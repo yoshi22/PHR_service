@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "PHRApp",
+    "slug": "PHRApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.phrapp",          
+      "infoPlist": {
+       "NSHealthShareUsageDescription": "健康データを同期して、週次ダッシュボードを作成するために必要です。",
+       "NSHealthUpdateUsageDescription": "体重・歩数データを取得・記録するために必要です。"
+       }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
