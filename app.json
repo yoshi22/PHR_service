@@ -14,13 +14,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.phrapp",          
+      "bundleIdentifier": "com.example.phrapp",
       "infoPlist": {
-       "NSHealthShareUsageDescription": "健康データを同期して、週次ダッシュボードを作成するために必要です。",
-       "NSHealthUpdateUsageDescription": "体重・歩数データを取得・記録するために必要です。"
-       }
+        "NSHealthShareUsageDescription": "健康データを同期して、週次ダッシュボードを作成するために必要です。",
+        "NSHealthUpdateUsageDescription": "体重・歩数データを取得・記録するために必要です。"
+      }
     },
     "android": {
+      "package": "com.example.phrapp",
+      "permissions": [
+        "com.google.android.apps.fitness.permission.ACTIVITY_READ",
+        "com.google.android.apps.fitness.permission.ACTIVITY_WRITE"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -29,6 +34,7 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": []
   }
 }
