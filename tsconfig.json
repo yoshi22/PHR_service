@@ -5,6 +5,7 @@
   },
   "include": [
     "env.d.ts",
+    "declarations.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx"
   ]

@@ -87,7 +87,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.phrapp"
+    namespace 'com.example.phrapp'
     defaultConfig {
         applicationId 'com.example.phrapp'
         minSdkVersion rootProject.ext.minSdkVersion
