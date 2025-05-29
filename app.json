@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -18,6 +18,12 @@
       "infoPlist": {
         "NSHealthShareUsageDescription": "健康データを同期して、週次ダッシュボードを作成するために必要です。",
         "NSHealthUpdateUsageDescription": "体重・歩数データを取得・記録するために必要です。"
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": [
+          "HKQuantityTypeIdentifierStepCount",
+          "HKQuantityTypeIdentifierBodyMass"
+        ]
       }
     },
     "android": {
