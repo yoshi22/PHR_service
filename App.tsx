@@ -1,29 +1,28 @@
 // App.tsx
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';
-
 import { decode, encode } from 'base-64';
-// Base64ポリフィル
 if (!global.btoa) global.btoa = encode;
 if (!global.atob) global.atob = decode;
-
-// ネイティブのネットワーク実装を強制的に使う
 if (__DEV__) {
-  // XMLHttpRequest
-  global.XMLHttpRequest =
-    global.originalXMLHttpRequest || global.XMLHttpRequest;
-  // FormData
-  global.FormData =
-    global.originalFormData || global.FormData;
-  // fetch
-  if (global.originalFetch) {
-    global.fetch = global.originalFetch;
+  if (global.originalXMLHttpRequest == null) {
+    // Expo Dev Client ではこれらが undefined なので保持
+    // @ts-ignore
+    global.originalXMLHttpRequest = global.XMLHttpRequest;
+    // @ts-ignore
+    global.originalFetch = global.fetch;
+    // @ts-ignore
+    global.originalFormData = global.FormData;
   }
+  // @ts-ignore
+  global.XMLHttpRequest = global.originalXMLHttpRequest;
+  // @ts-ignore
+  global.fetch = global.originalFetch;
+  // @ts-ignore
+  global.FormData = global.originalFormData;
 }
 
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';            // ナビゲーションのルート管理
-import { createNativeStackNavigator } from '@react-navigation/native-stack'; // ネイティブスタックナビゲーター
 import {
   View,
   Text,
@@ -34,14 +33,34 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { auth } from './src/firebase';                                      // Firebase Auth 初期化
-import { signInWithEmailAndPassword } from 'firebase/auth';                 // サインイン関数
-import { saveTodaySteps } from './src/services/firestoreService';           // Firestore 保存関数
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-// スタックの型定義
+// 画面コンポーネント
+import SignUpScreen from './src/screens/SignUpScreen';
+
+// Firebase Auth
+import { auth } from './src/firebase';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  User,
+} from 'firebase/auth';
+
+// 歩数取得 ＆ Firestore 保存ロジック
+import {
+  initHealthKit,
+  getTodayStepsIOS,
+  initGoogleFit,
+  getTodayStepsAndroid,
+} from './src/services/healthService';
+import { saveTodaySteps } from './src/services/firestoreService';
+
+// ナビゲーションの画面パラメータ型
 type RootStackParamList = {
   SignIn: undefined;
+  SignUp: undefined;
   Home: undefined;
 };
 
@@ -49,9 +68,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // ─── SignInScreen ─────────────────────────────────────────────────────────
 function SignInScreen({ navigation }: { navigation: any }) {
-  const [email, setEmail] = useState('');       // メールアドレス入力値
-  const [password, setPassword] = useState(''); // パスワード入力値
-  const [loading, setLoading] = useState(false);// ローディング状態
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading]   = useState(false);
 
   const onPressLogin = async () => {
     if (!email || !password) {
@@ -61,10 +80,9 @@ function SignInScreen({ navigation }: { navigation: any }) {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (error: any) {
-      console.error('ログインエラー:', error);
-      // エラー内容をアラートで表示
-      Alert.alert('ログイン失敗', error.message);
+      // 成功すると onAuthStateChanged が走って Home に自動遷移
+    } catch (e: any) {
+      Alert.alert('ログイン失敗', e.message);
     } finally {
       setLoading(false);
     }
@@ -88,20 +106,22 @@ function SignInScreen({ navigation }: { navigation: any }) {
         onChangeText={setPassword}
         secureTextEntry
       />
-      {loading ? (
-        <ActivityIndicator size="large" />
-      ) : (
-        <Button title="ログイン" onPress={onPressLogin} />
-      )}
+      {loading
+        ? <ActivityIndicator size="large" />
+        : <Button title="ログイン" onPress={onPressLogin} />
+      }
+      {/* ← ここで新規登録画面へリンク */}
+      <View style={{ marginTop: 16 }}>
+        <Button
+          title="新規登録はこちら"
+          onPress={() => navigation.navigate('SignUp')}
+        />
+      </View>
     </View>
   );
 }
 
 // ─── HomeScreen ───────────────────────────────────────────────────────────
-// App.tsx の中にある HomeScreen を以下に置き換え
-
-import { initHealthKit, getTodayStepsIOS, initGoogleFit, getTodayStepsAndroid } from './src/services/healthService';
-
 function HomeScreen() {
   const [steps, setSteps] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -109,18 +129,19 @@ function HomeScreen() {
   useEffect(() => {
     (async () => {
       try {
+        let count: number;
         if (Platform.OS === 'ios') {
           await initHealthKit();
-          const count = await getTodayStepsIOS();
-          setSteps(count);
+          count = await getTodayStepsIOS();
         } else {
           await initGoogleFit();
-          const count = await getTodayStepsAndroid();
-          const user = auth.currentUser;
-          if (user) {
-            await saveTodaySteps(user.uid, count); // Firestore に保存
-          }
-          setSteps(count);
+          count = await getTodayStepsAndroid();
+        }
+        setSteps(count);
+        // Firestore に書き込み
+        const u = auth.currentUser;
+        if (u) {
+          await saveTodaySteps(u.uid, count);
         }
       } catch (e: any) {
         setError(e.message);
@@ -131,35 +152,31 @@ function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>今日の歩数</Text>
-      {error ? (
-        <Text style={{ color: 'red' }}>{error}</Text>
-      ) : steps === null ? (
-        <ActivityIndicator />
-      ) : (
-        <Text style={{ fontSize: 32 }}>{steps} 歩</Text>
-      )}
+      {error
+        ? <Text style={{ color: 'red' }}>{error}</Text>
+        : steps === null
+          ? <ActivityIndicator />
+          : <Text style={{ fontSize: 32 }}>{steps} 歩</Text>
+      }
       <Button title="ログアウト" onPress={() => signOut(auth)} />
     </View>
   );
 }
 
-
-
 // ─── App エントリーポイント ───────────────────────────────────────────────
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [initializing, setInitializing] = useState(true);
+  const [user, setUser]         = useState<User | null>(null);
+  const [initializing, setInit] = useState(true);
 
+  // Firebase Auth の監視
   useEffect(() => {
-    // ① サブスクライブして認証状態を監視
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      if (initializing) setInitializing(false);
+    const unsub = onAuthStateChanged(auth, u => {
+      setUser(u);
+      if (initializing) setInit(false);
     });
-    return unsubscribe; // クリーンアップ
-  }, []);
+    return unsub;
+  }, [initializing]);
 
-  // ② 初期ロード中はローディング表示
   if (initializing) {
     return (
       <View style={styles.container}>
@@ -170,49 +187,45 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      {user ? (
-        // ③ ログイン済みなら Home スタック
-        <Stack.Navigator>
+      {/*
+        ここで一つの Navigator に初期ルートを指定。
+        未ログイン時は SignIn→SignUp、ログイン後は Home のみ登録。
+      */}
+      <Stack.Navigator initialRouteName="SignIn">
+        {user ? (
           <Stack.Screen
             name="Home"
             component={HomeScreen}
             options={{ title: 'ホーム' }}
           />
-        </Stack.Navigator>
-      ) : (
-        // ④ 未ログインなら SignIn スタック
-        <Stack.Navigator>
-          <Stack.Screen
-            name="SignIn"
-            component={SignInScreen}
-            options={{ headerShown: false }}
-          />
-        </Stack.Navigator>
-      )}
+        ) : (
+          <>
+            <Stack.Screen
+              name="SignIn"
+              component={SignInScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="SignUp"
+              component={SignUpScreen}
+              options={{ title: '新規登録' }}
+            />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
 
-
-// ─── スタイル ─────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
-    flex: 1,                    // 画面いっぱいに広げる
-    alignItems: 'center',       // 横方向中央揃え
-    justifyContent: 'center',   // 縦方向中央揃え
-    padding: 16,                // 内側余白
+    flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 24,
+    fontSize: 24, marginBottom: 24,
   },
   input: {
-    width: '100%',              // 親幅いっぱい
-    height: 48,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    marginBottom: 12,
+    width: '100%', height: 48, borderColor: '#ccc', borderWidth: 1,
+    borderRadius: 4, paddingHorizontal: 8, marginBottom: 12,
   },
 });

@@ -1,14 +1,6 @@
 // src/firebase.ts
-// src/firebase.ts
-
-
-
-
 import { initializeApp } from 'firebase/app';
-import {
-  initializeAuth,
-  getReactNativePersistence,
-} from 'firebase/auth';  // ← ここ
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
@@ -31,7 +23,7 @@ const app = initializeApp({
   appId: FIREBASE_APP_ID,
 });
 
-// React Native 向け Auth 初期化／永続化設定
+// React Native persistence needs AsyncStorage from '@react-native-async-storage/async-storage'
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
@@ -39,6 +31,7 @@ export const auth = initializeAuth(app, {
 export const db = getFirestore(app);
 export const functions = getFunctions(app);
 
+// handy debug
 console.log('🔑 Firebase Config →', {
   apiKey: FIREBASE_API_KEY,
   authDomain: FIREBASE_AUTH_DOMAIN,
