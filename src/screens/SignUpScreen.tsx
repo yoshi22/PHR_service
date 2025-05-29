@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Alert,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { auth, db } from '../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import InputField from '../components/InputField';
+import PrimaryButton from '../components/PrimaryButton';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { formatDate } from '../utils/formatDate';
+import colors from '../styles/colors';
+import typography from '../styles/typography';
 
 export default function SignUpScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('');
@@ -66,25 +64,25 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>新規登録</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="メールアドレス"
+      <Text style={[styles.title, typography.h2, { color: colors.primary }]}>新規登録</Text>
+      <InputField
+        label="メールアドレス"
+        placeholder="user@example.com"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="パスワード（6文字以上）"
+      <InputField
+        label="パスワード"
+        placeholder="6文字以上"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
-      <Button
-        title={`生年月日: ${birthDate.toLocaleDateString()}`}
+      <PrimaryButton
+        title={`生年月日: ${formatDate(birthDate)}`}
         onPress={() => setShowPicker(true)}
       />
       {showPicker && (
@@ -110,32 +108,29 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
       </Picker>
 
       {/* 任意項目 */}
-      <TextInput
-        style={styles.input}
-        placeholder="氏名（任意）"
+      <InputField
+        label="氏名（任意）"
+        placeholder="例: 山田 太郎"
         value={displayName}
         onChangeText={setDisplayName}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="身長（cm／任意）"
+      <InputField
+        label="身長（cm）"
+        placeholder="例: 170"
         keyboardType="numeric"
         value={height}
         onChangeText={setHeight}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="体重（kg／任意）"
+      <InputField
+        label="体重（kg）"
+        placeholder="例: 60"
         keyboardType="numeric"
         value={weight}
         onChangeText={setWeight}
       />
 
-      <Button
-        title={loading ? '登録中…' : '登録する'}
-        onPress={onPressSignUp}
-        disabled={loading}
-      />
+      {loading && <LoadingOverlay />}
+      <PrimaryButton title={loading ? '登録中…' : '登録する'} onPress={onPressSignUp} disabled={loading} />
     </View>
   );
 }
@@ -143,14 +138,5 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   title: { fontSize: 24, marginBottom: 24, textAlign: 'center' },
-  input: {
-    width: '100%',
-    height: 48,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    marginTop: 12,
-  },
   picker: { width: '100%', marginTop: 12 },
 });

@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
-import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, Alert } from 'react-native'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase'
+import InputField from '../components/InputField'
+import PrimaryButton from '../components/PrimaryButton'
+import LoadingOverlay from '../components/LoadingOverlay'
 
 export default function SignInScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('')
@@ -27,31 +30,29 @@ export default function SignInScreen({ navigation }: { navigation: any }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>サインイン</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="メールアドレス"
+      <InputField
+        label="メールアドレス"
+        placeholder="例: user@example.com"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
       />
-      <TextInput
-        style={styles.input}
+      <InputField
+        label="パスワード"
         placeholder="パスワード"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      {loading ? <ActivityIndicator /> : <Button title="ログイン" onPress={onPressLogin} />}
-      <View style={{ marginTop: 16 }}>
-        <Button title="新規登録はこちら" onPress={() => navigation.navigate('SignUp')} />
-      </View>
+      {loading && <LoadingOverlay />}
+      <PrimaryButton title="ログイン" onPress={onPressLogin} disabled={loading} />
+      <PrimaryButton title="新規登録はこちら" onPress={() => navigation.navigate('SignUp')} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 16 },
-  title: { fontSize: 24, marginBottom: 16, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 8, marginBottom: 12, borderRadius: 4 }
+  title: { fontSize: 24, marginBottom: 16, textAlign: 'center' }
 })
