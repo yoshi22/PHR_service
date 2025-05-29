@@ -1,6 +1,6 @@
-// src/firebase.ts
+// Firebase App (the core Firebase SDK) is always required and must be listed first
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
@@ -23,10 +23,8 @@ const app = initializeApp({
   appId: FIREBASE_APP_ID,
 });
 
-// React Native persistence needs AsyncStorage from '@react-native-async-storage/async-storage'
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+// Firebase Auth instance
+export const auth = getAuth(app);
 
 export const db = getFirestore(app);
 export const functions = getFunctions(app);

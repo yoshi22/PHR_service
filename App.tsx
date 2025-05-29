@@ -1,26 +1,24 @@
-// App.tsx
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';
 import { decode, encode } from 'base-64';
 if (!global.btoa) global.btoa = encode;
 if (!global.atob) global.atob = decode;
-if (__DEV__) {
-  if (global.originalXMLHttpRequest == null) {
-    // Expo Dev Client ではこれらが undefined なので保持
-    // @ts-ignore
-    global.originalXMLHttpRequest = global.XMLHttpRequest;
-    // @ts-ignore
-    global.originalFetch = global.fetch;
-    // @ts-ignore
-    global.originalFormData = global.FormData;
-  }
+
+// Restore native networking layers for Firebase
+if (global.originalXMLHttpRequest == null) {
   // @ts-ignore
-  global.XMLHttpRequest = global.originalXMLHttpRequest;
+  global.originalXMLHttpRequest = global.XMLHttpRequest;
   // @ts-ignore
-  global.fetch = global.originalFetch;
+  global.originalFetch = global.fetch;
   // @ts-ignore
-  global.FormData = global.originalFormData;
+  global.originalFormData = global.FormData;
 }
+// @ts-ignore
+global.XMLHttpRequest = global.originalXMLHttpRequest;
+// @ts-ignore
+global.fetch = global.originalFetch;
+// @ts-ignore
+global.FormData = global.originalFormData;
 
 import React from 'react';
 import {

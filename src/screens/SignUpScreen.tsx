@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { auth, db } from '../firebase';
@@ -63,80 +63,86 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, typography.h2, { color: colors.primary }]}>新規登録</Text>
-      <InputField
-        label="メールアドレス"
-        placeholder="user@example.com"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <InputField
-        label="パスワード"
-        placeholder="6文字以上"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <PrimaryButton
-        title={`生年月日: ${formatDate(birthDate)}`}
-        onPress={() => setShowPicker(true)}
-      />
-      {showPicker && (
-        <DateTimePicker
-          value={birthDate}
-          mode="date"
-          display="spinner"
-          maximumDate={new Date()}
-          onChange={(_, date) => {
-            setShowPicker(false);
-            if (date) setBirthDate(date);
-          }}
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Text style={[styles.title, typography.h2, { color: colors.primary }]}>新規登録</Text>
+        <InputField
+          label="メールアドレス"
+          placeholder="user@example.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
-      )}
+        <InputField
+          label="パスワード"
+          placeholder="6文字以上"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
 
-      <Picker
-        selectedValue={gender}
-        onValueChange={(v) => setGender(v)}
-        style={styles.picker}
-      >
-        <Picker.Item label="男性" value="male" />
-        <Picker.Item label="女性" value="female" />
-      </Picker>
+        <PrimaryButton
+          title={`生年月日: ${formatDate(birthDate)}`}
+          onPress={() => setShowPicker(true)}
+        />
+        {showPicker && (
+          <DateTimePicker
+            value={birthDate}
+            mode="date"
+            display="spinner"
+            maximumDate={new Date()}
+            onChange={(_, date) => {
+              setShowPicker(false);
+              if (date) setBirthDate(date);
+            }}
+          />
+        )}
 
-      {/* 任意項目 */}
-      <InputField
-        label="氏名（任意）"
-        placeholder="例: 山田 太郎"
-        value={displayName}
-        onChangeText={setDisplayName}
-      />
-      <InputField
-        label="身長（cm）"
-        placeholder="例: 170"
-        keyboardType="numeric"
-        value={height}
-        onChangeText={setHeight}
-      />
-      <InputField
-        label="体重（kg）"
-        placeholder="例: 60"
-        keyboardType="numeric"
-        value={weight}
-        onChangeText={setWeight}
-      />
+        <Picker
+          selectedValue={gender}
+          onValueChange={(v) => setGender(v)}
+          style={styles.picker}
+        >
+          <Picker.Item label="男性" value="male" />
+          <Picker.Item label="女性" value="female" />
+        </Picker>
 
-      {loading && <LoadingOverlay />}
-      <PrimaryButton title={loading ? '登録中…' : '登録する'} onPress={onPressSignUp} disabled={loading} />
-    </View>
+        {/* 任意項目 */}
+        <InputField
+          label="氏名（任意）"
+          placeholder="例: 山田 太郎"
+          value={displayName}
+          onChangeText={setDisplayName}
+        />
+        <InputField
+          label="身長（cm）"
+          placeholder="例: 170"
+          keyboardType="numeric"
+          value={height}
+          onChangeText={setHeight}
+        />
+        <InputField
+          label="体重（kg）"
+          placeholder="例: 60"
+          keyboardType="numeric"
+          value={weight}
+          onChangeText={setWeight}
+        />
+
+        {loading && <LoadingOverlay />}
+        <PrimaryButton title={loading ? '登録中…' : '登録する'} onPress={onPressSignUp} disabled={loading} />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
+  container: { padding: 16 },
   title: { fontSize: 24, marginBottom: 24, textAlign: 'center' },
   picker: { width: '100%', marginTop: 12 },
+  flex: { flex: 1 },
 });
