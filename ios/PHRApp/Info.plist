@@ -51,9 +51,9 @@
       <true/>
     </dict>
     <key>NSHealthShareUsageDescription</key>
-    <string>健康データを同期して、週次ダッシュボードを作成するために必要です。</string>
+    <string>歩数データを取得するためにHealthKitへのアクセスを許可してください。</string>
     <key>NSHealthUpdateUsageDescription</key>
-    <string>体重・歩数データを取得・記録するために必要です。</string>
+    <string>HealthKitに歩数データを書き込むためのアクセス許可が必要です。</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>

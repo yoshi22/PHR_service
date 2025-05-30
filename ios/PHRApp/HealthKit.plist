@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>本アプリは歩数カウントデータをHealthKitから読み取り、健康活動を追跡・分析し、バッジを獲得するために使用します。</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>本アプリはデータ分析と健康目標の追跡のために歩数データを保存します。</string>
+</dict>
+</plist>

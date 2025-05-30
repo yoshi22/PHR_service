@@ -6,22 +6,36 @@ import { useTodaySteps } from '../hooks/useTodaySteps'
 import PrimaryButton from '../components/PrimaryButton'
 import { useLoading } from '../context/LoadingContext'
 import { useError } from '../context/ErrorContext'
+import { usePermissions } from '../hooks/usePermissions'
 
 export default function HomeScreen() {
+  const { granted, loading: permLoading, error: permError, request: requestPerms } = usePermissions()
   const { steps, error, loading, refetch } = useTodaySteps()
   const { setLoading } = useLoading()
   const { showError } = useError()
 
   // Global loading overlay
   React.useEffect(() => {
-    setLoading(loading)
-  }, [loading])
+    setLoading(loading || permLoading)
+  }, [loading, permLoading])
   // Global error overlay
   React.useEffect(() => {
-    if (error) {
+    if (permError) {
+      showError(permError, requestPerms)
+    } else if (error) {
       showError(error, refetch)
     }
-  }, [error])
+  }, [permError, error])
+
+  // If permissions not granted, show request UI
+  if (!granted) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>ヘルスデータのアクセス権限が必要です</Text>
+        <PrimaryButton title={permLoading ? '確認中…' : '権限をリクエスト'} onPress={requestPerms} />
+      </View>
+    )
+  }
 
   // Screen UI always rendered; loading and errors are handled globally
   return (

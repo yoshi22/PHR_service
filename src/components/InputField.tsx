@@ -5,11 +5,11 @@ interface InputFieldProps extends TextInputProps {
   label?: string
 }
 
-export default function InputField({ label, style, ...props }: InputFieldProps) {
+export default function InputField({ label, style, testID, ...props }: InputFieldProps) {
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <TextInput style={[styles.input, style]} {...props} />
+      <TextInput style={[styles.input, style]} testID={testID} {...props} />
     </View>
   )
 }

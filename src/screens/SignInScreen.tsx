@@ -37,6 +37,7 @@ export default function SignInScreen({ navigation }: { navigation: any }) {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        testID="email"
       />
       <InputField
         label="パスワード"
@@ -44,10 +45,11 @@ export default function SignInScreen({ navigation }: { navigation: any }) {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        testID="password"
       />
       {loading && <LoadingOverlay />}
-      <PrimaryButton title="ログイン" onPress={onPressLogin} disabled={loading} />
-      <PrimaryButton title="新規登録はこちら" onPress={() => navigation.navigate('SignUp')} />
+      <PrimaryButton title="ログイン" onPress={onPressLogin} disabled={loading} testID="login-button" />
+      <PrimaryButton title="新規登録はこちら" onPress={() => navigation.navigate('SignUp')} testID="signup-link" />
     </View>
   )
 }

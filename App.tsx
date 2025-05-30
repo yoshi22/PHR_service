@@ -20,7 +20,7 @@ global.fetch = global.originalFetch;
 // @ts-ignore
 global.FormData = global.originalFormData;
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   ActivityIndicator,
@@ -29,23 +29,82 @@ import {
 import { NavigationContainer } from '@react-navigation/native'
 import { ErrorProvider } from './src/context/ErrorContext'
 import { LoadingProvider } from './src/context/LoadingContext'
+import { ToastProvider } from './src/context/ToastContext'
+import Toast from 'react-native-toast-message';
 
 import { useAuth } from './src/hooks/useAuth';
+import { usePermissionStatus } from './src/hooks/usePermissionStatus';
 import AppNavigator from './src/navigation';
+import PermissionsScreen from './src/screens/PermissionsScreen';
+import { initializeNotifications } from './src/services/notificationService';
 
 // ─── App エントリーポイント ───────────────────────────────────────────────
 export default function App() {
   const { user, initializing } = useAuth()
-  if (initializing) {
+  const { permissionsGranted, loading: permLoading, requestPermissions, refreshPermissionStatus } = usePermissionStatus()
+  const [forceUpdate, setForceUpdate] = React.useState(0);
+  
+  // Initialize notifications when app starts
+  useEffect(() => {
+    initializeNotifications().catch(err => {
+      console.error('Error initializing notifications:', err);
+    });
+  }, []);
+  
+  // Check permissions when user changes - using a ref to avoid dependency issues
+  const refreshPermissionStatusRef = React.useRef(refreshPermissionStatus);
+  
+  // Update the ref when the function changes
+  React.useEffect(() => {
+    refreshPermissionStatusRef.current = refreshPermissionStatus;
+  }, [refreshPermissionStatus]);
+  
+  useEffect(() => {
+    if (user) {
+      console.log('User state changed, refreshing permissions');
+      // Use the ref instead of the function directly
+      refreshPermissionStatusRef.current();
+    }
+  }, [user]); // removed refreshPermissionStatus from dependencies
+  
+  if (initializing || permLoading) {
     return <View style={styles.container}><ActivityIndicator size="large"/></View>
+  }
+  
+  // ログインしているがまだ権限を取得していない状態の場合、権限リクエスト画面を表示
+  if (user && !permissionsGranted) {
+    return (
+      <ErrorProvider>
+        <LoadingProvider>
+          <ToastProvider>
+            <PermissionsScreen 
+              onPermissionGranted={() => {
+                console.log('Permission granted callback in App.tsx');
+                // PermissionsScreen コンポーネントは一度だけこれを呼び出します
+                // 状態を更新して再レンダリングを促す
+                setForceUpdate(prev => prev + 1);
+                // 少し遅延させて権限更新を行う
+                setTimeout(() => {
+                  refreshPermissionStatusRef.current();
+                }, 500);
+              }} 
+            />
+            <Toast />
+          </ToastProvider>
+        </LoadingProvider>
+      </ErrorProvider>
+    )
   }
 
   return (
     <ErrorProvider>
       <LoadingProvider>
-        <NavigationContainer>
-          <AppNavigator signedIn={!!user} />
-        </NavigationContainer>
+        <ToastProvider>
+          <NavigationContainer>
+            <AppNavigator signedIn={!!user} />
+          </NavigationContainer>
+          <Toast />
+        </ToastProvider>
       </LoadingProvider>
     </ErrorProvider>
   )
