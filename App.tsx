@@ -25,31 +25,30 @@ import {
   View,
   ActivityIndicator,
   StyleSheet,
-} from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-
-// ナビゲーションの画面パラメータ型
-type RootStackParamList = {
-  SignIn: undefined;
-  SignUp: undefined;
-  Home: undefined;
-};
+} from 'react-native'
+import { NavigationContainer } from '@react-navigation/native'
+import { ErrorProvider } from './src/context/ErrorContext'
+import { LoadingProvider } from './src/context/LoadingContext'
 
 import { useAuth } from './src/hooks/useAuth';
 import AppNavigator from './src/navigation';
 
 // ─── App エントリーポイント ───────────────────────────────────────────────
 export default function App() {
-  const { user, initializing } = useAuth();
+  const { user, initializing } = useAuth()
   if (initializing) {
-    return <View style={styles.container}><ActivityIndicator size="large"/></View>;
+    return <View style={styles.container}><ActivityIndicator size="large"/></View>
   }
 
   return (
-    <NavigationContainer>
-      <AppNavigator signedIn={!!user} />
-    </NavigationContainer>
-  );
+    <ErrorProvider>
+      <LoadingProvider>
+        <NavigationContainer>
+          <AppNavigator signedIn={!!user} />
+        </NavigationContainer>
+      </LoadingProvider>
+    </ErrorProvider>
+  )
 }
 
 const styles = StyleSheet.create({

@@ -1,0 +1,32 @@
+// Firestore security rules for PHRApp
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to create and read their own step records
+    match /userSteps/{stepId} {
+      // Create only if the userId in the new data matches the authenticated uid
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Read (get/list) only if the stored userId matches the authenticated uid
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Update only if the stored userId matches the authenticated uid
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Prevent deletions
+      allow delete: if false;
+    }
+    
+    // userBadges コレクションへのアクセス制御
+    match /userBadges/{badgeId} {
+      // 作成: 認証済かつ userId フィールドが自分の UID と一致
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
+      // 読み取り: 認証済かつ保存済の userId が自分の UID と一致
+      allow read:   if request.auth != null
+                    && request.auth.uid == resource.data.userId;
+      // 更新: 自分のバッジのみ許可
+      allow update: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
+      // 削除は禁止
+      allow delete: if false;
+    }
+  }
+}

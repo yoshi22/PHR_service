@@ -3,6 +3,9 @@ import { Platform } from 'react-native'
 import { initHealthKit, getTodayStepsIOS, initGoogleFit, getTodayStepsAndroid } from '../services/healthService'
 import { saveTodaySteps } from '../services/firestoreService'
 import { auth } from '../firebase'
+import { saveBadge } from '../services/badgeService'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '../firebase'
 
 /**
  * Hook to fetch today's steps and save to Firestore.
@@ -27,7 +30,30 @@ export function useTodaySteps() {
       }
       setSteps(count)
       const user = auth.currentUser
-      if (user) await saveTodaySteps(user.uid, count)
+      if (user) {
+        await saveTodaySteps(user.uid, count)
+        // Badge: award if threshold reached
+        if (count >= 7500) {
+          const today = new Date().toISOString().split('T')[0]
+          await saveBadge(user.uid, today, '7500_steps')
+          // 3日連続バッジ判定
+          const dates = [0, 1, 2].map(offset => {
+            const d = new Date()
+            d.setDate(d.getDate() - offset)
+            return d.toISOString().split('T')[0]
+          })
+          const streakQ = query(
+            collection(db, 'userSteps'),
+            where('userId', '==', user.uid),
+            where('date', 'in', dates)
+          )
+          const streakSnap = await getDocs(streakQ)
+          const stepsList = streakSnap.docs.map(d => d.data().steps as number)
+          if (stepsList.length === 3 && stepsList.every(s => s >= 7500)) {
+            await saveBadge(user.uid, today, '3days_streak')
+          }
+        }
+      }
     } catch (e: any) {
       setError(e.message)
     } finally {

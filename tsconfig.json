@@ -4,7 +4,8 @@
     "strict": true,
     "jsx": "react-native",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
   },
   "include": [
     "env.d.ts",
