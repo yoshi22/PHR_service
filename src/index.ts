@@ -4,8 +4,10 @@ import 'react-native-url-polyfill/auto';
 // Base64 polyfill
 // @ts-ignore
 import { decode, encode } from 'base-64';
-if (!(global as any).btoa) (global as any).btoa = encode;
-if (!(global as any).atob) (global as any).atob = decode;
+// @ts-ignore
+if (!(global.btoa)) global.btoa = encode;
+// @ts-ignore
+if (!(global.atob)) global.atob = decode;
 // Keep only polyfills; use default React Native networking
 
 import { registerRootComponent } from 'expo';

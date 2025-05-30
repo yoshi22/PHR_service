@@ -27,16 +27,16 @@ import {
   StyleSheet,
 } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
-import { ErrorProvider } from './src/context/ErrorContext'
-import { LoadingProvider } from './src/context/LoadingContext'
-import { ToastProvider } from './src/context/ToastContext'
+import { ErrorProvider } from './context/ErrorContext'
+import { LoadingProvider } from './context/LoadingContext'
+import { ToastProvider } from './context/ToastContext'
 import Toast from 'react-native-toast-message';
 
-import { useAuth } from './src/hooks/useAuth';
-import { usePermissionStatus } from './src/hooks/usePermissionStatus';
-import AppNavigator from './src/navigation';
-import PermissionsScreen from './src/screens/PermissionsScreen';
-import { initializeNotifications } from './src/services/notificationService';
+import { useAuth } from './hooks/useAuth';
+import { usePermissionStatus } from './hooks/usePermissionStatus';
+import AppNavigator from './navigation';
+import PermissionsScreen from './screens/PermissionsScreen';
+import { initializeNotifications } from './services/notificationService';
 
 // ─── App エントリーポイント ───────────────────────────────────────────────
 export default function App() {

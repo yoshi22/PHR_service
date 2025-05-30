@@ -3,12 +3,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import HomeScreen from '../screens/HomeScreen'
 import DashboardScreen from '../screens/DashboardScreen'
 import ProfileScreen from '../screens/ProfileScreen'
+import ChatScreen from '../screens/ChatScreen'
 import { Ionicons } from '@expo/vector-icons'
 import { RouteProp } from '@react-navigation/native'
 
 export type MainTabParamList = {
   Home: undefined
   Dashboard: undefined
+  Chat: undefined
   Profile: undefined
 }
 
@@ -24,6 +26,8 @@ export default function MainTabs() {
           let iconName: React.ComponentProps<typeof Ionicons>['name'] = 'home'
           if (route.name === 'Dashboard') {
             iconName = 'stats-chart'
+          } else if (route.name === 'Chat') {
+            iconName = 'chatbubble-ellipses'
           } else if (route.name === 'Profile') {
             iconName = 'person'
           }
@@ -33,6 +37,7 @@ export default function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'ホーム' }} />
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'ダッシュボード' }} />
+      <Tab.Screen name="Chat" component={ChatScreen} options={{ title: 'AIチャット' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: '設定' }} />
     </Tab.Navigator>
   )
