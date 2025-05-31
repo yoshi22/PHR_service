@@ -34,6 +34,7 @@
     "expo-notifications": "~0.31.2",
     "expo-status-bar": "~2.2.3",
     "firebase": "^11.8.1",
+    "openai": "^5.0.1",
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-chart-kit": "^6.12.0",

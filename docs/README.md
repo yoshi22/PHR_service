@@ -9,11 +9,11 @@ A React Native application for personal health record management with integratio
 - **フェーズ1**: ✅ 完了 - コア認証＆データ同期
 - **フェーズ2**: ✅ 完了 - 週次ダッシュボード＆小さな勝利バッジ
 - **フェーズ3**: ✅ 完了 - パーミッションフロー改善＆ヘルスデータ統合
-- **フェーズ4**: 🚧 実装中 - AIチャット（GPT-4o）統合
+- **フェーズ4**: ✅ 完了 - AIチャット（GPT-4o）統合
 - **フェーズ5**: 📝 未着手 - 品質向上＆リリース準備
 
-詳細は [PROJECT_PHASES.md](./PROJECT_PHASES.md), [PHASE3_SUMMARY.md](./PHASE3_SUMMARY.md) 
-と [PHASE4_PLAN.md](./PHASE4_PLAN.md) をご参照ください。
+詳細は [PROJECT_PHASES.md](./PROJECT_PHASES.md), [PHASE3_SUMMARY.md](./PHASE3_SUMMARY.md), 
+[PHASE4_SUMMARY.md](./PHASE4_SUMMARY.md) と [PHASE4_PLAN.md](./PHASE4_PLAN.md) をご参照ください。
 
 2025年5月30日に [プロジェクト構造の再編成](./PROJECT_REORGANIZATION.md) を完了し、より整理されたディレクトリ構造を採用しました。
 
@@ -22,6 +22,8 @@ A React Native application for personal health record management with integratio
 - 🔐 ユーザー認証と権限管理
 - 📊 インタラクティブなチャートによる健康データ可視化
 - 🏅 健康目標に対するバッジ達成システム
+- 🤖 AIによるパーソナライズされた健康アドバイス（GPT-4o）
+- 💬 自然言語による健康質問応答チャットインターフェース
 - 📱 プラットフォーム固有のヘルスAPI連携（iOS/Android）
 - 🔔 プッシュ通知システム
 - 🎨 テーマカスタマイズ

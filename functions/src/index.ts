@@ -4,7 +4,10 @@ import * as functions from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 
-admin.initializeApp();
+// Initialize Firebase Admin once
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 const db = admin.firestore();
 const messaging = admin.messaging();
@@ -74,3 +77,6 @@ export const checkDailySteps = functions.pubsub
 
     return null;
   });
+
+// AI機能のエクスポート（v2 functions）
+export { generateAIChatResponse, getUserConversationHistory } from './ai-functions';

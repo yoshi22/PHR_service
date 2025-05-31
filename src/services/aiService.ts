@@ -1,5 +1,7 @@
 // src/services/aiService.ts
 // OpenAI APIとの連携用サービス
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getApp } from 'firebase/app';
 
 // メッセージの型定義
 export type ChatMessage = {
@@ -15,21 +17,28 @@ export type AIResponse = {
 
 /**
  * OpenAI APIを利用してチャット応答を取得する
- * フェーズ4実装時に完成させる
  */
 export const getChatCompletion = async (
   messages: ChatMessage[],
   healthData?: Record<string, any>
 ): Promise<AIResponse> => {
   try {
-    // TODO: Firebase CloudFunctionsを経由してOpenAI APIを呼び出す実装
-    // 現時点ではダミー応答を返す
+    // Firebase Functionsのリージョンを指定（東京リージョン）
+    const functions = getFunctions(getApp(), 'asia-northeast1'); // 東京リージョン
+    const generateAIChatResponse = httpsCallable(functions, 'generateAIChatResponse');
+
+    // Firebase Functionsを呼び出し
+    console.log('AI APIリクエスト送信中...');
     
-    console.log('AI APIリクエスト:', { messages, healthData });
+    const result = await generateAIChatResponse({ messages, healthData });
     
-    // APIリクエストの実装プレースホルダ
+    // レスポンスを取得
+    const data = result.data as { message: string };
+    
+    console.log('AI APIレスポンス受信完了');
+    
     return {
-      message: 'これはダミーレスポンスです。実際の実装ではGPT-4oからの応答が返ります。',
+      message: data.message
     };
     
   } catch (error: any) {
@@ -74,12 +83,14 @@ export const generateSystemPrompt = (healthData?: Record<string, any>): string =
 
 /**
  * 会話履歴を保存する
- * フェーズ4実装時にFirestoreに保存する機能を実装
+ * 注: 会話履歴は現在generateAIChatResponse関数内で自動的に保存されるため、
+ * このメソッドはクライアント側での独自保存が必要な場合のみ使用
  */
 export const saveConversation = async (userId: string, messages: ChatMessage[]): Promise<void> => {
   try {
-    // TODO: Firestoreに会話履歴を保存する実装
-    console.log('会話履歴を保存:', { userId, messageCount: messages.length });
+    // 現在はFirebase Functionsが自動的に保存するため、何もしない
+    console.log('会話履歴はサーバー側で自動保存されます:', { userId, messageCount: messages.length });
+    // CloudFunctionsが会話履歴を自動保存するため、クライアント側での実装は省略
   } catch (error) {
     console.error('会話履歴の保存に失敗しました', error);
   }
@@ -87,15 +98,36 @@ export const saveConversation = async (userId: string, messages: ChatMessage[]):
 
 /**
  * 会話履歴を取得する
- * フェーズ4実装時にFirestoreから読み込む機能を実装
  */
 export const getConversationHistory = async (userId: string): Promise<ChatMessage[]> => {
   try {
-    // TODO: Firestoreから会話履歴を取得する実装
-    console.log('会話履歴を取得:', userId);
-    return [];
+    const functions = getFunctions(getApp(), 'asia-northeast1'); // 東京リージョン
+    const getUserConversationHistory = httpsCallable(functions, 'getUserConversationHistory');
+
+    // Firebase Functionsを呼び出し
+    console.log('会話履歴を取得中...');
+    
+    const result = await getUserConversationHistory({ limit: 10 });
+    
+    // レスポンスを取得
+    const data = result.data as { conversations: any[] };
+    
+    if (!data.conversations || data.conversations.length === 0) {
+      console.log('会話履歴なし');
+      return [];
+    }
+    
+    // 最新の会話の最初のメッセージを取得
+    const latestConversation = data.conversations[0];
+    console.log(`会話履歴取得完了: ${latestConversation.messages?.length || 0}件のメッセージ`);
+    return latestConversation.messages || [];
   } catch (error) {
     console.error('会話履歴の取得に失敗しました', error);
+    // エラー内容を詳細に表示することでデバッグを容易にする
+    if (error instanceof Error) {
+      console.error('エラーメッセージ:', error.message);
+      console.error('エラースタック:', error.stack);
+    }
     return [];
   }
 };
