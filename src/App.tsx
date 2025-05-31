@@ -30,6 +30,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { ErrorProvider } from './context/ErrorContext'
 import { LoadingProvider } from './context/LoadingContext'
 import { ToastProvider } from './context/ToastContext'
+import { ThemeProvider, useThemeContext } from './context/ThemeContext'
 import Toast from 'react-native-toast-message';
 
 import { useAuth } from './hooks/useAuth';
@@ -37,6 +38,18 @@ import { usePermissionStatus } from './hooks/usePermissionStatus';
 import AppNavigator from './navigation';
 import PermissionsScreen from './screens/PermissionsScreen';
 import { initializeNotifications } from './services/notificationService';
+
+// テーマ対応アプリコンポーネント
+const ThemedApp = ({ user }: { user: any }) => {
+  const { theme } = useThemeContext();
+  
+  return (
+    <NavigationContainer theme={theme}>
+      <AppNavigator signedIn={!!user} />
+      <Toast />
+    </NavigationContainer>
+  );
+};
 
 // ─── App エントリーポイント ───────────────────────────────────────────────
 export default function App() {
@@ -77,19 +90,21 @@ export default function App() {
       <ErrorProvider>
         <LoadingProvider>
           <ToastProvider>
-            <PermissionsScreen 
-              onPermissionGranted={() => {
-                console.log('Permission granted callback in App.tsx');
-                // PermissionsScreen コンポーネントは一度だけこれを呼び出します
-                // 状態を更新して再レンダリングを促す
-                setForceUpdate(prev => prev + 1);
-                // 少し遅延させて権限更新を行う
-                setTimeout(() => {
-                  refreshPermissionStatusRef.current();
-                }, 500);
-              }} 
-            />
-            <Toast />
+            <ThemeProvider>
+              <PermissionsScreen 
+                onPermissionGranted={() => {
+                  console.log('Permission granted callback in App.tsx');
+                  // PermissionsScreen コンポーネントは一度だけこれを呼び出します
+                  // 状態を更新して再レンダリングを促す
+                  setForceUpdate(prev => prev + 1);
+                  // 少し遅延させて権限更新を行う
+                  setTimeout(() => {
+                    refreshPermissionStatusRef.current();
+                  }, 500);
+                }} 
+              />
+              <Toast />
+            </ThemeProvider>
           </ToastProvider>
         </LoadingProvider>
       </ErrorProvider>
@@ -100,10 +115,9 @@ export default function App() {
     <ErrorProvider>
       <LoadingProvider>
         <ToastProvider>
-          <NavigationContainer>
-            <AppNavigator signedIn={!!user} />
-          </NavigationContainer>
-          <Toast />
+          <ThemeProvider>
+            <ThemedApp user={user} />
+          </ThemeProvider>
         </ToastProvider>
       </LoadingProvider>
     </ErrorProvider>

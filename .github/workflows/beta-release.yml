@@ -1,0 +1,288 @@
+name: Beta Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Release platform (ios/android/both)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - ios
+          - android
+          - both
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.version.outputs.new_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+          
+      - name: Bump version
+        id: version
+        run: |
+          # バージョン番号を取得
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # バージョンコンポーネントを分割
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
+          
+          # 引数に基づいてバージョンを更新
+          case "${{ github.event.inputs.version_bump }}" in
+            "major")
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            "minor")
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            "patch")
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version: $NEW_VERSION"
+          
+          # package.jsonの更新
+          npm version "$NEW_VERSION" --no-git-tag-version
+          
+          # 出力変数を設定
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Generate Release Notes
+        run: |
+          mkdir -p release-notes
+          
+          cat > "release-notes/RELEASE_${{ steps.version.outputs.new_version }}.md" << EOL
+          # PHRApp ベータリリース - バージョン ${{ steps.version.outputs.new_version }}
+          
+          *リリース日: $(date '+%Y年%m月%d日')*
+          
+          このリリースでは以下の機能が追加・改善されました:
+          
+          ## 主な変更点
+          
+          - アプリのUI/UX改善
+          - パフォーマンス最適化
+          - バグ修正とコード品質の向上
+          
+          ## テスト方法
+          
+          次の主要な機能をテストしてフィードバックをお願いします:
+          
+          1. ユーザー登録とログイン
+          2. ヘルスデータの同期
+          3. AIチャット機能
+          4. 週間ダッシュボード
+          
+          ## フィードバック
+          
+          アプリ内のフィードバックフォームからお気軽にフィードバックをお送りください。
+          EOL
+          
+      - name: Commit version bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json
+          git add release-notes/
+          git commit -m "バージョン ${{ steps.version.outputs.new_version }} へバージョンアップ"
+          git tag "v${{ steps.version.outputs.new_version }}"
+          git push origin HEAD:main --tags
+
+  ios-beta:
+    needs: prepare-release
+    if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: "v${{ needs.prepare-release.outputs.new_version }}"
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+          
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true
+          
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+          cd ..
+          
+      - name: Update iOS version and build number
+        run: |
+          VERSION=${{ needs.prepare-release.outputs.new_version }}
+          plutil -replace CFBundleShortVersionString -string "$VERSION" ios/PHRApp/Info.plist
+          
+          # ビルド番号を取得して更新
+          BUILD_NUMBER=$(plutil -extract CFBundleVersion xml1 -o - ios/PHRApp/Info.plist | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
+          NEW_BUILD=$((BUILD_NUMBER + 1))
+          plutil -replace CFBundleVersion -string "$NEW_BUILD" ios/PHRApp/Info.plist
+          
+          echo "Updated iOS version to $VERSION (build $NEW_BUILD)"
+          
+      - name: Build iOS app
+        run: |
+          cd ios
+          # Fastlaneを使用する場合は以下のコマンドを使用
+          # bundle exec fastlane beta
+          
+          # 直接ビルドコマンドを使用する場合
+          xcodebuild -workspace PHRApp.xcworkspace -scheme PHRApp -configuration Release -destination generic/platform=iOS archive -archivePath build/PHRApp.xcarchive
+          xcodebuild -exportArchive -archivePath build/PHRApp.xcarchive -exportOptionsPlist exportOptions.plist -exportPath build/ipa
+          cd ..
+          
+      - name: Upload to TestFlight
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          cd ios
+          # App Store Connect APIキーを一時ファイルに保存
+          echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > /tmp/auth_key.p8
+          
+          # アップロードコマンド
+          xcrun altool --upload-app --type ios --file build/ipa/PHRApp.ipa --apiKey "$APP_STORE_CONNECT_API_KEY_ID" --apiIssuer "$APP_STORE_CONNECT_API_KEY_ISSUER_ID" --apple-id YOUR_APPLE_ID
+          
+          # 一時ファイルを削除
+          rm /tmp/auth_key.p8
+          cd ..
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-beta-build
+          path: ios/build/ipa/
+
+  android-beta:
+    needs: prepare-release
+    if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: "v${{ needs.prepare-release.outputs.new_version }}"
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+          
+      - name: Setup JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+          
+      - name: Update Android version
+        run: |
+          VERSION=${{ needs.prepare-release.outputs.new_version }}
+          
+          # build.gradleのバージョン情報を更新
+          sed -i "s/versionName \".*\"/versionName \"$VERSION\"/" android/app/build.gradle
+          
+          # versionCodeを増加
+          VERSION_CODE=$(grep "versionCode " android/app/build.gradle | awk '{print $2}')
+          NEW_VERSION_CODE=$((VERSION_CODE + 1))
+          sed -i "s/versionCode $VERSION_CODE/versionCode $NEW_VERSION_CODE/" android/app/build.gradle
+          
+          echo "Updated Android version to $VERSION (versionCode $NEW_VERSION_CODE)"
+          
+      - name: Decode Keystore
+        env:
+          ENCODED_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PATH: android/app/upload-keystore.jks
+        run: |
+          echo "$ENCODED_KEYSTORE" | base64 --decode > "$KEYSTORE_PATH"
+          
+      - name: Configure Gradle properties
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          mkdir -p ~/.gradle
+          echo "PHRAPP_UPLOAD_STORE_FILE=upload-keystore.jks" >> ~/.gradle/gradle.properties
+          echo "PHRAPP_UPLOAD_STORE_PASSWORD=$KEYSTORE_PASSWORD" >> ~/.gradle/gradle.properties
+          echo "PHRAPP_UPLOAD_KEY_ALIAS=$KEY_ALIAS" >> ~/.gradle/gradle.properties
+          echo "PHRAPP_UPLOAD_KEY_PASSWORD=$KEY_PASSWORD" >> ~/.gradle/gradle.properties
+          
+      - name: Build Android App Bundle
+        run: |
+          cd android
+          ./gradlew bundleRelease
+          cd ..
+          
+      - name: Upload to Google Play
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          # JSONキーファイルを一時ファイルに保存
+          echo "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" > /tmp/google-play-key.json
+          
+          # Google Play Publisher APIを使用してアップロード
+          # NOTE: 実際にはGoogle Play用のライブラリやFastlaneを使うことを推奨
+          cd android
+          
+          # Fastlaneを使っている場合はコメントアウトを外す
+          # bundle exec fastlane supply --aab app/build/outputs/bundle/release/app-release.aab --track internal --json_key /tmp/google-play-key.json
+          
+          cd ..
+          
+          # 一時ファイルを削除
+          rm /tmp/google-play-key.json
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-beta-build
+          path: android/app/build/outputs/bundle/release/

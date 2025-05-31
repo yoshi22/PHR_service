@@ -2,6 +2,7 @@
 // OpenAI APIとの連携用サービス
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // メッセージの型定義
 export type ChatMessage = {
@@ -15,6 +16,73 @@ export type AIResponse = {
   error?: string;
 };
 
+// キャッシュ用の型定義
+type CachedResponse = {
+  message: string;
+  timestamp: number;
+  healthDataSnapshot?: string; // 健康データのスナップショット（JSONとして保存）
+};
+
+// キャッシュの有効期限（24時間）
+const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // ミリ秒
+
+// キャッシュのキーを生成する
+const generateCacheKey = (question: string): string => {
+  // 文字列からスペース、改行などを削除し小文字に統一
+  return `ai_cache_${question.toLowerCase().trim().replace(/\s+/g, '_')}`;
+};
+
+// キャッシュされたレスポンスを取得する
+const getCachedResponse = async (question: string, healthData?: Record<string, any>): Promise<string | null> => {
+  try {
+    const cacheKey = generateCacheKey(question);
+    const cachedData = await AsyncStorage.getItem(cacheKey);
+    
+    if (!cachedData) return null;
+    
+    const cachedResponse = JSON.parse(cachedData) as CachedResponse;
+    const now = Date.now();
+    
+    // キャッシュの有効期限をチェック
+    if (now - cachedResponse.timestamp > CACHE_EXPIRATION) {
+      // 期限切れならキャッシュを削除
+      await AsyncStorage.removeItem(cacheKey);
+      return null;
+    }
+    
+    // 健康データが変わっていたら新しい応答が必要
+    if (healthData && cachedResponse.healthDataSnapshot) {
+      const cachedHealthData = JSON.parse(cachedResponse.healthDataSnapshot);
+      
+      // 健康データの比較（簡易的な比較）
+      if (JSON.stringify(cachedHealthData) !== JSON.stringify(healthData)) {
+        return null;
+      }
+    }
+    
+    return cachedResponse.message;
+  } catch (error) {
+    console.error('キャッシュ読み込みエラー:', error);
+    return null;
+  }
+};
+
+// レスポンスをキャッシュに保存する
+const cacheResponse = async (question: string, message: string, healthData?: Record<string, any>): Promise<void> => {
+  try {
+    const cacheKey = generateCacheKey(question);
+    const cachedResponse: CachedResponse = {
+      message,
+      timestamp: Date.now(),
+      healthDataSnapshot: healthData ? JSON.stringify(healthData) : undefined,
+    };
+    
+    await AsyncStorage.setItem(cacheKey, JSON.stringify(cachedResponse));
+  } catch (error) {
+    console.error('キャッシュ保存エラー:', error);
+  }
+};
+
 /**
  * OpenAI APIを利用してチャット応答を取得する
  */
@@ -23,6 +91,21 @@ export const getChatCompletion = async (
   healthData?: Record<string, any>
 ): Promise<AIResponse> => {
   try {
+    // ユーザーからの最新のメッセージを取得
+    const userMessage = messages.find(msg => msg.role === 'user');
+    
+    if (!userMessage) {
+      return { message: 'ユーザーメッセージが見つかりませんでした' };
+    }
+    
+    // キャッシュをチェック
+    const cachedMessage = await getCachedResponse(userMessage.content, healthData);
+    
+    if (cachedMessage) {
+      console.log('キャッシュからAIレスポンスを返却');
+      return { message: cachedMessage };
+    }
+    
     // Firebase Functionsのリージョンを指定（東京リージョン）
     const functions = getFunctions(getApp(), 'asia-northeast1'); // 東京リージョン
     const generateAIChatResponse = httpsCallable(functions, 'generateAIChatResponse');
@@ -36,6 +119,11 @@ export const getChatCompletion = async (
     const data = result.data as { message: string };
     
     console.log('AI APIレスポンス受信完了');
+    
+    // レスポンスをキャッシュに保存
+    if (userMessage && data.message) {
+      await cacheResponse(userMessage.content, data.message, healthData);
+    }
     
     return {
       message: data.message
@@ -129,5 +217,22 @@ export const getConversationHistory = async (userId: string): Promise<ChatMessag
       console.error('エラースタック:', error.stack);
     }
     return [];
+  }
+};
+
+/**
+ * キャッシュをクリアする（テストやデバッグ用）
+ */
+export const clearResponseCache = async (): Promise<void> => {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const cacheKeys = keys.filter(key => key.startsWith('ai_cache_'));
+    
+    if (cacheKeys.length > 0) {
+      await AsyncStorage.multiRemove(cacheKeys);
+      console.log(`${cacheKeys.length}件のキャッシュをクリアしました`);
+    }
+  } catch (error) {
+    console.error('キャッシュクリアエラー:', error);
   }
 };

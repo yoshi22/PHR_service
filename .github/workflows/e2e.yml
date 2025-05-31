@@ -1,0 +1,118 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Test platform (ios/android)'
+        required: true
+        default: 'ios'
+        type: choice
+        options:
+          - ios
+          - android
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'e2e/**'
+      - '.github/workflows/e2e.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'e2e/**'
+      - '.github/workflows/e2e.yml'
+
+jobs:
+  e2e-ios:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.platform == 'ios' || github.event_name != 'workflow_dispatch' }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Detox CLI
+        run: npm install -g detox-cli
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Firebase Emulator Setup
+        run: |
+          npm install -g firebase-tools
+          firebase emulators:start --only auth,firestore,functions --project demo-test &
+          sleep 10  # Wait for emulators to start
+
+      - name: Build iOS app for testing
+        run: detox build --configuration ios
+
+      - name: Run Detox tests
+        run: detox test --configuration ios --cleanup
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-ios-artifacts
+          path: |
+            e2e/artifacts
+            ios/build/logs
+
+  e2e-android:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.platform == 'android' }}
+    runs-on: macos-latest # macOS runner provides better Android emulator performance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Detox CLI
+        run: npm install -g detox-cli
+
+      - name: Firebase Emulator Setup
+        run: |
+          npm install -g firebase-tools
+          firebase emulators:start --only auth,firestore,functions --project demo-test &
+          sleep 10  # Wait for emulators to start
+
+      - name: Build Android app for testing
+        run: detox build --configuration android
+
+      - name: Run Detox tests
+        run: detox test --configuration android --cleanup
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-android-artifacts
+          path: |
+            e2e/artifacts
+            android/app/build/reports

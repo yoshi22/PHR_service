@@ -12,15 +12,17 @@ import {
   ScrollView,
   Animated,
   Keyboard,
+  TouchableWithoutFeedback,
   Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
+import { useThemeContext } from '../context/ThemeContext';
 import * as aiService from '../services/aiService';
 import { useAuth } from '../hooks/useAuth';
 import { useHealthData } from '../hooks/useHealthData';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 // チャットメッセージの型定義
 type Message = {
@@ -39,7 +41,7 @@ const welcomeMessage: Message = {
   timestamp: new Date(),
 };
 
-const ChatScreen: React.FC = () => {
+const ChatScreenEnhanced: React.FC = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
@@ -116,7 +118,7 @@ const ChatScreen: React.FC = () => {
     };
     
     loadConversationHistory();
-  }, [user?.uid, fadeAnim]);
+  }, [user?.uid]);
 
   // リストの末尾へスクロールする
   const scrollToBottom = useCallback(() => {
@@ -237,41 +239,76 @@ const ChatScreen: React.FC = () => {
     }, 100);
   }, []);
 
-  // メッセージ表示用のレンダー関数
+  // メッセージ送信領域のレンダリング処理
+  const renderInputToolbar = () => {
+    return (
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={styles.inputContainer}
+      >
+        <View style={styles.inputWrapper}>
+          <TextInput
+            ref={inputRef}
+            style={styles.input}
+            placeholder="メッセージを入力..."
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+            testID="chat-input" // E2Eテスト用ID
+          />
+          <TouchableOpacity 
+            style={[
+              styles.sendButton,
+              { backgroundColor: colors.primary, opacity: !inputText.trim() || isLoading ? 0.5 : 1 }
+            ]} 
+            onPress={handleSend} 
+            disabled={!inputText.trim() || isLoading}
+            testID="send-button" // E2Eテスト用ID
+          >
+            <Ionicons name="send" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  };
+
+  // メッセージバブルのレンダリング
   const renderMessage = useCallback(({ item }: { item: Message }) => {
-    const isUserMessage = item.sender === 'user';
-    const messageOpacity = item.isAnimating ? 0.7 : 1;
+    const isAI = item.sender === 'ai';
+    const messageTime = formatMessageTime(item.timestamp);
     
     return (
-      <Animated.View 
+      <View 
         style={[
-          styles.messageContainer,
-          isUserMessage ? styles.userMessageContainer : styles.aiMessageContainer,
-          { opacity: messageOpacity }
+          styles.messageContainer, 
+          isAI ? styles.aiMessageContainer : styles.userMessageContainer
         ]}
       >
-        <View style={[
-          styles.messageBubble,
-          isUserMessage 
-            ? [styles.userBubble, { backgroundColor: colors.primary }] 
-            : styles.aiBubble
-        ]}>
+        <View 
+          style={[
+            styles.messageBubble,
+            isAI ? styles.aiBubble : styles.userBubble,
+            item.isAnimating && { opacity: 0.7 }
+          ]}
+          testID={isAI ? "ai-message" : "user-message"} // E2Eテスト用ID
+        >
           <Text style={[
             styles.messageText,
-            isUserMessage ? styles.userMessageText : styles.aiMessageText
+            isAI ? { color: colors.text } : { color: 'white' }
           ]}>
             {item.text}
           </Text>
+          <Text style={[
+            styles.timestamp,
+            isAI ? { color: colors.text } : { color: 'rgba(255, 255, 255, 0.7)' }
+          ]}>
+            {messageTime}
+          </Text>
         </View>
-        <Text style={[
-          styles.timestamp,
-          isUserMessage ? styles.userTimestamp : styles.aiTimestamp
-        ]}>
-          {formatMessageTime(item.timestamp)}
-        </Text>
-      </Animated.View>
+      </View>
     );
-  }, [colors.primary]);
+  }, [colors]);
 
   // 時刻フォーマット
   const formatMessageTime = (date: Date) => {
@@ -334,87 +371,37 @@ const ChatScreen: React.FC = () => {
   ), [healthData, colors.primary, promptSuggestions, handlePromptSelect]);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View style={styles.innerContainer}>
-          {healthDataLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={styles.loadingText}>健康データを読み込み中...</Text>
-            </View>
-          ) : (
-            healthDataSection
-          )}
-
-          {/* メッセージ履歴のフェードインローディング表示 */}
-          <Animated.View 
-            style={[
-              styles.historyLoadingContainer, 
-              { opacity: fadeAnim, display: fadeAnim._value === 0 ? 'none' : 'flex' }
-            ]}
-          >
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>会話履歴を読み込み中...</Text>
-          </Animated.View>
-
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            renderItem={renderMessage}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.messagesList}
-            onContentSizeChange={scrollToBottom}
-            onLayout={scrollToBottom}
-            showsVerticalScrollIndicator={false}
-            initialNumToRender={15}
-            maxToRenderPerBatch={10}
-            windowSize={10}
-          />
-          
-          {isLoading && (
-            <View style={styles.aiTypingContainer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={styles.aiTypingText}>AIが応答を生成中...</Text>
-            </View>
-          )}
-        </View>
-      </TouchableWithoutFeedback>
-      
-      <View style={[
-        styles.inputContainer,
-        { paddingBottom: Platform.OS === 'ios' ? (isKeyboardVisible ? 0 : insets.bottom) : 8 }
-      ]}>
-        <TextInput
-          ref={inputRef}
-          style={styles.input}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="質問を入力してください..."
-          placeholderTextColor="#A0A0A0"
-          multiline
-          maxLength={500}
-          blurOnSubmit={false}
-        />
-        <TouchableOpacity
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {healthDataLoading && (
+        <Animated.View 
           style={[
-            styles.sendButton,
-            { 
-              backgroundColor: inputText.trim() && !isLoading ? colors.primary : '#CCCCCC',
-              opacity: inputText.trim() && !isLoading ? 1 : 0.7
-            }
+            styles.loadingOverlay, 
+            { opacity: fadeAnim }
           ]}
-          onPress={handleSend}
-          disabled={!inputText.trim() || isLoading}
-          activeOpacity={0.7}
         >
-          <Ionicons name="send" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <ActivityIndicator size="large" color={colors.primary} testID="loading-indicator" />
+        </Animated.View>
+      )}
+      
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.messagesList} // messagesList に修正
+        onContentSizeChange={scrollToBottom}
+        onLayout={scrollToBottom}
+        testID="message-list" // E2Eテスト用ID
+        // パフォーマンス最適化
+        initialNumToRender={10}
+        maxToRenderPerBatch={5}
+        windowSize={10}
+        removeClippedSubviews={true}
+        automaticallyAdjustContentInsets={true} // コンテンツ位置の自動調整
+      />
+      
+      {renderInputToolbar()}
+    </SafeAreaView>
   );
 };
 
@@ -424,12 +411,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F7F7',
+    paddingBottom: 0, // セーフエリアで自動調整されるため
   },
   innerContainer: {
     flex: 1,
+    width: '100%',
   },
   messagesList: {
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 20,
     paddingHorizontal: 10,
   },
   messageContainer: {
@@ -537,6 +527,17 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#E0E0E0',
   },
+  inputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 22,
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    maxHeight: 120,
+    minHeight: 44,
+  },
   input: {
     flex: 1,
     backgroundColor: '#F5F5F5',
@@ -621,6 +622,17 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 14,
   },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    zIndex: 100,
+  },
 });
 
-export default ChatScreen;
+export default ChatScreenEnhanced;

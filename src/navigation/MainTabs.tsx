@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import HomeScreen from '../screens/HomeScreen'
 import DashboardScreen from '../screens/DashboardScreen'
 import ProfileScreen from '../screens/ProfileScreen'
-import ChatScreen from '../screens/ChatScreen'
+import ChatScreenEnhanced from '../screens/ChatScreenEnhanced'
 import { Ionicons } from '@expo/vector-icons'
 import { RouteProp } from '@react-navigation/native'
 
@@ -37,7 +37,7 @@ export default function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'ホーム' }} />
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'ダッシュボード' }} />
-      <Tab.Screen name="Chat" component={ChatScreen} options={{ title: 'AIチャット' }} />
+      <Tab.Screen name="Chat" component={ChatScreenEnhanced} options={{ title: 'AIチャット' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: '設定' }} />
     </Tab.Navigator>
   )

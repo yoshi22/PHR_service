@@ -8,10 +8,12 @@ import {
   ScrollView,
   Alert,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { useToast } from '../context/ToastContext';
+import { useThemeContext } from '../context/ThemeContext';
 import PrimaryButton from '../components/PrimaryButton';
 import { 
   getNotificationSettings, 
@@ -92,13 +94,17 @@ export default function ProfileScreen() {
     );
   };
   
-  // Handle theme toggle
+  // Handle theme toggle using ThemeContext
+  const { isDarkMode: themeDarkMode, toggleTheme } = useThemeContext();
+  
+  // Keep local state in sync with global theme context
+  useEffect(() => {
+    setIsDarkMode(themeDarkMode);
+  }, [themeDarkMode]);
+  
   const toggleDarkMode = () => {
-    setIsDarkMode(previous => {
-      const newValue = !previous;
-      showToast('info', `${newValue ? 'ダーク' : 'ライト'}モードに切り替えました`);
-      return newValue;
-    });
+    toggleTheme();
+    showToast('info', `${!isDarkMode ? 'ダーク' : 'ライト'}モードに切り替えました`);
   };
   
   // Handle notifications toggle
@@ -156,6 +162,7 @@ export default function ProfileScreen() {
             onValueChange={toggleDarkMode}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
             thumbColor={isDarkMode ? '#007AFF' : '#f4f3f4'}
+            testID="theme-toggle"
           />
         </View>
       </View>

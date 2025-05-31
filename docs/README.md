@@ -10,10 +10,10 @@ A React Native application for personal health record management with integratio
 - **フェーズ2**: ✅ 完了 - 週次ダッシュボード＆小さな勝利バッジ
 - **フェーズ3**: ✅ 完了 - パーミッションフロー改善＆ヘルスデータ統合
 - **フェーズ4**: ✅ 完了 - AIチャット（GPT-4o）統合
-- **フェーズ5**: 📝 未着手 - 品質向上＆リリース準備
+- **フェーズ5**: ✅ 完了 - 品質向上＆リリース準備
 
 詳細は [PROJECT_PHASES.md](./PROJECT_PHASES.md), [PHASE3_SUMMARY.md](./PHASE3_SUMMARY.md), 
-[PHASE4_SUMMARY.md](./PHASE4_SUMMARY.md) と [PHASE4_PLAN.md](./PHASE4_PLAN.md) をご参照ください。
+[PHASE4_SUMMARY.md](./PHASE4_SUMMARY.md), [PHASE4_PLAN.md](./PHASE4_PLAN.md) と [PHASE5_COMPLETION.md](./PHASE5_COMPLETION.md) をご参照ください。
 
 2025年5月30日に [プロジェクト構造の再編成](./PROJECT_REORGANIZATION.md) を完了し、より整理されたディレクトリ構造を採用しました。
 

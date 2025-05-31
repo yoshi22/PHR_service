@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView } from 'react-native'
 import { LineChart } from 'react-native-chart-kit'
+import { useTheme } from '@react-navigation/native'
 import { useWeeklyMetrics } from '../hooks/useWeeklyMetrics'
 import { useBadges } from '../hooks/useBadges'
 import { useLoading } from '../context/LoadingContext'
@@ -19,6 +20,7 @@ export default function DashboardScreen() {
   const { setLoading } = useLoading()
   const { showError } = useError()
   const { showBadgeAcquired } = useToast()
+  const { colors } = useTheme()
   const screenWidth = Dimensions.get('window').width - 32
   
   React.useEffect(() => {
@@ -70,8 +72,8 @@ export default function DashboardScreen() {
   // Fallback: if no data, show placeholder instead of chart
   // UI always rendered; global overlay handles loading/error
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>週間ダッシュボード</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>週間ダッシュボード</Text>
       <TouchableOpacity 
         activeOpacity={1} 
         onPress={handleChartAreaTouch}
@@ -103,12 +105,12 @@ export default function DashboardScreen() {
           onDataPointClick={({ value, index, x, y }) => setSelectedPoint({ value, index, x, y })}
           yAxisSuffix="歩"
           chartConfig={{
-            backgroundColor: '#fff',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
+            backgroundColor: colors.card,
+            backgroundGradientFrom: colors.card,
+            backgroundGradientTo: colors.card,
             decimalPlaces: 0,
             color: (opacity = 1) => `rgba(0,122,255,${opacity})`,
-            labelColor: () => '#333',
+            labelColor: () => colors.text,
             propsForLabels: { fontSize: 10 },
             propsForBackgroundLines: { stroke: '#e3e3e3' },
             propsForDots: { r: '4', strokeWidth: '2', stroke: '#007AFF' },
@@ -126,13 +128,18 @@ export default function DashboardScreen() {
         {selectedPoint && (
           <View 
             style={[styles.tooltipContainer, 
-              { left: selectedPoint.x - 50, top: selectedPoint.y - 45 }
+              { 
+                left: selectedPoint.x - 50, 
+                top: selectedPoint.y - 45,
+                backgroundColor: colors.card,
+                borderColor: colors.primary
+              }
             ]}
             testID="tooltip-container"
           > 
-            <Text style={styles.tooltipTitle}>{data[selectedPoint.index].date}</Text>
-            <Text style={styles.tooltipText}>{selectedPoint.value.toLocaleString()}歩</Text>
-            <View style={styles.tooltipTriangle} />
+            <Text style={[styles.tooltipTitle, { color: colors.primary }]}>{data[selectedPoint.index].date}</Text>
+            <Text style={[styles.tooltipText, { color: colors.text }]}>{selectedPoint.value.toLocaleString()}歩</Text>
+            <View style={[styles.tooltipTriangle, { borderTopColor: colors.primary }]} />
           </View>
         )}
         {/* Y-axis label */}
@@ -149,12 +156,19 @@ export default function DashboardScreen() {
           <BadgeList badges={badges} />
         )}
       </View>
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 20 },
+  container: { 
+    flex: 1, 
+    justifyContent: 'flex-start', 
+    alignItems: 'center', 
+    paddingTop: 5, // SafeAreaViewを使用するのでpaddingTopを減らす
+    paddingHorizontal: 10,
+    backgroundColor: '#F7F7F7',
+  },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
   chartWrapper: { position: 'relative', width: '100%', alignItems: 'center', marginBottom: 20 },
   badgeSection: { width: '100%', padding: 16, borderTopWidth: 1, borderColor: '#ddd', marginTop: 10 },

@@ -4,6 +4,10 @@ import * as functions from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 
+// Import AI and Feedback functions
+import * as aiFunctions from './ai-functions';
+import * as feedbackFunctions from './feedback-functions';
+
 // Initialize Firebase Admin once
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -80,3 +84,6 @@ export const checkDailySteps = functions.pubsub
 
 // AI機能のエクスポート（v2 functions）
 export { generateAIChatResponse, getUserConversationHistory } from './ai-functions';
+
+// フィードバック機能のエクスポート
+export { submitUserFeedback } from './feedback-functions';
