@@ -12,6 +12,16 @@ import { formatDate } from '../utils/formatDate';
 import colors from '../styles/colors';
 import typography from '../styles/typography';
 
+const DEFAULT_STEP_GOAL = 7500;
+const DEFAULT_NOTIFICATION_TIME = '20:00';
+
+const styles = StyleSheet.create({
+  container: { padding: 16 },
+  title: { fontSize: 24, marginBottom: 24, textAlign: 'center' },
+  picker: { width: '100%', marginTop: 12 },
+  flex: { flex: 1 },
+});
+
 export default function SignUpScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,9 +50,11 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
       // 1) Firebase Auth にユーザー作成
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const uid = cred.user.uid;
+      console.log('Firebase Auth: User created successfully, user ID:', uid);
 
       // 2) Firestore にプロフィール情報を保存
       await setDoc(doc(db, 'users', uid), {
+        uid,
         email,
         birthDate: birthDate.toISOString(),
         gender,
@@ -52,11 +64,68 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
         createdAt: new Date().toISOString(),
       });
 
-      // 登録完了したら Home へ
-      navigation.replace('Home');
+      // 3) ユーザー設定を初期化
+      await setDoc(doc(db, 'userSettings', uid), {
+        userId: uid,
+        stepGoal: DEFAULT_STEP_GOAL,
+        notificationTime: DEFAULT_NOTIFICATION_TIME,
+        updatedAt: new Date().toISOString(),
+      });
+      
+      // 4) ユーザープロフィールを初期化
+      await setDoc(doc(db, 'userProfile', uid), {
+        uid,
+        email,
+        name: displayName || '',
+        createdAt: new Date().toISOString(),
+        birthday: birthDate.toISOString(),
+      });
+      
+      // 5) Initialize cached level
+      await setDoc(doc(db, 'cachedLevel', uid), {
+        userId: uid,
+        level: 1,
+        xp: 0,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // 6) Initialize user level
+      await setDoc(doc(db, 'userLevel', uid), {
+        userId: uid,
+        level: 1,
+        xp: 0,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // 7) Initialize daily bonus
+      await setDoc(doc(db, 'dailyBonuses', uid), {
+        userId: uid,
+        lastBonusDate: null,
+        consecutiveDays: 0,
+        totalBonuses: 0,
+        availableBonuses: 1,
+        monthlyResetDate: new Date().toISOString().substring(0, 7), // YYYY-MM
+        updatedAt: new Date().toISOString()
+      });
+
+      console.log('All user data initialized in Firestore collections');
+      
+      // 登録完了したらDashboardへ
+      navigation.replace('MainTabs');
     } catch (e: any) {
-      console.error(e);
-      Alert.alert('登録失敗', e.message);
+      console.error('Firebase Error:', e.code, e.message);
+      
+      // Provide more user-friendly error messages
+      let errorMessage = e.message;
+      if (e.code === 'auth/email-already-in-use') {
+        errorMessage = 'このメールアドレスは既に使用されています';
+      } else if (e.code === 'auth/weak-password') {
+        errorMessage = 'パスワードが弱すぎます。より強力なパスワードを使用してください';
+      } else if (e.code === 'auth/invalid-email') {
+        errorMessage = '無効なメールアドレス形式です';
+      }
+      
+      Alert.alert('登録失敗', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -139,10 +208,3 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 16 },
-  title: { fontSize: 24, marginBottom: 24, textAlign: 'center' },
-  picker: { width: '100%', marginTop: 12 },
-  flex: { flex: 1 },
-});

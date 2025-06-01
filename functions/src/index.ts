@@ -17,33 +17,60 @@ const db = admin.firestore();
 const messaging = admin.messaging();
 
 /**
- * 毎日 08:00 (Cron: '0 8 * * *') に実行
+ * 毎日 20:00 (Cron: '0 20 * * *') に実行
+ * ユーザーごとの目標に対して進捗をチェック
  */
 export const checkDailySteps = functions.pubsub
-  .schedule("0 8 * * *")
+  .schedule("0 20 * * *")
   .timeZone("Asia/Tokyo")
   .onRun(async () => {
-    const threshold = 5000;
     const today = new Date().toISOString().split("T")[0];
-
-    logger.log(`[checkDailySteps] date=${today}, threshold=${threshold}`);
+    logger.log(`[checkDailySteps] date=${today}`);
 
     try {
-      const snapshot = await db
+      // Get all user settings to check individual goals
+      const userSettingsSnapshot = await db.collection("userSettings").get();
+      const userSettings = new Map<string, number>();
+      userSettingsSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.stepGoal) {
+          userSettings.set(doc.id, data.stepGoal);
+        }
+      });
+
+      // Get today's steps for all users
+      const stepsSnapshot = await db
         .collection("userSteps")
         .where("date", "==", today)
-        .where("steps", "<", threshold)
         .get();
 
-      if (snapshot.empty) {
-        logger.log("No users below threshold.");
+      // Find users who haven't met their goals
+      const usersToNotify: string[] = [];
+      stepsSnapshot.forEach(doc => {
+        const steps = doc.data().steps as number;
+        const userId = doc.data().userId as string;
+        const goal = userSettings.get(userId);
+        
+        if (goal && steps < goal) {
+          usersToNotify.push(userId);
+        }
+      });
+
+      if (usersToNotify.length === 0) {
+        logger.log("No users below their goals.");
         return null;
       }
 
+      // Get FCM tokens for users who need notification
+      const tokensSnapshot = await db
+        .collection("userTokens")
+        .where("userId", "in", usersToNotify)
+        .get();
+
       const tokens: string[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.fcmToken) tokens.push(data.fcmToken as string);
+      tokensSnapshot.forEach(doc => {
+        const token = doc.data().fcmToken;
+        if (token) tokens.push(token);
       });
 
       if (tokens.length === 0) {
@@ -51,11 +78,16 @@ export const checkDailySteps = functions.pubsub
         return null;
       }
 
+      // Send notifications with personalized messages
       const response = await messaging.sendEachForMulticast({
         tokens,
         notification: {
-          title: "今日は少し歩いてみましょう！",
-          body: `${threshold} 歩未満です。小さな一歩でも健康に近づきます！`,
+          title: "今日の目標達成まであと少し！",
+          body: "目標歩数まであと一歩です。今日も健康的に過ごしましょう！",
+        },
+        data: {
+          type: "daily_steps_reminder",
+          date: today,
         },
       });
 

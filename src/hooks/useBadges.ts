@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getBadges, subscribeToBadges, BadgeRecord, onBadgeAcquired } from '../services/badgeService'
+import { getBadgeMetadata } from '../services/specialBadgeService'
 import { useAuth } from './useAuth'
 import { useToast } from '../context/ToastContext'
 
@@ -14,15 +15,10 @@ export function useBadges() {
   const [error, setError] = useState<string | null>(null)
   const [newBadgeCount, setNewBadgeCount] = useState(0)
 
-  // Get badge display label from type
+  // Get badge display label from type using metadata
   const getBadgeLabel = useCallback((type: string): string => {
-    switch (type) {
-      case '7500_steps': return '1日7500歩達成'
-      case '3days_streak': return '3日連続7500歩達成'
-      case '5days_streak': return '5日連続7500歩達成'
-      case '10000_steps': return '1日10000歩達成'
-      default: return type
-    }
+    const metadata = getBadgeMetadata(type);
+    return metadata?.name || type;
   }, [])
   
   // Handle new badge acquisition

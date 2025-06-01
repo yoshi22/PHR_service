@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NOTIFICATIONS_KEY = 'notifications_enabled';
 const STEP_REMINDER_ID = 'daily-step-reminder';
+const DEFAULT_NOTIFICATION_TIME = '20:00';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -12,6 +13,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -59,29 +62,54 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 /**
  * Schedule daily step reminder notification
  */
-export async function scheduleDailyStepReminder(enabled: boolean = true): Promise<void> {
-  // First cancel any existing reminder
-  await Notifications.cancelScheduledNotificationAsync(STEP_REMINDER_ID);
-  
-  // Save notification preference
-  await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(enabled));
-  
-  if (!enabled) return;
-  
-  // Schedule new reminder - daily at 8:00 PM if not achieved step goal
-  await Notifications.scheduleNotificationAsync({
-    identifier: STEP_REMINDER_ID,
-    content: {
-      title: '今日の歩数目標を達成しましょう！',
-      body: '少し歩いてみませんか？健康のために今日の目標を達成しましょう。',
-      sound: 'default',
-    },
-    trigger: {
-      hour: 20,
-      minute: 0,
-      repeats: true,
-    },
-  });
+export async function scheduleDailyStepReminder(enabled: boolean = true, notificationTime?: string): Promise<void> {
+  try {
+    // First cancel any existing reminder
+    await Notifications.cancelScheduledNotificationAsync(STEP_REMINDER_ID);
+    
+    // Save notification preference
+    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(enabled));
+    
+    if (!enabled) return;
+    
+    // Parse notification time (use default if not provided or invalid)
+    let timeString = notificationTime || DEFAULT_NOTIFICATION_TIME;
+    if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(timeString)) {
+      console.warn(`Invalid time format: ${timeString}, using default: ${DEFAULT_NOTIFICATION_TIME}`);
+      timeString = DEFAULT_NOTIFICATION_TIME;
+    }
+    
+    const [hours, minutes] = timeString.split(':').map(Number);
+    
+    // Create date for next notification
+    const now = new Date();
+    const scheduledTime = new Date();
+    scheduledTime.setHours(hours, minutes, 0, 0);
+    
+    // If the time has already passed today, schedule for tomorrow
+    if (scheduledTime <= now) {
+      scheduledTime.setDate(scheduledTime.getDate() + 1);
+    }
+    
+    // Schedule new reminder
+    await Notifications.scheduleNotificationAsync({
+      identifier: STEP_REMINDER_ID,
+      content: {
+        title: '今日の歩数目標を達成しましょう！',
+        body: '少し歩いてみませんか？健康のために今日の目標を達成しましょう。',
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: Math.floor((scheduledTime.getTime() - now.getTime()) / 1000),
+        repeats: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error scheduling notification:', error);
+    throw error;  // Re-throw to handle in the UI
+  }
 }
 
 /**

@@ -5,20 +5,14 @@ if (!global.btoa) global.btoa = encode;
 if (!global.atob) global.atob = decode;
 
 // Restore native networking layers for Firebase
-if (global.originalXMLHttpRequest == null) {
-  // @ts-ignore
-  global.originalXMLHttpRequest = global.XMLHttpRequest;
-  // @ts-ignore
-  global.originalFetch = global.fetch;
-  // @ts-ignore
-  global.originalFormData = global.FormData;
+if ((global as any).originalXMLHttpRequest == null) {
+  (global as any).originalXMLHttpRequest = (global as any).XMLHttpRequest;
+  (global as any).originalFetch = (global as any).fetch;
+  (global as any).originalFormData = (global as any).FormData;
 }
-// @ts-ignore
-global.XMLHttpRequest = global.originalXMLHttpRequest;
-// @ts-ignore
-global.fetch = global.originalFetch;
-// @ts-ignore
-global.FormData = global.originalFormData;
+(global as any).XMLHttpRequest = (global as any).originalXMLHttpRequest;
+(global as any).fetch = (global as any).originalFetch;
+(global as any).FormData = (global as any).originalFormData;
 
 import React, { useEffect, useRef } from 'react';
 import {
@@ -31,13 +25,17 @@ import { ErrorProvider } from './context/ErrorContext'
 import { LoadingProvider } from './context/LoadingContext'
 import { ToastProvider } from './context/ToastContext'
 import { ThemeProvider, useThemeContext } from './context/ThemeContext'
+import { AuthProvider } from './contexts/AuthContext'
 import Toast from 'react-native-toast-message';
 
-import { useAuth } from './hooks/useAuth';
+import { useAuth as useFirebaseAuth } from './hooks/useAuth';
+import { useAuth } from './contexts/AuthContext';
 import { usePermissionStatus } from './hooks/usePermissionStatus';
 import AppNavigator from './navigation';
 import PermissionsScreen from './screens/PermissionsScreen';
 import { initializeNotifications } from './services/notificationService';
+import { initializeVoiceReminders } from './services/voiceReminderService';
+import { createUserProfileIfNotExists } from './services/userProfileService';
 
 // テーマ対応アプリコンポーネント
 const ThemedApp = ({ user }: { user: any }) => {
@@ -53,15 +51,35 @@ const ThemedApp = ({ user }: { user: any }) => {
 
 // ─── App エントリーポイント ───────────────────────────────────────────────
 export default function App() {
-  const { user, initializing } = useAuth()
+  return (
+    <AuthProvider>
+      <AppMain />
+    </AuthProvider>
+  );
+}
+
+function AppMain() {
+  const { user, loading: authLoading, isAuthenticated } = useAuth()
   const { permissionsGranted, loading: permLoading, requestPermissions, refreshPermissionStatus } = usePermissionStatus()
   const [forceUpdate, setForceUpdate] = React.useState(0);
   
-  // Initialize notifications when app starts
+  // 認証状態が変更されたときにコンソールに出力
+  React.useEffect(() => {
+    console.log('🔑 Authentication state changed:', { isAuthenticated, uid: user?.uid });
+  }, [isAuthenticated, user]);
+  
+  // Initialize notifications and voice reminders when app starts
   useEffect(() => {
-    initializeNotifications().catch(err => {
-      console.error('Error initializing notifications:', err);
-    });
+    const initServices = async () => {
+      try {
+        await initializeNotifications();
+        await initializeVoiceReminders();
+      } catch (err) {
+        console.error('Error initializing services:', err);
+      }
+    };
+    
+    initServices();
   }, []);
   
   // Check permissions when user changes - using a ref to avoid dependency issues
@@ -72,15 +90,32 @@ export default function App() {
     refreshPermissionStatusRef.current = refreshPermissionStatus;
   }, [refreshPermissionStatus]);
   
+  // Initialize user profile when user logs in
   useEffect(() => {
+    async function initializeUserProfile() {
+      if (user && user.uid && user.email) {
+        try {
+          console.log(`Ensuring user profile exists for: ${user.uid}`);
+          // Create user profile, cached level, user level, and daily bonuses if they don't exist
+          await createUserProfileIfNotExists(user.uid, {
+            email: user.email,
+            name: user.displayName || ''
+          });
+        } catch (error) {
+          console.error('Error initializing user profile:', error);
+        }
+      }
+    }
+    
     if (user) {
+      initializeUserProfile();
       console.log('User state changed, refreshing permissions');
       // Use the ref instead of the function directly
       refreshPermissionStatusRef.current();
     }
   }, [user]); // removed refreshPermissionStatus from dependencies
   
-  if (initializing || permLoading) {
+  if (authLoading || permLoading) {
     return <View style={styles.container}><ActivityIndicator size="large"/></View>
   }
   

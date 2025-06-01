@@ -15,6 +15,7 @@ import {
   TouchableWithoutFeedback,
   Dimensions,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
@@ -23,6 +24,7 @@ import * as aiService from '../services/aiService';
 import { useAuth } from '../hooks/useAuth';
 import { useHealthData } from '../hooks/useHealthData';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useVoiceFeatures } from '../hooks/useVoiceFeatures';
 
 // チャットメッセージの型定義
 type Message = {
@@ -48,6 +50,7 @@ const ChatScreenEnhanced: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   
   const flatListRef = useRef<FlatList>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -55,6 +58,16 @@ const ChatScreenEnhanced: React.FC = () => {
   
   const { user } = useAuth();
   const { healthData, loading: healthDataLoading } = useHealthData();
+  const { 
+    voiceState, 
+    isSpeaking,
+    startListening, 
+    stopListening,
+    cancelListening,
+    speak,
+    stopSpeaking,
+    resetVoiceState
+  } = useVoiceFeatures();
 
   // キーボード表示状態の監視
   useEffect(() => {
@@ -134,21 +147,30 @@ const ChatScreenEnhanced: React.FC = () => {
 
   // メッセージ送信処理
   const handleSend = async () => {
-    if (!inputText.trim() || !user?.uid || isLoading) return;
+    if ((!inputText.trim() && !voiceState.results.length) || !user?.uid || isLoading) return;
 
+    // Get text from either input field or voice recognition results
+    const messageText = inputText.trim() || (voiceState.results.length > 0 ? voiceState.results[0] : '');
+    if (!messageText) return;
+    
     // ユーザーメッセージの追加
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText,
+      text: messageText,
       sender: 'user',
       timestamp: new Date(),
       isAnimating: true,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    const userInput = inputText;
+    const userInput = messageText;
     setInputText('');
     setIsLoading(true);
+    
+    // Reset voice state if coming from voice input
+    if (voiceState.results.length > 0) {
+      resetVoiceState();
+    }
     
     // キーボードを閉じる
     Keyboard.dismiss();
@@ -196,6 +218,11 @@ const ChatScreenEnhanced: React.FC = () => {
             msg.id === aiResponse.id ? { ...msg, isAnimating: false } : msg
           )
         );
+        
+        // If in voice mode, speak the AI response
+        if (isVoiceMode) {
+          speak(response.message);
+        }
       }, 500);
       
     } catch (error) {
@@ -241,29 +268,77 @@ const ChatScreenEnhanced: React.FC = () => {
 
   // メッセージ送信領域のレンダリング処理
   const renderInputToolbar = () => {
+    // Toggle voice recognition
+    const toggleVoiceInput = () => {
+      if (voiceState.isRecording) {
+        stopListening();
+      } else {
+        startListening();
+      }
+    };
+  
+    // Toggle voice mode for AI responses
+    const toggleVoiceMode = () => {
+      if (isSpeaking) {
+        stopSpeaking();
+      }
+      setIsVoiceMode(prev => !prev);
+    };
+    
     return (
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         style={styles.inputContainer}
       >
+        <View style={styles.voiceControls}>
+          <TouchableOpacity 
+            style={[styles.voiceButton, isVoiceMode ? styles.voiceButtonActive : {}]} 
+            onPress={toggleVoiceMode}
+          >
+            <Ionicons name={isVoiceMode ? "volume-high" : "volume-mute"} size={24} color={isVoiceMode ? colors.primary : "#666"} />
+          </TouchableOpacity>
+        </View>
+        
         <View style={styles.inputWrapper}>
-          <TextInput
-            ref={inputRef}
-            style={styles.input}
-            placeholder="メッセージを入力..."
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            testID="chat-input" // E2Eテスト用ID
-          />
+          {voiceState.isRecording ? (
+            <View style={styles.voiceInputContainer}>
+              <Text style={styles.voiceText}>
+                {voiceState.results.length > 0 
+                  ? voiceState.results[0] 
+                  : voiceState.error || "聞き取っています..."}
+              </Text>
+            </View>
+          ) : (
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              placeholder="メッセージを入力..."
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              testID="chat-input" // E2Eテスト用ID
+            />
+          )}
+          
+          <TouchableOpacity 
+            style={[styles.voiceRecordButton, voiceState.isRecording ? styles.voiceStopButton : {}]} 
+            onPress={toggleVoiceInput}
+          >
+            <Ionicons 
+              name={voiceState.isRecording ? "stop" : "mic"} 
+              size={24} 
+              color="white" 
+            />
+          </TouchableOpacity>
+          
           <TouchableOpacity 
             style={[
               styles.sendButton,
-              { backgroundColor: colors.primary, opacity: !inputText.trim() || isLoading ? 0.5 : 1 }
+              { backgroundColor: colors.primary, opacity: (!inputText.trim() && !voiceState.results.length) || isLoading ? 0.5 : 1 }
             ]} 
             onPress={handleSend} 
-            disabled={!inputText.trim() || isLoading}
+            disabled={(!inputText.trim() && !voiceState.results.length) || isLoading}
             testID="send-button" // E2Eテスト用ID
           >
             <Ionicons name="send" size={24} color="white" />
@@ -527,6 +602,24 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#E0E0E0',
   },
+  voiceControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginBottom: 8,
+    paddingHorizontal: 10,
+  },
+  voiceButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceButtonActive: {
+    backgroundColor: '#E0F7FF',
+  },
   inputWrapper: {
     flex: 1,
     flexDirection: 'row',
@@ -538,15 +631,34 @@ const styles = StyleSheet.create({
     maxHeight: 120,
     minHeight: 44,
   },
+  voiceInputContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 5,
+  },
+  voiceText: {
+    color: '#333',
+    fontSize: 16,
+  },
   input: {
     flex: 1,
     backgroundColor: '#F5F5F5',
     borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     fontSize: 16,
     maxHeight: 120,
     minHeight: 44,
+  },
+  voiceRecordButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#FF5722',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
+  voiceStopButton: {
+    backgroundColor: '#FF0000',
   },
   sendButton: {
     width: 46,

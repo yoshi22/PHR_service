@@ -18,10 +18,14 @@ export default function SignInScreen({ navigation }: { navigation: any }) {
     }
     setLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      // ログイン成功後の処理（例: onAuthStateChangedで遷移）
+      // Updated to use proper error handling with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      console.log('Firebase Auth: Login successful, user ID:', userCredential.user.uid)
+      // Auth state observer in useAuth.ts will handle navigation
     } catch (e: any) {
-      Alert.alert('ログイン失敗', e.message)
+      const errorMessage = e.message || 'ログインに失敗しました'
+      console.error('Firebase Auth error:', e.code, errorMessage)
+      Alert.alert('ログイン失敗', errorMessage)
     } finally {
       setLoading(false)
     }

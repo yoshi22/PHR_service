@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, Animated } from 'react-native'
+import { getBadgeMetadata } from '../services/specialBadgeService'
 
 export type BadgeItemProps = {
   date: string
@@ -11,15 +12,10 @@ export default function BadgeItem({ date, type, isNew = false }: BadgeItemProps)
   // Animation for shining effect
   const shineAnim = useRef(new Animated.Value(-100)).current;
   
-  // Determine display label
-  let label = ''
-  switch (type) {
-    case '7500_steps': label = '1日7500歩達成'; break
-    case '3days_streak': label = '3日連続7500歩達成'; break
-    case '5days_streak': label = '5日連続7500歩達成'; break
-    case '10000_steps': label = '1日10000歩達成'; break
-    default: label = type
-  }
+  // Get badge metadata for display
+  const badgeMetadata = getBadgeMetadata(type);
+  const label = badgeMetadata?.name || type;
+  const icon = badgeMetadata?.icon || '🏅';
   
   // Start shine animation if this is a new badge
   useEffect(() => {
@@ -44,7 +40,7 @@ export default function BadgeItem({ date, type, isNew = false }: BadgeItemProps)
           ]}
         />
       )}
-      <Text style={styles.icon}>{isNew ? '🌟' : '🏅'}</Text>
+      <Text style={styles.icon}>{isNew ? '🌟' : icon}</Text>
       <Text style={[styles.text, isNew && styles.newText]}>{date} {label}</Text>
       {isNew && <Text style={styles.newBadge}>新着</Text>}
     </View>

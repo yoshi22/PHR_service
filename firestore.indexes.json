@@ -9,6 +9,15 @@
       ]
     },
     {
+      "collectionGroup": "userSteps",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "userBadges",
       "queryScope": "COLLECTION",
       "fields": [

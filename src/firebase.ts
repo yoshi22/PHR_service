@@ -23,7 +23,7 @@ const app = initializeApp({
   appId: FIREBASE_APP_ID,
 });
 
-// Firebase Auth instance
+// Firebase Auth instance - getAuth() automatically uses AsyncStorage persistence in React Native
 export const auth = getAuth(app);
 
 export const db = getFirestore(app);
@@ -37,4 +37,18 @@ console.log('🔑 Firebase Config →', {
   storageBucket: FIREBASE_STORAGE_BUCKET,
   messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
   appId: FIREBASE_APP_ID,
+});
+
+// Debug auth state changes
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    console.log('🔐 Firebase Auth: User signed in', {
+      uid: user.uid,
+      email: user.email,
+      isAnonymous: user.isAnonymous,
+      emailVerified: user.emailVerified
+    });
+  } else {
+    console.log('🔐 Firebase Auth: User signed out');
+  }
 });

@@ -6,23 +6,39 @@ import MainTabs from './MainTabs'
 // 各画面コンポーネント
 import SignInScreen from '../screens/SignInScreen'
 import SignUpScreen from '../screens/SignUpScreen'
-import HomeScreen   from '../screens/HomeScreen'
 import DashboardScreen from '../screens/DashboardScreen'
+import BadgeGalleryScreen from '../screens/BadgeGalleryScreen'
 
 export type RootStackParamList = {
   SignIn: undefined
   SignUp: undefined
-  Home: undefined
   Dashboard: undefined
+  BadgeGallery: undefined
+  MainTabs: undefined
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
 export default function AppNavigator({ signedIn }: { signedIn: boolean }) {
   return signedIn ? (
-    // Use bottom tabs for Home & Dashboard when signed in
-    <MainTabs />
+    // @ts-ignore - Temporary fix for React Navigation v7 type issue
+    <Stack.Navigator initialRouteName="MainTabs">
+      <Stack.Screen
+        name="MainTabs"
+        component={MainTabs}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="BadgeGallery"
+        component={BadgeGalleryScreen}
+        options={{ 
+          title: 'バッジコレクション',
+          headerBackTitle: 'ダッシュボード'
+        }}
+      />
+    </Stack.Navigator>
   ) : (
+    // @ts-ignore - Temporary fix for React Navigation v7 type issue
     <Stack.Navigator initialRouteName="SignIn">
       <Stack.Screen
         name="SignIn"

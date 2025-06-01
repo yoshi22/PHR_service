@@ -1,5 +1,6 @@
 import { db } from '../firebase'
 import { collection, query, where, orderBy, getDocs, doc, setDoc, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore'
+import { requireAuth } from '../utils/authUtils'
 
 export interface BadgeRecord {
   date: string
@@ -40,6 +41,12 @@ function notifyBadgeAcquired(badge: BadgeRecord) {
  * Merges to avoid duplication.
  */
 export async function saveBadge(userId: string, date: string, type: string): Promise<void> {
+  // 認証状態を確認
+  const user = requireAuth();
+  if (user.uid !== userId) {
+    throw new Error('Unauthorized access to badge data');
+  }
+
   const id = `${userId}_${date}_${type}`
   const ref = doc(db, badgeCollection, id)
   
