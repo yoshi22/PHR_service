@@ -1,6 +1,7 @@
 import { db } from '../firebase'
 import { collection, query, where, orderBy, getDocs, doc, setDoc, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore'
 import { requireAuth } from '../utils/authUtils'
+import { getFirestore } from '../utils/firebaseUtils'
 
 export interface BadgeRecord {
   date: string
@@ -47,12 +48,13 @@ export async function saveBadge(userId: string, date: string, type: string): Pro
     throw new Error('Unauthorized access to badge data');
   }
 
+  const firestore = getFirestore();
   const id = `${userId}_${date}_${type}`
-  const ref = doc(db, badgeCollection, id)
+  const ref = doc(firestore, badgeCollection, id)
   
   // First check if badge already exists to avoid duplicate notifications
-  const docRef = doc(db, badgeCollection, id);
-  const docSnap = await getDocs(query(collection(db, badgeCollection), where('__name__', '==', id)));
+  const docRef = doc(firestore, badgeCollection, id);
+  const docSnap = await getDocs(query(collection(firestore, badgeCollection), where('__name__', '==', id)));
   const isNew = docSnap.empty;
   
   await setDoc(
@@ -77,8 +79,9 @@ export async function saveBadge(userId: string, date: string, type: string): Pro
  * Fetch all badges for a user, sorted by awardedAt desc.
  */
 export async function getBadges(userId: string): Promise<BadgeRecord[]> {
+  const firestore = getFirestore();
   const q = query(
-    collection(db, badgeCollection),
+    collection(firestore, badgeCollection),
     where('userId', '==', userId),
     orderBy('awardedAt', 'desc')
   )
@@ -94,8 +97,9 @@ export async function getBadges(userId: string): Promise<BadgeRecord[]> {
  * Subscribe to user's badge updates in real-time
  */
 export function subscribeToBadges(userId: string, onUpdate: (badges: BadgeRecord[]) => void): () => void {
+  const firestore = getFirestore();
   const q = query(
-    collection(db, badgeCollection),
+    collection(firestore, badgeCollection),
     where('userId', '==', userId),
     orderBy('awardedAt', 'desc')
   )

@@ -50,9 +50,14 @@ export function useUserLevel() {
 
   // Fetch user's total steps and calculate level
   const fetchUserLevel = useCallback(async () => {
-    const user = auth.currentUser
+    const user = auth?.currentUser
     if (!user) {
       setError('ユーザーが認証されていません')
+      return
+    }
+
+    if (!db) {
+      setError('Firebase Firestore が初期化されていません')
       return
     }
 
@@ -108,8 +113,8 @@ export function useUserLevel() {
 
   // Get cached level data first, then update in background
   const fetchCachedLevel = useCallback(async () => {
-    const user = auth.currentUser
-    if (!user) return
+    const user = auth?.currentUser
+    if (!user || !db) return
 
     try {
       const cachedLevelRef = doc(db, 'cachedLevel', user.uid)

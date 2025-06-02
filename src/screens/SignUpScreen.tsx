@@ -47,6 +47,10 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
 
     setLoading(true);
     try {
+      if (!auth || !db) {
+        throw new Error('Firebase not initialized');
+      }
+      
       // 1) Firebase Auth にユーザー作成
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const uid = cred.user.uid;

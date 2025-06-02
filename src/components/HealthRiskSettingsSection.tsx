@@ -21,7 +21,7 @@ export default function HealthRiskSettingsSection() {
     const fetchSettings = async () => {
       setLoading(true);
       try {
-        const userId = auth.currentUser?.uid;
+        const userId = auth?.currentUser?.uid;
         if (!userId) return;
 
         const data = await getHealthRiskSettings(userId);

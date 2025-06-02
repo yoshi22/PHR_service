@@ -1,17 +1,19 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '../firebase';
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
+  initializing: boolean;
   isAuthenticated: boolean;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: true,
+  initializing: true,
   isAuthenticated: false,
+  signOut: async () => {},
 });
 
 export const useAuth = () => {
@@ -28,9 +30,14 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    if (!auth) {
+      setInitializing(false);
+      return;
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log('🔐 Auth state changed:', {
         authenticated: !!user,
@@ -41,16 +48,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       
       setUser(user);
-      setLoading(false);
+      setInitializing(false);
     });
 
     return unsubscribe;
   }, []);
 
+  /**
+   * Sign out the current user
+   */
+  const signOut = async () => {
+    try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
-    loading,
+    initializing,
     isAuthenticated: !!user,
+    signOut
   };
 
   return (

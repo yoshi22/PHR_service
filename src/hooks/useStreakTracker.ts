@@ -27,9 +27,14 @@ export function useStreakTracker() {
 
   // Calculate streak from step data
   const calculateStreak = useCallback(async (stepGoal: number = 7500) => {
-    const user = auth.currentUser
+    const user = auth?.currentUser
     if (!user) {
       setError('ユーザーが認証されていません')
+      return
+    }
+
+    if (!db) {
+      setError('Firebase Firestore が初期化されていません')
       return
     }
 
@@ -139,7 +144,7 @@ export function useStreakTracker() {
 
   // Get user's step goal and calculate streak
   const fetchStreak = useCallback(async () => {
-    const user = auth.currentUser
+    const user = auth?.currentUser
     if (!user) return
 
     try {

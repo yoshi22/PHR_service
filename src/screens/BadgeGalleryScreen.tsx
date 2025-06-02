@@ -2,16 +2,16 @@ import React from 'react'
 import { View, StyleSheet, SafeAreaView } from 'react-native'
 import BadgeGallery from '../components/BadgeGallery'
 import { useBadges } from '../hooks/useBadges'
-import { BadgeDefinition } from '../constants/badgeDefinitions'
+import { BadgeMetadata } from '../services/specialBadgeService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 
 export default function BadgeGalleryScreen() {
   const { badges, loading, error } = useBadges()
 
-  const handleBadgePress = (definition: BadgeDefinition, isEarned: boolean) => {
+  const handleBadgePress = (metadata: BadgeMetadata, isEarned: boolean) => {
     // Handle badge press - could show more details, achievements, etc.
-    console.log('Badge pressed:', definition.name, 'Earned:', isEarned)
+    console.log('Badge pressed:', metadata.name, 'Earned:', isEarned)
   }
 
   if (loading) {

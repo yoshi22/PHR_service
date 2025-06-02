@@ -19,6 +19,10 @@ export function useWeeklyMetrics() {
     setLoading(true)
     setError(null)
     try {
+      if (!db) {
+        throw new Error('Firebase Firestore not initialized');
+      }
+      
       const today = new Date()
       const start = new Date()
       start.setDate(today.getDate() - 6)

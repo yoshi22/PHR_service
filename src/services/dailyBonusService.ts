@@ -1,5 +1,6 @@
 import { db } from '../firebase'
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { getFirestore } from '../utils/firebaseUtils'
 
 export interface DailyBonus {
   userId: string
@@ -45,7 +46,8 @@ const BONUS_REWARDS: BonusReward[][] = [
  */
 export async function getUserDailyBonus(userId: string): Promise<DailyBonus | null> {
   try {
-    const bonusRef = doc(db, 'dailyBonuses', userId)
+    const firestore = getFirestore();
+    const bonusRef = doc(firestore, 'dailyBonuses', userId)
     const bonusSnap = await getDoc(bonusRef)
     
     if (bonusSnap.exists()) {
@@ -78,7 +80,8 @@ export async function initializeDailyBonus(userId: string): Promise<DailyBonus> 
   }
   
   try {
-    const bonusRef = doc(db, 'dailyBonuses', userId)
+    const firestore = getFirestore();
+    const bonusRef = doc(firestore, 'dailyBonuses', userId)
     await setDoc(bonusRef, {
       ...initialBonus,
       createdAt: serverTimestamp(),
@@ -162,7 +165,8 @@ export async function claimDailyBonus(userId: string): Promise<BonusReward> {
       monthlyResetDate: currentMonth,
     }
     
-    const bonusRef = doc(db, 'dailyBonuses', userId)
+    const firestore = getFirestore();
+    const bonusRef = doc(firestore, 'dailyBonuses', userId)
     await updateDoc(bonusRef, {
       ...updatedBonus,
       updatedAt: serverTimestamp()

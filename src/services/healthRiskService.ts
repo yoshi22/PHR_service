@@ -2,6 +2,7 @@ import { db, auth } from '../firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, orderBy, limit, serverTimestamp } from 'firebase/firestore';
 import { sendHealthRiskWarning, sendInactivityReminder, sendCustomReminder } from './smartReminderService';
 import { requireAuth } from '../utils/authUtils';
+import { getFirestore, getAuth } from '../utils/firebaseUtils';
 
 // 健康リスクのタイプ
 export enum HealthRiskType {
@@ -40,13 +41,15 @@ export interface HealthRiskSettings {
  */
 export async function getHealthRiskSettings(userId: string): Promise<HealthRiskSettings | null> {
   try {
-    // 認証状態を確認
-    const user = requireAuth();
-    if (user.uid !== userId) {
-      throw new Error('Unauthorized access to health risk settings');
+    // 認証状態を確認 - サイレントモードで不一致の場合はnullを返す
+    const user = requireAuth({ silent: true });
+    if (!user || user.uid !== userId) {
+      console.log('認証待機中またはユーザーID不一致 - health risk settings');
+      return null;
     }
 
-    const settingsRef = doc(db, 'healthRiskSettings', userId);
+    const firestore = getFirestore();
+    const settingsRef = doc(firestore, 'healthRiskSettings', userId);
     const settingsSnap = await getDoc(settingsRef);
     
     if (settingsSnap.exists()) {
@@ -78,7 +81,8 @@ export async function initializeHealthRiskSettings(userId: string): Promise<Heal
   };
   
   try {
-    const settingsRef = doc(db, 'healthRiskSettings', userId);
+    const firestore = getFirestore();
+    const settingsRef = doc(firestore, 'healthRiskSettings', userId);
     await setDoc(settingsRef, defaultSettings);
     return defaultSettings;
   } catch (error) {
@@ -92,10 +96,12 @@ export async function initializeHealthRiskSettings(userId: string): Promise<Heal
  */
 export async function updateHealthRiskSettings(settings: Partial<HealthRiskSettings>): Promise<boolean> {
   try {
-    const user = auth.currentUser;
+    const firebaseAuth = getAuth();
+    const user = firebaseAuth.currentUser;
     if (!user) return false;
     
-    const settingsRef = doc(db, 'healthRiskSettings', user.uid);
+    const firestore = getFirestore();
+    const settingsRef = doc(firestore, 'healthRiskSettings', user.uid);
     await updateDoc(settingsRef, {
       ...settings,
       updatedAt: serverTimestamp()
@@ -113,8 +119,9 @@ export async function updateHealthRiskSettings(settings: Partial<HealthRiskSetti
  */
 export async function getActiveHealthRisks(userId: string): Promise<HealthRisk[]> {
   try {
+    const firestore = getFirestore();
     const risksQuery = query(
-      collection(db, 'healthRisks'),
+      collection(firestore, 'healthRisks'),
       where('userId', '==', userId),
       where('status', '==', 'active'),
       orderBy('detectedAt', 'desc')
@@ -133,10 +140,12 @@ export async function getActiveHealthRisks(userId: string): Promise<HealthRisk[]
  */
 export async function recordHealthRisk(risk: Omit<HealthRisk, 'detectedAt'>): Promise<string | null> {
   try {
-    const user = auth.currentUser;
+    const firebaseAuth = getAuth();
+    const user = firebaseAuth.currentUser;
     if (!user) return null;
     
-    const riskRef = doc(collection(db, 'healthRisks'));
+    const firestore = getFirestore();
+    const riskRef = doc(collection(firestore, 'healthRisks'));
     await setDoc(riskRef, {
       ...risk,
       detectedAt: serverTimestamp()
@@ -154,7 +163,8 @@ export async function recordHealthRisk(risk: Omit<HealthRisk, 'detectedAt'>): Pr
  */
 export async function resolveHealthRisk(riskId: string): Promise<boolean> {
   try {
-    const riskRef = doc(db, 'healthRisks', riskId);
+    const firestore = getFirestore();
+    const riskRef = doc(firestore, 'healthRisks', riskId);
     await updateDoc(riskRef, {
       status: 'resolved',
       updatedAt: serverTimestamp()
@@ -173,8 +183,9 @@ export async function resolveHealthRisk(riskId: string): Promise<boolean> {
 export async function checkInactivityRisk(userId: string): Promise<number | null> {
   try {
     // ユーザーの歩数履歴を取得
+    const firestore = getFirestore();
     const stepsQuery = query(
-      collection(db, 'userSteps'),
+      collection(firestore, 'userSteps'),
       where('userId', '==', userId),
       orderBy('date', 'desc'),
       limit(14)  // 直近14日間のデータを取得
@@ -256,8 +267,9 @@ export async function checkInactivityRisk(userId: string): Promise<number | null
 export async function checkActivityDeclineRisk(userId: string): Promise<number | null> {
   try {
     // ユーザーの歩数履歴を取得
+    const firestore = getFirestore();
     const stepsQuery = query(
-      collection(db, 'userSteps'),
+      collection(firestore, 'userSteps'),
       where('userId', '==', userId),
       orderBy('date', 'desc'),
       limit(28)  // 直近4週間のデータを取得
@@ -382,7 +394,8 @@ export async function checkStreakBrokenRisk(userId: string, previousStreak: numb
  */
 export async function checkAllHealthRisks(): Promise<boolean> {
   try {
-    const user = auth.currentUser;
+    const firebaseAuth = getAuth();
+    const user = firebaseAuth.currentUser;
     if (!user) return false;
     
     const inactivityRisk = await checkInactivityRisk(user.uid);

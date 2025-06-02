@@ -18,6 +18,9 @@ export default function SignInScreen({ navigation }: { navigation: any }) {
     }
     setLoading(true)
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
       // Updated to use proper error handling with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       console.log('Firebase Auth: Login successful, user ID:', userCredential.user.uid)

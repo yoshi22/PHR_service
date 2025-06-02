@@ -1,6 +1,6 @@
 // Test utility to verify Firebase authentication persistence
-import { auth, db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getAuth, getFirestore } from './firebaseUtils';
 
 /**
  * Tests Firebase authentication and Firestore permissions
@@ -13,7 +13,8 @@ export async function testFirebasePermissions(): Promise<{
 }> {
   try {
     // Check authentication status
-    const user = auth.currentUser;
+    const authInstance = getAuth();
+    const user = authInstance.currentUser;
     let authStatus = 'Not authenticated';
     let firestoreStatus = 'Not tested';
     let success = false;
@@ -25,7 +26,8 @@ export async function testFirebasePermissions(): Promise<{
       try {
         if (user.uid) {
           // Try to read user profile
-          const userProfileRef = doc(db, 'userProfile', user.uid);
+          const firestore = getFirestore();
+          const userProfileRef = doc(firestore, 'userProfile', user.uid);
           const profileSnap = await getDoc(userProfileRef);
           
           firestoreStatus = profileSnap.exists() 
@@ -33,7 +35,7 @@ export async function testFirebasePermissions(): Promise<{
             : 'User profile does not exist, but read permission granted';
           
           // Try to read user level as another test
-          const userLevelRef = doc(db, 'userLevel', user.uid);
+          const userLevelRef = doc(firestore, 'userLevel', user.uid);
           const levelSnap = await getDoc(userLevelRef);
           
           firestoreStatus += levelSnap.exists()
@@ -68,13 +70,13 @@ export async function testAuthPersistence(): Promise<{
   message: string;
 }> {
   try {
-    // Check if the Firebase Auth persistence is properly set up
-    const persistenceType = auth._persistenceProvider?.type;
-    const isIndexedDBAvailable = auth._persistenceProvider?.isIndexedDBAvailable;
+    const authInstance = getAuth();
+    // Check if auth instance is available
+    const hasAuth = !!authInstance;
     
     return {
-      success: true,
-      message: `Auth persistence type: ${persistenceType || 'Unknown'}, IndexedDB available: ${isIndexedDBAvailable !== undefined ? isIndexedDBAvailable : 'Unknown'}`
+      success: hasAuth,
+      message: hasAuth ? 'Auth persistence available' : 'Auth not available'
     };
   } catch (error: any) {
     return {

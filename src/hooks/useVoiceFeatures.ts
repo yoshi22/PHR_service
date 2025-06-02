@@ -98,11 +98,21 @@ export function useVoiceFeatures() {
     }
   }, []);
 
-  // Text to speech function
+  // Text to speech function with high-quality option
   const speak = useCallback(async (text: string) => {
     try {
       setIsSpeaking(true);
-      await voiceService.speakText(text);
+      
+      // Use high-quality voice service when available
+      try {
+        // Import dynamically to avoid circular dependencies
+        const voiceQualityService = await import('../services/voiceQualityService');
+        await voiceQualityService.speakWithHighQuality(text);
+      } catch (qualityError) {
+        console.log('Falling back to standard TTS:', qualityError);
+        // Fall back to standard TTS if high-quality service fails
+        await voiceService.speakText(text);
+      }
       
       // Check when speaking is done
       const checkInterval = setInterval(async () => {

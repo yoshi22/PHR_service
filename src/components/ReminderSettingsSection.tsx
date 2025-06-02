@@ -26,7 +26,7 @@ export default function ReminderSettingsSection() {
     const fetchSettings = async () => {
       setLoading(true);
       try {
-        const userId = auth.currentUser?.uid;
+        const userId = auth?.currentUser?.uid;
         if (!userId) return;
 
         const data = await getReminderSettings(userId);

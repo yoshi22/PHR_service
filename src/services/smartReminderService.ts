@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { db, auth } from '../firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { requireAuth } from '../utils/authUtils';
+import { getFirestore, getAuth, getCurrentUser } from '../utils/firebaseUtils';
 
 // 通知タイプの定義
 export enum ReminderType {
@@ -33,13 +34,15 @@ export interface ReminderSettings {
  */
 export async function getReminderSettings(userId: string): Promise<ReminderSettings | null> {
   try {
-    // 認証状態を確認
-    const user = requireAuth();
-    if (user.uid !== userId) {
-      throw new Error('Unauthorized access to reminder settings');
+    // 認証状態を確認 - サイレントモードで不一致の場合はnullを返す
+    const user = requireAuth({ silent: true });
+    if (!user || user.uid !== userId) {
+      console.log('認証待機中またはユーザーID不一致 - reminder settings');
+      return null;
     }
 
-    const settingsRef = doc(db, 'reminderSettings', userId);
+    const firestore = getFirestore();
+    const settingsRef = doc(firestore, 'reminderSettings', userId);
     const settingsSnap = await getDoc(settingsRef);
     
     if (settingsSnap.exists()) {
@@ -73,7 +76,8 @@ export async function initializeReminderSettings(userId: string): Promise<Remind
   };
   
   try {
-    const settingsRef = doc(db, 'reminderSettings', userId);
+    const firestore = getFirestore();
+    const settingsRef = doc(firestore, 'reminderSettings', userId);
     await setDoc(settingsRef, defaultSettings);
     return defaultSettings;
   } catch (error) {
@@ -87,10 +91,9 @@ export async function initializeReminderSettings(userId: string): Promise<Remind
  */
 export async function updateReminderSettings(settings: Partial<ReminderSettings>): Promise<boolean> {
   try {
-    const user = auth.currentUser;
-    if (!user) return false;
-    
-    const settingsRef = doc(db, 'reminderSettings', user.uid);
+    const user = getCurrentUser();
+    const firestore = getFirestore();
+    const settingsRef = doc(firestore, 'reminderSettings', user.uid);
     await setDoc(settingsRef, {
       ...settings,
       updatedAt: serverTimestamp()
@@ -140,9 +143,7 @@ export async function sendGoalProgressReminder(
   customMessage?: string
 ): Promise<string | null> {
   try {
-    const user = auth.currentUser;
-    if (!user) return null;
-    
+    const user = getCurrentUser();
     const settings = await getReminderSettings(user.uid);
     if (!settings || !settings.goalProgressEnabled) return null;
     
@@ -184,9 +185,7 @@ export async function sendGoalProgressReminder(
  */
 export async function sendStreakRiskReminder(streak: number): Promise<string | null> {
   try {
-    const user = auth.currentUser;
-    if (!user) return null;
-    
+    const user = getCurrentUser();
     const settings = await getReminderSettings(user.uid);
     if (!settings || !settings.streakRiskEnabled) return null;
     
@@ -231,9 +230,7 @@ export async function sendStreakRiskReminder(streak: number): Promise<string | n
  */
 export async function sendInactivityReminder(daysInactive: number): Promise<string | null> {
   try {
-    const user = auth.currentUser;
-    if (!user) return null;
-    
+    const user = getCurrentUser();
     const settings = await getReminderSettings(user.uid);
     if (!settings || !settings.inactivityEnabled) return null;
     
@@ -274,9 +271,7 @@ export async function sendInactivityReminder(daysInactive: number): Promise<stri
  */
 export async function scheduleEveningReminder(): Promise<string | null> {
   try {
-    const user = auth.currentUser;
-    if (!user) return null;
-    
+    const user = getCurrentUser();
     const settings = await getReminderSettings(user.uid);
     if (!settings || !settings.eveningNudgeEnabled) return null;
     
@@ -320,9 +315,7 @@ export async function scheduleEveningReminder(): Promise<string | null> {
  */
 export async function sendHealthRiskWarning(daysInactive: number): Promise<string | null> {
   try {
-    const user = auth.currentUser;
-    if (!user) return null;
-    
+    const user = getCurrentUser();
     const settings = await getReminderSettings(user.uid);
     if (!settings || !settings.healthRiskEnabled) return null;
     
@@ -360,9 +353,7 @@ export async function sendHealthRiskWarning(daysInactive: number): Promise<strin
  */
 export async function sendCustomReminder(title: string, message: string): Promise<string | null> {
   try {
-    const user = auth.currentUser;
-    if (!user) return null;
-    
+    const user = getCurrentUser();
     const settings = await getReminderSettings(user.uid);
     if (!settings) return null;
     

@@ -354,7 +354,7 @@ const ChatScreen: React.FC = () => {
           <Animated.View 
             style={[
               styles.historyLoadingContainer, 
-              { opacity: fadeAnim, display: fadeAnim._value === 0 ? 'none' : 'flex' }
+              { opacity: fadeAnim }
             ]}
           >
             <ActivityIndicator size="large" color={colors.primary} />

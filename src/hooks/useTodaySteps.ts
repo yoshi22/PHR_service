@@ -35,6 +35,10 @@ export function useTodaySteps() {
     }
 
     try {
+      if (!db) {
+        throw new Error('Firebase Firestore not initialized');
+      }
+      
       // ユーザーの歩数履歴を日付の降順で取得
       const stepsQuery = query(
         collection(db, 'userSteps'),
@@ -168,6 +172,11 @@ export function useTodaySteps() {
       // Regular badges: award if threshold reached
       if (count >= 7500) {
         await saveBadge(user.uid, today, '7500_steps')
+        
+        if (!db) {
+          console.log('⚠️ Cannot check streak badges: Firestore not initialized');
+          return;
+        }
           
         // 3日連続バッジ判定
         const dates3 = [0, 1, 2].map(offset => {

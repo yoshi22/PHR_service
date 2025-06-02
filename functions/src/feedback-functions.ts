@@ -1,19 +1,21 @@
 import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 
 /**
  * ユーザーフィードバックを受け取るCloud Function
  */
-export const submitUserFeedback = functions
-  .region('asia-northeast1')
-  .https.onCall(async (data, context) => {
+export const submitUserFeedback = onCall(
+  { region: 'asia-northeast1' },
+  async (request) => {
     try {
       // 認証を確認（匿名フィードバックも許可）
-      const userId = context.auth?.uid || 'anonymous';
+      const userId = request.auth?.uid || 'anonymous';
+      const data = request.data;
       
       // データの検証
       if (!data.title || !data.description || !data.feedbackType) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'invalid-argument',
           '必須フィールドが欠けています'
         );
@@ -22,7 +24,7 @@ export const submitUserFeedback = functions
       // フィードバックデータを準備
       const feedbackData = {
         userId: userId,
-        userEmail: data.userEmail || context.auth?.token.email || 'anonymous',
+        userEmail: data.userEmail || request.auth?.token.email || 'anonymous',
         feedbackType: data.feedbackType,
         title: data.title,
         description: data.description,

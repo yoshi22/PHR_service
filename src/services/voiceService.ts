@@ -1,7 +1,8 @@
 import * as Speech from 'expo-speech';
 // import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
+import Voice, { SpeechErrorEvent, SpeechResultsEvent } from '@react-native-voice/voice';
+import { Platform } from 'react-native';
 
 // Voice state interface
 export interface VoiceState {
@@ -25,8 +26,7 @@ export const initialVoiceState: VoiceState = {
   error: '',
 };
 
-// Mock speech recognition (temporary implementation)
-let mockRecognitionTimeout: NodeJS.Timeout | null = null;
+// Speech recognition callbacks
 let speechRecognitionCallbacks: {
   onStart?: () => void;
   onEnd?: () => void;
@@ -35,8 +35,67 @@ let speechRecognitionCallbacks: {
 } = {};
 
 /**
- * Start voice recognition (Mock implementation)
- * In a real app, this would integrate with a speech recognition service
+ * Initialize voice recognition listeners
+ */
+function setupVoiceListeners(
+  onSpeechStart?: () => void,
+  onSpeechEnd?: () => void,
+  onSpeechResults?: (results: string[]) => void,
+  onSpeechPartial?: (partialResults: string[]) => void,
+  onSpeechError?: (error: string) => void
+) {
+  // Store callbacks for later use
+  speechRecognitionCallbacks = {
+    onStart: onSpeechStart,
+    onEnd: onSpeechEnd,
+    onResults: onSpeechResults,
+    onError: onSpeechError,
+  };
+  
+  // Set up event listeners
+  Voice.onSpeechStart = () => {
+    console.log('Speech recognition started');
+    onSpeechStart?.();
+  };
+
+  Voice.onSpeechEnd = () => {
+    console.log('Speech recognition ended');
+    onSpeechEnd?.();
+  };
+
+  Voice.onSpeechResults = (event: SpeechResultsEvent) => {
+    console.log('Speech recognition results:', event.value);
+    if (event.value && event.value.length > 0) {
+      onSpeechResults?.(event.value);
+    }
+  };
+
+  Voice.onSpeechPartialResults = (event: SpeechResultsEvent) => {
+    console.log('Speech recognition partial results:', event.value);
+    if (event.value && event.value.length > 0) {
+      onSpeechPartial?.(event.value);
+    }
+  };
+
+  Voice.onSpeechError = (event: SpeechErrorEvent) => {
+    console.error('Speech recognition error:', event);
+    onSpeechError?.(event.error?.message || '音声認識エラー');
+  };
+}
+
+/**
+ * Remove voice recognition listeners
+ */
+function removeVoiceListeners() {
+  Voice.onSpeechStart = () => {};
+  Voice.onSpeechEnd = () => {};
+  Voice.onSpeechResults = () => {};
+  Voice.onSpeechPartialResults = () => {};
+  Voice.onSpeechError = () => {};
+}
+
+/**
+ * Start voice recognition with real implementation
  */
 export async function startVoiceRecognition(
   locale: string = 'ja-JP',
@@ -46,37 +105,28 @@ export async function startVoiceRecognition(
   onSpeechError?: (error: string) => void
 ): Promise<void> {
   try {
-    // Store callbacks
-    speechRecognitionCallbacks = {
-      onStart: onSpeechStart,
-      onEnd: onSpeechEnd,
-      onResults: onSpeechResults,
-      onError: onSpeechError,
-    };
+    // Set up event listeners first
+    setupVoiceListeners(
+      onSpeechStart,
+      onSpeechEnd,
+      onSpeechResults,
+      undefined, // Partial results not handled in the current implementation
+      onSpeechError
+    );
+    
+    // Check if already recording
+    const isRecording = await Voice.isRecognizing();
+    if (isRecording) {
+      await Voice.stop();
+      await new Promise(resolve => setTimeout(resolve, 300)); // Small delay before starting again
+    }
 
-    // Mock start
-    onSpeechStart?.();
-
-    // Mock recognition after 3 seconds
-    mockRecognitionTimeout = setTimeout(() => {
-      // For demonstration, show a prompt to enter text
-      Alert.prompt(
-        '音声入力（デモ）',
-        'このバージョンでは音声認識は模擬実装です。テキストを入力してください：',
-        (text) => {
-          if (text && text.trim()) {
-            onSpeechResults?.([text.trim()]);
-          }
-          onSpeechEnd?.();
-        },
-        'plain-text',
-        '',
-        'default'
-      );
-    }, 500);
-
+    // Start listening
+    await Voice.start(locale);
+    
   } catch (error: any) {
     console.error('Error starting voice recognition:', error);
+    removeVoiceListeners(); // Clean up listeners on error
     onSpeechError?.(error.message || 'Unknown error');
   }
 }
@@ -86,13 +136,15 @@ export async function startVoiceRecognition(
  */
 export async function stopVoiceRecognition(): Promise<void> {
   try {
-    if (mockRecognitionTimeout) {
-      clearTimeout(mockRecognitionTimeout);
-      mockRecognitionTimeout = null;
+    const isRecognizing = await Voice.isRecognizing();
+    if (isRecognizing) {
+      await Voice.stop();
     }
     speechRecognitionCallbacks.onEnd?.();
   } catch (error) {
     console.error('Error stopping voice recognition:', error);
+  } finally {
+    removeVoiceListeners();
   }
 }
 
@@ -101,14 +153,16 @@ export async function stopVoiceRecognition(): Promise<void> {
  */
 export async function cancelVoiceRecognition(): Promise<void> {
   try {
-    if (mockRecognitionTimeout) {
-      clearTimeout(mockRecognitionTimeout);
-      mockRecognitionTimeout = null;
+    const isRecognizing = await Voice.isRecognizing();
+    if (isRecognizing) {
+      await Voice.cancel();
     }
     // Clear callbacks
     speechRecognitionCallbacks = {};
   } catch (error) {
     console.error('Error canceling voice recognition:', error);
+  } finally {
+    removeVoiceListeners();
   }
 }
 
@@ -230,3 +284,17 @@ export async function getCurrentLocation(): Promise<any | null> {
     return null;
   }
 }
+
+// Unified voice service object export for easier testing
+export const voiceService = {
+  startVoiceRecognition,
+  stopVoiceRecognition,
+  cancelVoiceRecognition,
+  speakText,
+  stopSpeaking,
+  isSpeaking,
+  isUserAtHome,
+  isDayTimeForExercise,
+  getCurrentLocation,
+  initialVoiceState
+};

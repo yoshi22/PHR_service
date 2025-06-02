@@ -1,6 +1,7 @@
 import { db } from '../firebase';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { requireAuth } from '../utils/authUtils';
+import { getFirestore } from '../utils/firebaseUtils';
 
 export interface StreakProtection {
   userId: string;
@@ -19,14 +20,24 @@ const DAYS_FOR_REFILL = 14; // 保護が補充されるまでの日数
  */
 export async function getStreakProtection(userId: string): Promise<StreakProtection | null> {
   try {
+    console.log('🛡️ getStreakProtection called for userId:', userId);
+    
     // 認証状態を確認
     const user = requireAuth();
+    console.log('🛡️ Auth check passed, user.uid:', user.uid);
+    
     if (user.uid !== userId) {
       throw new Error('Unauthorized access to streak protection data');
     }
 
-    const protectionRef = doc(db, 'streakProtections', userId);
+    const firestore = getFirestore();
+    console.log('🛡️ Firestore instance obtained');
+    
+    const protectionRef = doc(firestore, 'streakProtections', userId);
+    console.log('🛡️ Attempting to read from streakProtections collection...');
+    
     const protectionSnap = await getDoc(protectionRef);
+    console.log('🛡️ Firestore read result - exists:', protectionSnap.exists());
     
     if (protectionSnap.exists()) {
       return protectionSnap.data() as StreakProtection;
@@ -62,7 +73,8 @@ export async function initializeStreakProtection(userId: string): Promise<Streak
   };
   
   try {
-    const protectionRef = doc(db, 'streakProtections', userId);
+    const firestore = getFirestore();
+    const protectionRef = doc(firestore, 'streakProtections', userId);
     await setDoc(protectionRef, initialProtection);
     return initialProtection;
   } catch (error) {
@@ -107,7 +119,8 @@ export async function useStreakProtection(userId: string): Promise<boolean> {
       }
     }
     
-    const protectionRef = doc(db, 'streakProtections', userId);
+    const firestore = getFirestore();
+    const protectionRef = doc(firestore, 'streakProtections', userId);
     await updateDoc(protectionRef, {
       activeProtections: protection.activeProtections - 1,
       usedProtections: protection.usedProtections + 1,
@@ -154,7 +167,8 @@ export async function checkAndRefillProtection(userId: string): Promise<boolean>
       
       // DAYS_FOR_REFILL日以上経過していたら補充
       if (diffDays >= DAYS_FOR_REFILL) {
-        const protectionRef = doc(db, 'streakProtections', userId);
+        const firestore = getFirestore();
+        const protectionRef = doc(firestore, 'streakProtections', userId);
         await updateDoc(protectionRef, {
           activeProtections: Math.min(protection.activeProtections + 1, MAX_PROTECTIONS),
           lastRefillDate: today,

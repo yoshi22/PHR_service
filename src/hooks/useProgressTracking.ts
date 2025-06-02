@@ -33,7 +33,7 @@ export function useProgressTracking() {
 
   // Calculate progress based on current data
   const calculateProgress = useCallback(async () => {
-    const user = auth.currentUser
+    const user = auth?.currentUser
     if (!user || todaySteps === null) return
 
     setLoading(true)

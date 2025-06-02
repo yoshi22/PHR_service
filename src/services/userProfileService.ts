@@ -1,5 +1,5 @@
-import { db } from '../firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore } from '../utils/firebaseUtils';
 
 export interface UserProfile {
   uid: string;
@@ -14,7 +14,8 @@ export interface UserProfile {
  */
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
   try {
-    const userDoc = doc(db, 'users', userId);
+    const firestore = getFirestore();
+    const userDoc = doc(firestore, 'users', userId);
     const userSnap = await getDoc(userDoc);
     
     if (!userSnap.exists()) {
@@ -52,7 +53,8 @@ export async function getUserRegistrationDate(userId: string): Promise<Date | nu
 export async function createUserProfileIfNotExists(userId: string, userData: { email: string; name?: string }): Promise<boolean> {
   try {
     // Check if profile exists
-    const userProfileRef = doc(db, 'userProfile', userId);
+    const firestore = getFirestore();
+    const userProfileRef = doc(firestore, 'userProfile', userId);
     const profileSnap = await getDoc(userProfileRef);
     
     if (!profileSnap.exists()) {
@@ -66,7 +68,7 @@ export async function createUserProfileIfNotExists(userId: string, userData: { e
       console.log(`Created new user profile for user: ${userId}`);
       
       // Also ensure user document exists in the users collection
-      const userDocRef = doc(db, 'users', userId);
+      const userDocRef = doc(firestore, 'users', userId);
       const userSnap = await getDoc(userDocRef);
       
       if (!userSnap.exists()) {
@@ -80,7 +82,7 @@ export async function createUserProfileIfNotExists(userId: string, userData: { e
       }
 
       // Initialize cached level
-      const cachedLevelRef = doc(db, 'cachedLevel', userId);
+      const cachedLevelRef = doc(firestore, 'cachedLevel', userId);
       await setDoc(cachedLevelRef, {
         userId,
         level: 1,
@@ -89,7 +91,7 @@ export async function createUserProfileIfNotExists(userId: string, userData: { e
       });
       
       // Initialize user level
-      const userLevelRef = doc(db, 'userLevel', userId);
+      const userLevelRef = doc(firestore, 'userLevel', userId);
       await setDoc(userLevelRef, {
         userId,
         level: 1,
@@ -98,7 +100,7 @@ export async function createUserProfileIfNotExists(userId: string, userData: { e
       });
       
       // Initialize daily bonus
-      const dailyBonusRef = doc(db, 'dailyBonuses', userId);
+      const dailyBonusRef = doc(firestore, 'dailyBonuses', userId);
       await setDoc(dailyBonusRef, {
         userId,
         lastBonusDate: null,

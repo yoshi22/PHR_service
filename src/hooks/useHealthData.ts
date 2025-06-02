@@ -36,6 +36,9 @@ export function useHealthData() {
       };
       
       // Firestoreから追加の健康データを取得
+      if (!db) {
+        throw new Error('Firebase Firestore not initialized');
+      }
       const userHealthDoc = await getDoc(doc(db, 'users', user.uid, 'health', 'metrics'));
       
       if (userHealthDoc.exists()) {
