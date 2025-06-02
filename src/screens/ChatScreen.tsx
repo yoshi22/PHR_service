@@ -21,6 +21,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useHealthData } from '../hooks/useHealthData';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { detectAndProcessSettingsIntent } from '../services/settingsIntentService';
+import { useToast } from '../context/ToastContext';
 
 // チャットメッセージの型定義
 type Message = {
@@ -46,9 +48,11 @@ const ChatScreen: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [settingsChanged, setSettingsChanged] = useState<boolean>(false);
   
   const flatListRef = useRef<FlatList>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { showToast } = useToast();
   const inputRef = useRef<TextInput>(null);
   
   const { user } = useAuth();
@@ -152,6 +156,50 @@ const ChatScreen: React.FC = () => {
     Keyboard.dismiss();
 
     try {
+      // 設定変更の意図を検出して処理
+      if (user) {
+        const settingsIntent = await detectAndProcessSettingsIntent(user.uid, userInput);
+        
+        if (settingsIntent && settingsIntent.type !== 'unknown') {
+          // 設定変更の意図が検出された場合の処理
+          setSettingsChanged(true);
+          
+          // 設定変更結果のメッセージを表示
+          const systemMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: settingsIntent.success 
+              ? `✅ ${settingsIntent.message}` 
+              : `❌ ${settingsIntent.message}`,
+            sender: 'ai',
+            timestamp: new Date(),
+            isAnimating: true,
+          };
+          
+          setMessages((prev) => {
+            const updatedPrev = prev.map(msg => 
+              msg.id === userMessage.id ? { ...msg, isAnimating: false } : msg
+            );
+            return [...updatedPrev, systemMessage];
+          });
+          
+          // 成功したら通知も表示
+          if (settingsIntent.success) {
+            showToast('success', settingsIntent.message);
+            
+            // 処理が終わったのでローディングを解除して関数を終了
+            setTimeout(() => {
+              setIsLoading(false);
+              setMessages((prev) => 
+                prev.map(msg => 
+                  msg.id === systemMessage.id ? { ...msg, isAnimating: false } : msg
+                )
+              );
+            }, 500);
+            return;
+          }
+        }
+      }
+      
       // 健康データを準備
       const healthDataForAI = healthData || { steps: 0 };
 
@@ -163,8 +211,19 @@ const ChatScreen: React.FC = () => {
         }
       ];
 
+      // ユーザーの設定情報を取得
+      let userSettings = null;
+      if (user) {
+        try {
+          const { getGeneralSettings } = require('../services/settingsIntentService');
+          userSettings = await getGeneralSettings(user.uid);
+        } catch (error) {
+          console.error('設定情報の取得に失敗しました', error);
+        }
+      }
+      
       // AIレスポンスを取得
-      const response = await aiService.getChatCompletion(aiMessages, healthDataForAI);
+      const response = await aiService.getChatCompletion(aiMessages, healthDataForAI, userSettings);
       
       if (response.error) {
         throw new Error(response.error);

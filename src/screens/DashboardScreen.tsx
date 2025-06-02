@@ -13,8 +13,6 @@ import BadgeList from '../components/BadgeList'
 import BadgeSummary from '../components/BadgeSummary'
 import ProgressBar from '../components/ProgressBar'
 import StreakCard from '../components/StreakCard'
-import StreakProtectionSection from '../components/StreakProtectionSection'
-import { useStreakProtection } from '../hooks/useStreakProtection'
 
 /**
  * Dashboard Screen placeholder for weekly metrics chart
@@ -27,7 +25,6 @@ export default function DashboardScreen() {
   const { badges, loading: badgesLoading, error: badgesError } = useBadges()
   const { progressData, loading: progressLoading } = useProgressTracking()
   const { streakData, loading: streakLoading, getStreakStatus } = useStreakTracker()
-  const { protection, loading: protectionLoading } = useStreakProtection()
   const { setLoading } = useLoading()
   const { showError } = useError()
   const { showBadgeAcquired } = useToast()
@@ -35,8 +32,8 @@ export default function DashboardScreen() {
   const screenWidth = Dimensions.get('window').width - 32
   
   React.useEffect(() => {
-    setLoading(loading || badgesLoading || progressLoading || streakLoading || protectionLoading)
-  }, [loading, badgesLoading, progressLoading, streakLoading, protectionLoading])
+    setLoading(loading || badgesLoading || progressLoading || streakLoading)
+  }, [loading, badgesLoading, progressLoading, streakLoading])
 
   React.useEffect(() => {
     if (error) showError(error, refetch)
@@ -209,15 +206,6 @@ export default function DashboardScreen() {
             />
           )}
         </View>
-        
-        {/* Streak Protection Section */}
-        <View style={styles.protectionSection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>連続記録を守る</Text>
-          <StreakProtectionSection 
-            streak={streakData.currentStreak} 
-            onUseProtection={() => refetch()}
-          />
-        </View>
       </ScrollView>
     </SafeAreaView>
   )
@@ -245,7 +233,6 @@ const styles = StyleSheet.create({
   },
   chartWrapper: { position: 'relative', width: '100%', alignItems: 'center', marginBottom: 20 },
   badgeSection: { width: '100%', padding: 16, borderTopWidth: 1, borderColor: '#ddd', marginTop: 10 },
-  protectionSection: { width: '100%', padding: 16, marginTop: 10 },
   sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
   subTitle: { fontSize: 20, fontWeight: '600', marginBottom: 8 },
   tooltipContainer: {
@@ -299,19 +286,5 @@ const styles = StyleSheet.create({
     borderRightColor: 'transparent',
     borderTopColor: '#007AFF',
     transform: [{ rotate: '180deg' }]
-  },
-  streakProtectionSection: {
-    width: '100%',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
   },
 })

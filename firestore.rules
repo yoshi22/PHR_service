@@ -61,14 +61,7 @@ service cloud.firestore {
       allow delete: if false;
     }
     
-    // streakProtections コレクションへのアクセス制御
-    match /streakProtections/{userId} {
-      // 作成・読み取り・更新: 認証済かつドキュメントIDが自分のUIDと一致
-      allow create, read, update: if request.auth != null && request.auth.uid == userId;
-      // 削除は禁止
-      allow delete: if false;
-    }
-    
+
     // reminderSettings コレクションへのアクセス制御
     match /reminderSettings/{userId} {
       // 作成・読み取り・更新: 認証済かつドキュメントIDが自分のUIDと一致

@@ -77,7 +77,12 @@ export default function ProgressBar({
         
         {/* Progress percentage overlay */}
         <View style={styles.percentageContainer}>
-          <Text style={[styles.percentage, { color: isCompleted ? '#fff' : colors.text }]}>
+          <Text style={[
+            styles.percentage, 
+            { 
+              color: clampedProgress > 40 ? '#fff' : colors.text,
+            }
+          ]}>
             {Math.round(clampedProgress)}%
           </Text>
         </View>
@@ -129,8 +134,8 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   progressContainer: {
-    height: 8,
-    borderRadius: 4,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: '#E5E5E7',
     overflow: 'hidden',
     position: 'relative',
@@ -150,8 +155,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   percentage: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
   },
   achievementContainer: {
     marginTop: 4,

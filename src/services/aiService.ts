@@ -88,7 +88,8 @@ const cacheResponse = async (question: string, message: string, healthData?: Rec
  */
 export const getChatCompletion = async (
   messages: ChatMessage[],
-  healthData?: Record<string, any>
+  healthData?: Record<string, any>,
+  userSettings?: Record<string, any>
 ): Promise<AIResponse> => {
   try {
     // ユーザーからの最新のメッセージを取得
@@ -96,6 +97,22 @@ export const getChatCompletion = async (
     
     if (!userMessage) {
       return { message: 'ユーザーメッセージが見つかりませんでした' };
+    }
+    
+    // ユーザー設定情報があれば、システムプロンプトに追加
+    if (userSettings) {
+      const settingsInfo = `\n\n現在のユーザー設定情報:\n` +
+        `- 目標歩数: ${userSettings.stepGoal}歩\n` +
+        `- 通知時間: ${userSettings.notificationTime}`;
+      
+      // システムメッセージを作成
+      const systemMessage: ChatMessage = {
+        role: 'system',
+        content: generateSystemPrompt(healthData) + settingsInfo
+      };
+      
+      // システムメッセージをメッセージ配列に追加
+      messages = [systemMessage, ...messages];
     }
     
     // キャッシュをチェック
@@ -145,7 +162,12 @@ export const generateSystemPrompt = (healthData?: Record<string, any>): string =
   // ベースとなるシステムプロンプト
   let prompt = `あなたは個人健康記録アプリのAIアシスタントです。
 ユーザーの健康に関する質問に答え、適切なアドバイスを提供してください。
-医学的なアドバイスを提供する際は、必ず「これは医療アドバイスではなく、医師に相談することをお勧めします」と断りを入れてください。`;
+医学的なアドバイスを提供する際は、必ず「これは医療アドバイスではなく、医師に相談することをお勧めします」と断りを入れてください。
+
+アプリの設定について:
+- ユーザーが歩数目標を変更したい場合は、「目標歩数を10000歩に設定して」のように伝えるよう案内してください。1000から50000歩の間で設定できます。
+- ユーザーが通知時間を変更したい場合は、「通知時刻を20:30に設定して」のように伝えるよう案内してください。
+- ユーザーはこのチャット内であなたに指示するだけで、上記の設定を変更できます。設定画面に移動する必要はありません。`;
 
   // 健康データがある場合は、それをプロンプトに追加
   if (healthData) {
