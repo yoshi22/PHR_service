@@ -12,10 +12,12 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { useToast } from '../context/ToastContext';
 import { useThemeContext } from '../context/ThemeContext';
+import { useCoachFeatures } from '../hooks/useCoachFeatures';
 import PrimaryButton from '../components/PrimaryButton';
 import ReminderSettingsSection from '../components/ReminderSettingsSection';
 import HealthRiskSettingsSection from '../components/HealthRiskSettingsSection';
@@ -26,6 +28,7 @@ import {
   registerForPushNotificationsAsync 
 } from '../services/notificationService';
 import { getUserSettings, updateStepGoal, updateNotificationTime } from '../services/userSettingsService';
+import { CoachSettings } from '../services/coachService';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 /**
@@ -35,6 +38,7 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { hasPermissions, request: requestPermissions, checkStatus } = usePermissions();
   const { showToast } = useToast();
+  const { coachSettings, saveSettings: saveCoachSettings } = useCoachFeatures();
   
   // State for theme and notification settings
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -43,6 +47,14 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [notificationTime, setNotificationTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  // Coach settings state
+  const [localCoachSettings, setLocalCoachSettings] = useState<CoachSettings | null>(null);
+  const [showCoachTimePicker, setShowCoachTimePicker] = useState(false);
+  const [currentCoachTimePickerMode, setCurrentCoachTimePickerMode] = useState<{
+    type: 'morningPlan' | 'eveningReflection' | 'weeklyReview' | 'quietFrom' | 'quietTo';
+    time: Date;
+  } | null>(null);
 
   // Load user settings on mount
   useEffect(() => {
@@ -78,6 +90,13 @@ export default function ProfileScreen() {
     
     loadSettings();
   }, [user]);
+
+  // Load coach settings when available
+  useEffect(() => {
+    if (coachSettings) {
+      setLocalCoachSettings(coachSettings);
+    }
+  }, [coachSettings]);
 
   // Handle step goal update
   const handleStepGoalUpdate = useCallback(async () => {
@@ -211,6 +230,142 @@ export default function ProfileScreen() {
     }
   };
 
+  // Coach settings handlers
+  const handleCoachSettingChange = (key: keyof CoachSettings, value: any) => {
+    if (!localCoachSettings) return;
+    
+    setLocalCoachSettings(prevSettings => {
+      if (!prevSettings) return null;
+      
+      return {
+        ...prevSettings,
+        [key]: value
+      };
+    });
+  };
+
+  // Get time as Date object for coach settings
+  const getCoachTimeAsDate = (type: 'morningPlan' | 'eveningReflection' | 'weeklyReview' | 'quietFrom' | 'quietTo'): Date => {
+    if (!localCoachSettings) return new Date();
+    
+    const date = new Date();
+    let hours = 0;
+    let minutes = 0;
+    
+    switch (type) {
+      case 'morningPlan':
+        hours = localCoachSettings.morningPlanTime.hour;
+        minutes = localCoachSettings.morningPlanTime.minute;
+        break;
+      case 'eveningReflection':
+        hours = localCoachSettings.eveningReflectionTime.hour;
+        minutes = localCoachSettings.eveningReflectionTime.minute;
+        break;
+      case 'weeklyReview':
+        hours = localCoachSettings.weeklyReviewTime.hour;
+        minutes = localCoachSettings.weeklyReviewTime.minute;
+        break;
+      case 'quietFrom':
+        hours = localCoachSettings.disableNotificationsFrom.hour;
+        minutes = localCoachSettings.disableNotificationsFrom.minute;
+        break;
+      case 'quietTo':
+        hours = localCoachSettings.disableNotificationsTo.hour;
+        minutes = localCoachSettings.disableNotificationsTo.minute;
+        break;
+    }
+    
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  };
+
+  // Show time picker for coach settings
+  const showCoachTimePickerFor = (type: 'morningPlan' | 'eveningReflection' | 'weeklyReview' | 'quietFrom' | 'quietTo') => {
+    setCurrentCoachTimePickerMode({
+      type,
+      time: getCoachTimeAsDate(type)
+    });
+    setShowCoachTimePicker(true);
+  };
+
+  // Handle coach time change
+  const handleCoachTimeChange = (event: any, selectedDate?: Date) => {
+    setShowCoachTimePicker(Platform.OS === 'ios');
+    
+    if (!currentCoachTimePickerMode || !selectedDate || !localCoachSettings) return;
+    
+    const hours = selectedDate.getHours();
+    const minutes = selectedDate.getMinutes();
+    
+    // Apply selected time to settings
+    switch (currentCoachTimePickerMode.type) {
+      case 'morningPlan':
+        setLocalCoachSettings({
+          ...localCoachSettings,
+          morningPlanTime: { hour: hours, minute: minutes }
+        });
+        break;
+      case 'eveningReflection':
+        setLocalCoachSettings({
+          ...localCoachSettings,
+          eveningReflectionTime: { hour: hours, minute: minutes }
+        });
+        break;
+      case 'weeklyReview':
+        setLocalCoachSettings({
+          ...localCoachSettings,
+          weeklyReviewTime: { hour: hours, minute: minutes }
+        });
+        break;
+      case 'quietFrom':
+        setLocalCoachSettings({
+          ...localCoachSettings,
+          disableNotificationsFrom: { hour: hours, minute: minutes }
+        });
+        break;
+      case 'quietTo':
+        setLocalCoachSettings({
+          ...localCoachSettings,
+          disableNotificationsTo: { hour: hours, minute: minutes }
+        });
+        break;
+    }
+  };
+
+  // Handle reminder frequency change
+  const handleReminderFrequencyChange = (frequency: 'low' | 'medium' | 'high') => {
+    if (!localCoachSettings) return;
+    
+    setLocalCoachSettings({
+      ...localCoachSettings,
+      remindersFrequency: frequency
+    });
+  };
+
+  // Save coach settings
+  const handleSaveCoachSettings = async () => {
+    if (localCoachSettings) {
+      try {
+        await saveCoachSettings(localCoachSettings);
+        showToast('success', 'コーチ設定を保存しました');
+      } catch (error) {
+        console.error('Error saving coach settings:', error);
+        showToast('error', 'コーチ設定の保存に失敗しました');
+      }
+    }
+  };
+
+  // Format time for display
+  const formatTime = (hour: number, minute: number): string => {
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  };
+
+  // Format weekday for display
+  const formatWeekday = (day: number): string => {
+    const weekdays = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'];
+    return weekdays[day];
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
@@ -327,6 +482,208 @@ export default function ProfileScreen() {
           <VoiceSettingsSection />
         </View>
 
+        {/* コーチング設定 */}
+        {localCoachSettings && (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>コーチング通知設定</Text>
+              
+              {/* 朝の計画 */}
+              <View style={styles.setting}>
+                <View style={styles.settingLabelContainer}>
+                  <Ionicons name="sunny-outline" size={20} color="#333" style={styles.settingIcon} />
+                  <Text style={styles.settingLabel}>朝の計画</Text>
+                </View>
+                <Switch
+                  value={localCoachSettings.enableMorningPlan}
+                  onValueChange={(value) => handleCoachSettingChange('enableMorningPlan', value)}
+                  trackColor={{ false: '#767577', true: '#81b0ff' }}
+                  thumbColor={localCoachSettings.enableMorningPlan ? '#007AFF' : '#f4f3f4'}
+                />
+              </View>
+
+              {localCoachSettings.enableMorningPlan && (
+                <TouchableOpacity
+                  style={styles.timePickerSetting}
+                  onPress={() => showCoachTimePickerFor('morningPlan')}
+                >
+                  <Text style={styles.timePickerLabel}>朝の計画時刻</Text>
+                  <View style={styles.timeDisplay}>
+                    <Text style={styles.timeDisplayText}>
+                      {formatTime(localCoachSettings.morningPlanTime.hour, localCoachSettings.morningPlanTime.minute)}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={20} color="#333" />
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              {/* 夜の振り返り */}
+              <View style={styles.setting}>
+                <View style={styles.settingLabelContainer}>
+                  <Ionicons name="moon-outline" size={20} color="#333" style={styles.settingIcon} />
+                  <Text style={styles.settingLabel}>夜の振り返り</Text>
+                </View>
+                <Switch
+                  value={localCoachSettings.enableEveningReflection}
+                  onValueChange={(value) => handleCoachSettingChange('enableEveningReflection', value)}
+                  trackColor={{ false: '#767577', true: '#81b0ff' }}
+                  thumbColor={localCoachSettings.enableEveningReflection ? '#007AFF' : '#f4f3f4'}
+                />
+              </View>
+
+              {localCoachSettings.enableEveningReflection && (
+                <TouchableOpacity
+                  style={styles.timePickerSetting}
+                  onPress={() => showCoachTimePickerFor('eveningReflection')}
+                >
+                  <Text style={styles.timePickerLabel}>夜の振り返り時刻</Text>
+                  <View style={styles.timeDisplay}>
+                    <Text style={styles.timeDisplayText}>
+                      {formatTime(localCoachSettings.eveningReflectionTime.hour, localCoachSettings.eveningReflectionTime.minute)}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={20} color="#333" />
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              {/* 週間レビュー */}
+              <View style={styles.setting}>
+                <View style={styles.settingLabelContainer}>
+                  <Ionicons name="calendar-outline" size={20} color="#333" style={styles.settingIcon} />
+                  <Text style={styles.settingLabel}>週間レビュー</Text>
+                </View>
+                <Switch
+                  value={localCoachSettings.enableWeeklyReview}
+                  onValueChange={(value) => handleCoachSettingChange('enableWeeklyReview', value)}
+                  trackColor={{ false: '#767577', true: '#81b0ff' }}
+                  thumbColor={localCoachSettings.enableWeeklyReview ? '#007AFF' : '#f4f3f4'}
+                />
+              </View>
+
+              {localCoachSettings.enableWeeklyReview && (
+                <>
+                  <TouchableOpacity
+                    style={styles.timePickerSetting}
+                    onPress={() => showCoachTimePickerFor('weeklyReview')}
+                  >
+                    <Text style={styles.timePickerLabel}>週間レビュー時刻</Text>
+                    <View style={styles.timeDisplay}>
+                      <Text style={styles.timeDisplayText}>
+                        {formatTime(localCoachSettings.weeklyReviewTime.hour, localCoachSettings.weeklyReviewTime.minute)}
+                      </Text>
+                      <Ionicons name="chevron-forward" size={20} color="#333" />
+                    </View>
+                  </TouchableOpacity>
+
+                  <View style={styles.setting}>
+                    <Text style={styles.timePickerLabel}>週間レビュー曜日</Text>
+                    <Text style={styles.timeDisplayText}>
+                      {formatWeekday(localCoachSettings.weeklyReviewDay)}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
+
+            {/* 通知静寂時間 */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>通知静寂時間</Text>
+              
+              <TouchableOpacity
+                style={styles.setting}
+                onPress={() => showCoachTimePickerFor('quietFrom')}
+              >
+                <Text style={styles.settingLabel}>静寂開始時刻</Text>
+                <View style={styles.timeDisplay}>
+                  <Text style={styles.timeDisplayText}>
+                    {formatTime(localCoachSettings.disableNotificationsFrom.hour, localCoachSettings.disableNotificationsFrom.minute)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#333" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.setting}
+                onPress={() => showCoachTimePickerFor('quietTo')}
+              >
+                <Text style={styles.settingLabel}>静寂終了時刻</Text>
+                <View style={styles.timeDisplay}>
+                  <Text style={styles.timeDisplayText}>
+                    {formatTime(localCoachSettings.disableNotificationsTo.hour, localCoachSettings.disableNotificationsTo.minute)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#333" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* リマインダー頻度 */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>リマインダー頻度</Text>
+              
+              <View style={styles.frequencySelector}>
+                <TouchableOpacity
+                  style={[
+                    styles.frequencyOption,
+                    localCoachSettings.remindersFrequency === 'low' && styles.selectedFrequency
+                  ]}
+                  onPress={() => handleReminderFrequencyChange('low')}
+                >
+                  <Text
+                    style={[
+                      styles.frequencyText,
+                      localCoachSettings.remindersFrequency === 'low' && styles.selectedFrequencyText
+                    ]}
+                  >
+                    少なめ
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.frequencyOption,
+                    localCoachSettings.remindersFrequency === 'medium' && styles.selectedFrequency
+                  ]}
+                  onPress={() => handleReminderFrequencyChange('medium')}
+                >
+                  <Text
+                    style={[
+                      styles.frequencyText,
+                      localCoachSettings.remindersFrequency === 'medium' && styles.selectedFrequencyText
+                    ]}
+                  >
+                    標準
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.frequencyOption,
+                    localCoachSettings.remindersFrequency === 'high' && styles.selectedFrequency
+                  ]}
+                  onPress={() => handleReminderFrequencyChange('high')}
+                >
+                  <Text
+                    style={[
+                      styles.frequencyText,
+                      localCoachSettings.remindersFrequency === 'high' && styles.selectedFrequencyText
+                    ]}
+                  >
+                    多め
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.saveCoachButton}
+                onPress={handleSaveCoachSettings}
+              >
+                <Text style={styles.saveCoachButtonText}>コーチ設定を保存</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
+        {/* Time pickers */}
         {showTimePicker && (
           <DateTimePicker
             value={notificationTime}
@@ -334,6 +691,16 @@ export default function ProfileScreen() {
             is24Hour={true}
             display="spinner"
             onChange={handleTimeChange}
+          />
+        )}
+
+        {showCoachTimePicker && currentCoachTimePickerMode && (
+          <DateTimePicker
+            value={currentCoachTimePickerMode.time}
+            mode="time"
+            is24Hour={true}
+            display="default"
+            onChange={handleCoachTimeChange}
           />
         )}
         
@@ -484,6 +851,76 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 16,
     color: '#007AFF',
+    fontWeight: '600',
+  },
+  settingLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingIcon: {
+    marginRight: 8,
+  },
+  timePickerSetting: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingLeft: 28,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  timePickerLabel: {
+    fontSize: 14,
+    color: '#333',
+  },
+  timeDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timeDisplayText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginRight: 4,
+  },
+  frequencySelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 16,
+  },
+  frequencyOption: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    alignItems: 'center',
+    marginHorizontal: 4,
+    backgroundColor: '#f0f0f0',
+  },
+  selectedFrequency: {
+    borderColor: '#007AFF',
+    backgroundColor: '#e8f3ff',
+  },
+  frequencyText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  selectedFrequencyText: {
+    color: '#007AFF',
+  },
+  saveCoachButton: {
+    marginTop: 16,
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  saveCoachButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

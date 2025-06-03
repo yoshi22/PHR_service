@@ -305,13 +305,6 @@ const CoachHomeScreen: React.FC = () => {
               {formattedDate}（{dayOfWeek}）
             </Text>
           </View>
-          
-          <TouchableOpacity
-            style={[styles.settingsButton, { backgroundColor: colors.card }]}
-            onPress={() => navigation.navigate('CoachSettings')}
-          >
-            <Ionicons name="settings-outline" size={20} color={colors.text} />
-          </TouchableOpacity>
         </View>
 
         {/* Enhanced Tab Navigation */}
@@ -720,13 +713,6 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     marginTop: 4,
-  },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   tabContainer: {
     marginVertical: 16,

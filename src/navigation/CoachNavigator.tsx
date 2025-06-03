@@ -3,7 +3,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '@react-navigation/native';
 
 import CoachHomeScreen from '../screens/CoachHomeScreen';
-import CoachSettingsScreen from '../screens/CoachSettingsScreen';
 import CreateGoalScreen from '../screens/CreateGoalScreen';
 import GoalListScreen from '../screens/GoalListScreen';
 import GoalDetailScreen from '../screens/GoalDetailScreen';
@@ -16,7 +15,6 @@ import ExerciseLibraryScreen from '../screens/ExerciseLibraryScreen';
 // Stack型の定義を追加
 export type CoachStackParamList = {
   CoachHome: undefined;
-  CoachSettings: undefined;
   CreateGoal: undefined;
   GoalDetail: { goalId?: string };
   EditGoal: { goalId: string };
@@ -51,11 +49,6 @@ const CoachNavigator = () => {
         name="CoachHome" 
         component={CoachHomeScreen} 
         options={{ title: 'コーチング', headerShown: false }} 
-      />
-      <Stack.Screen 
-        name="CoachSettings" 
-        component={CoachSettingsScreen} 
-        options={{ title: 'コーチング設定' }} 
       />
       <Stack.Screen 
         name="CreateGoal" 
