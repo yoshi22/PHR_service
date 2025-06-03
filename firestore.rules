@@ -89,6 +89,36 @@ service cloud.firestore {
       // 削除は禁止
       allow delete: if false;
     }
+    
+    // userGoals コレクションへのアクセス制御
+    match /userGoals/{goalId} {
+      // 作成: 認証済かつ userId フィールドが自分の UID と一致
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // 読み取り: 認証済かつ保存済の userId が自分の UID と一致、または listDocuments などのクエリで自分のドキュメントを取得
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        request.query.limit <= 1000 && request.query.filters && request.query.filters.userId == request.auth.uid
+      );
+      // 更新: 認証済かつ保存済の userId が自分の UID と一致
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      // 削除は禁止
+      allow delete: if false;
+    }
+    
+    // dailyCheckins コレクションへのアクセス制御
+    match /dailyCheckins/{checkinId} {
+      // 作成: 認証済かつ userId フィールドが自分の UID と一致
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // 読み取り: 認証済かつ保存済の userId が自分の UID と一致、または listDocuments などのクエリで自分のドキュメントを取得
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        request.query.limit <= 1000 && request.query.filters && request.query.filters.userId == request.auth.uid
+      );
+      // 更新: 認証済かつ保存済の userId が自分の UID と一致
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      // 削除は禁止
+      allow delete: if false;
+    }
 
     // ユーザープロフィールと健康データへのアクセス制御
     match /users/{userId} {

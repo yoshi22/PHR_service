@@ -51,14 +51,23 @@
       <true/>
     </dict>
     <key>NSHealthShareUsageDescription</key>
-    <string>歩数データを取得するためにHealthKitへのアクセスを許可してください。</string>
+    <string>健康データを同期して、週次ダッシュボードを作成するために必要です。</string>
     <key>NSHealthUpdateUsageDescription</key>
-    <string>HealthKitに歩数データを書き込むためのアクセス許可が必要です。</string>
+    <string>体重・歩数データを取得・記録するために必要です。</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Mi Bandと接続して健康データを記録するためにBluetoothを使用します。</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>Mi Bandと接続して健康データを記録するためにBluetoothを使用します。</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
     <array>
       <string>arm64</string>
+      <string>bluetooth-le</string>
+    </array>
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>bluetooth-central</string>
     </array>
     <key>UIRequiresFullScreen</key>
     <false/>

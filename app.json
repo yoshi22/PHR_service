@@ -25,7 +25,12 @@
       "entitlements": {
         "com.apple.developer.healthkit": [
           "HKQuantityTypeIdentifierStepCount",
-          "HKQuantityTypeIdentifierBodyMass"
+          "HKQuantityTypeIdentifierBodyMass",
+          "HKQuantityTypeIdentifierHeartRate",
+          "HKQuantityTypeIdentifierActiveEnergyBurned",
+          "HKQuantityTypeIdentifierDistanceWalking",
+          "HKQuantityTypeIdentifierDistanceWalkingRunning",
+          "HKWorkoutTypeIdentifier"
         ]
       }
     },

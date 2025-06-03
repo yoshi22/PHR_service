@@ -3,11 +3,13 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import DashboardScreen from '../screens/DashboardScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import ChatScreenEnhanced from '../screens/ChatScreenEnhanced'
+import CoachNavigator from './CoachNavigator'
 import { Ionicons } from '@expo/vector-icons'
 import { RouteProp } from '@react-navigation/native'
 
 export type MainTabParamList = {
   Dashboard: undefined
+  Coach: undefined
   Chat: undefined
   Profile: undefined
 }
@@ -23,7 +25,9 @@ export default function MainTabs() {
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
           let iconName: React.ComponentProps<typeof Ionicons>['name'] = 'stats-chart'
-          if (route.name === 'Chat') {
+          if (route.name === 'Coach') {
+            iconName = 'fitness'
+          } else if (route.name === 'Chat') {
             iconName = 'chatbubble-ellipses'
           } else if (route.name === 'Profile') {
             iconName = 'person'
@@ -33,6 +37,7 @@ export default function MainTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'ダッシュボード' }} />
+      <Tab.Screen name="Coach" component={CoachNavigator} options={{ title: 'コーチング' }} />
       <Tab.Screen name="Chat" component={ChatScreenEnhanced} options={{ title: 'AIチャット' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: '設定' }} />
     </Tab.Navigator>
