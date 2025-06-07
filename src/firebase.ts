@@ -1,12 +1,9 @@
 import { initializeApp, getApp, FirebaseApp } from 'firebase/app';
 import {
-  initializeAuth,
   getAuth,
   onAuthStateChanged,
   Auth
 } from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getReactNativePersistence } from 'firebase/auth/react-native';
 import { getFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
 
@@ -77,37 +74,17 @@ async function initializeFirebaseApp() {
 // Initialize Firebase immediately
 initializeFirebaseApp();
 
-// Initialize Auth with AsyncStorage persistence for React Native
+// Initialize Firebase Auth - getAuth() automatically uses AsyncStorage persistence in React Native
 let auth: Auth | undefined;
 try {
   if (app) {
-    console.log('🔐 Initializing Firebase Auth with AsyncStorage persistence');
-    
-    // Check if auth already exists before initializing
-    try {
-      auth = getAuth(app);
-      console.log('🔐 Using existing Firebase Auth instance');
-    } catch (getAuthError) {
-      console.log('🔐 No existing Auth instance, creating new one with persistence');
-      // Create a new auth instance with persistence
-      auth = initializeAuth(app, {
-        persistence: getReactNativePersistence(AsyncStorage)
-      });
-    }
+    console.log('🔐 Initializing Firebase Auth with automatic React Native persistence');
+    auth = getAuth(app);
+    console.log('🔐 Firebase Auth initialized successfully');
   }
 } catch (error) {
   console.error('⚠️ Firebase Auth initialization error:', error);
-  // Try to get existing auth instance as fallback
-  try {
-    if (app) {
-      auth = getAuth(app);
-      console.log('🔐 Using fallback Firebase Auth instance without custom persistence');
-    }
-  } catch (fallbackError) {
-    console.error('❌ Firebase Auth fallback initialization error:', fallbackError);
-    // Auth initialization completely failed
-    auth = undefined;
-  }
+  auth = undefined;
 }
 
 // Initialize Firestore
