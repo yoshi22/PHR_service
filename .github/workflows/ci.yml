@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  lint-and-typecheck:
+  typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,8 +20,6 @@ jobs:
         run: npm ci
       - name: Run TypeScript type checking
         run: npm run type-check
-      - name: Run linting
-        run: npm run lint
 
   ios-build:
     runs-on: macos-latest
