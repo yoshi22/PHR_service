@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { BleManager, Device } from 'react-native-ble-plx';
+import { BleManager, Device, Subscription } from 'react-native-ble-plx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
 
@@ -58,9 +58,11 @@ export const scanForMiBand = async (): Promise<Device | null> => {
   const savedDeviceId = await AsyncStorage.getItem('mibandDeviceId');
 
   return new Promise((resolve, reject) => {
+    let subscription: any = null;
+    
     try {
       // 以前に接続したデバイスIDがあれば、その特定のデバイスをスキャンする
-      const subscription = manager.startDeviceScan(
+      subscription = manager.startDeviceScan(
         savedDeviceId ? null : ['0000fedd-0000-1000-8000-00805f9b34fb'], 
         null,
         (error, device) => {
@@ -77,6 +79,9 @@ export const scanForMiBand = async (): Promise<Device | null> => {
                 device.name?.toLowerCase().includes('huami') ||
                 (savedDeviceId && device.id === savedDeviceId)
               )) {
+            if (subscription) {
+              subscription.remove();
+            }
             manager.stopDeviceScan();
             console.log('Found Mi Band:', device.name, device.id);
             resolve(device);
@@ -86,7 +91,9 @@ export const scanForMiBand = async (): Promise<Device | null> => {
 
       // 15秒後にタイムアウト
       setTimeout(() => {
-        subscription.remove();
+        if (subscription) {
+          subscription.remove();
+        }
         manager.stopDeviceScan();
         console.log('Scan timed out');
         resolve(null);

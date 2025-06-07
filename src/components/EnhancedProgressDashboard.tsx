@@ -150,6 +150,8 @@ const EnhancedProgressDashboard: React.FC<EnhancedProgressDashboardProps> = ({
           data={healthMetricsData}
           width={screenWidth - 60}
           height={220}
+          yAxisLabel=""
+          yAxisSuffix=""
           chartConfig={chartConfig}
           style={styles.chart}
           showValuesOnTopOfBars

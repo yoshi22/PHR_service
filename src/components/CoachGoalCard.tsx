@@ -109,10 +109,10 @@ const CoachGoalCard: React.FC<CoachGoalCardProps> = ({ goal, onComplete, onPress
                 style={[
                   styles.dayDot,
                   { 
-                    backgroundColor: goal.scheduledDays.includes(day) 
+                    backgroundColor: goal.scheduledDays?.includes(day) 
                       ? colors.primary 
                       : colors.border,
-                    opacity: goal.scheduledDays.includes(day) ? 1 : 0.3,
+                    opacity: goal.scheduledDays?.includes(day) ? 1 : 0.3,
                   }
                 ]}
               >

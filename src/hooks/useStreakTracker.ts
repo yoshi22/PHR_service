@@ -149,7 +149,7 @@ export function useStreakTracker() {
 
     try {
       // Get user's step goal from settings
-      const userSettingsService = await import('../services/userSettingsService')
+      const userSettingsService = await import('../services/userSettingsService.js')
       const settings = await userSettingsService.getUserSettings(user.uid)
       await calculateStreak(settings.stepGoal)
     } catch (error) {

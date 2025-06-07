@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>phrapp</string>
-          <string>com.example.phrapp</string>
+          <string>com.yoshi22.phrapp-dev</string>
         </array>
       </dict>
       <dict>

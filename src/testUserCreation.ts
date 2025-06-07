@@ -13,6 +13,14 @@ export async function testUserCreationAndFirestore() {
   const testPassword = 'password123';
   
   try {
+    // Type guards
+    if (!auth) {
+      throw new Error('Firebase auth not initialized');
+    }
+    if (!db) {
+      throw new Error('Firebase db not initialized');
+    }
+    
     // Step 1: Create user with Firebase Auth
     console.log('🧪 Step 1: Creating user with Firebase Auth...');
     const userCredential = await createUserWithEmailAndPassword(auth, testEmail, testPassword);
@@ -48,14 +56,16 @@ export async function testUserCreationAndFirestore() {
     
     // Step 3: Test Firestore read
     console.log('🧪 Step 3: Testing Firestore reads...');
-    const { getUserSettings } = await import('./services/userSettingsService');
+    const { getUserSettings } = await import('./services/userSettingsService.js');
     const settings = await getUserSettings(user.uid);
     
     console.log('✅ Step 3 Passed: Firestore reads successful', settings);
     
     // Step 4: Clean up (sign out)
     console.log('🧪 Step 4: Cleaning up...');
-    await auth.signOut();
+    if (auth) {
+      await auth.signOut();
+    }
     console.log('✅ Step 4 Passed: Sign out successful');
     
     console.log('🎉 All tests passed! Firebase and Firestore are working correctly with proper security rules.');
@@ -75,7 +85,7 @@ export async function testUserCreationAndFirestore() {
     
     // Clean up on error
     try {
-      if (auth.currentUser) {
+      if (auth?.currentUser) {
         await auth.signOut();
       }
     } catch (cleanupError) {

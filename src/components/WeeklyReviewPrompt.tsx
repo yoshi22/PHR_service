@@ -5,7 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCoachFeatures } from '../hooks/useCoachFeatures';
+import { CoachStackParamList } from '../navigation/CoachNavigator';
+
+type NavigationProp = NativeStackNavigationProp<CoachStackParamList>;
 
 interface WeeklyReviewPromptProps {
   onDismiss?: () => void;
@@ -13,7 +17,7 @@ interface WeeklyReviewPromptProps {
 
 const WeeklyReviewPrompt: React.FC<WeeklyReviewPromptProps> = ({ onDismiss }) => {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const { prepareCoachingPrompt } = useCoachFeatures();
   const [isLoading, setIsLoading] = useState(false);
 

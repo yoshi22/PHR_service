@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useCoachFeatures } from '../hooks/useCoachFeatures';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Timestamp } from 'firebase/firestore';
 
 // 目標タイプの定義
 const goalTypes = [
@@ -88,7 +89,7 @@ const CreateGoalScreen: React.FC = () => {
         unit: unitMapping[selectedType as keyof typeof unitMapping] || '',
         scheduledDays: selectedDays,
         active: true,
-        startDate: startDate,
+        startDate: Timestamp.fromDate(startDate),
         completedDates: [],
       };
       

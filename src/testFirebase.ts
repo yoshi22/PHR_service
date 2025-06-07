@@ -10,6 +10,11 @@ export async function testFirebaseConnection() {
   console.log('🧪 Starting Firebase Connection Test...');
   
   try {
+    // Type guard
+    if (!auth) {
+      throw new Error('Firebase auth not initialized');
+    }
+    
     // Test 1: Sign in with existing test user
     console.log('🧪 Test 1: Attempting to sign in with test user...');
     const userCredential = await signInWithEmailAndPassword(auth, 'test@example.com', 'password123');
@@ -29,7 +34,9 @@ export async function testFirebaseConnection() {
     
     // Test 3: Sign out
     console.log('🧪 Test 3: Signing out...');
-    await auth.signOut();
+    if (auth) {
+      await auth.signOut();
+    }
     console.log('✅ Test 3 Passed: Sign out successful');
     
     console.log('🎉 All Firebase tests passed! The fixes are working.');

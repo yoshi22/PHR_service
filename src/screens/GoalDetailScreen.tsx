@@ -99,7 +99,7 @@ const GoalDetailScreen: React.FC = () => {
   
   // 進捗の更新
   const handleUpdateProgress = async () => {
-    if (!goal || isUpdating) return;
+    if (!goal || isUpdating || !goalId) return;
     
     const newValue = Number(currentValue);
     if (isNaN(newValue) || newValue < 0) {
@@ -128,7 +128,7 @@ const GoalDetailScreen: React.FC = () => {
   
   // 完了状態の切り替え
   const handleToggleCompletion = async (completed: boolean) => {
-    if (!goal) return;
+    if (!goal || !goalId) return;
     
     try {
       await toggleGoalCompletion(goalId, completed);
@@ -140,7 +140,9 @@ const GoalDetailScreen: React.FC = () => {
   
   // 編集画面への遷移
   const handleEdit = () => {
-    navigation.navigate('EditGoal', { goalId });
+    if (goalId) {
+      navigation.navigate('EditGoal', { goalId });
+    }
   };
   
   // 削除の処理
@@ -332,7 +334,7 @@ const GoalDetailScreen: React.FC = () => {
         <View style={styles.detailItem}>
           <Text style={[styles.detailLabel, { color: colors.text }]}>開始日:</Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            {goal.startDate ? format(new Date(goal.startDate), 'yyyy年MM月dd日', { locale: ja }) : '設定なし'}
+            {goal.startDate ? format(goal.startDate.toDate(), 'yyyy年MM月dd日', { locale: ja }) : '設定なし'}
           </Text>
         </View>
         

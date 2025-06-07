@@ -187,7 +187,7 @@ const MiBandSetupScreen: React.FC = () => {
               onPress={handleDisconnect}
               disabled={refreshing}
             >
-              <Ionicons name="bluetooth-off" size={20} color="#FFFFFF" />
+              <Ionicons name="bluetooth" size={20} color="#FFFFFF" />
               <Text style={styles.buttonText}>切断</Text>
             </TouchableOpacity>
           </>

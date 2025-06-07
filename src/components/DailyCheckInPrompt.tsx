@@ -5,7 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCoachFeatures } from '../hooks/useCoachFeatures';
+import { CoachStackParamList } from '../navigation/CoachNavigator';
+
+type NavigationProp = NativeStackNavigationProp<CoachStackParamList>;
 
 interface DailyCheckInPromptProps {
   type?: 'morning' | 'evening';
@@ -17,7 +21,7 @@ const DailyCheckInPrompt: React.FC<DailyCheckInPromptProps> = ({ type, checkinTy
   // Use either type or checkinType, with type having priority
   const checkInType = type || checkinType || 'morning';
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const { prepareCoachingPrompt, saveDailyCheckin, todayCheckin } = useCoachFeatures();
   const [isLoading, setIsLoading] = useState(false);
   const [goals, setGoals] = useState<string[]>([]);

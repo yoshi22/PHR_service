@@ -106,7 +106,7 @@ export function useVoiceFeatures() {
       // Use high-quality voice service when available
       try {
         // Import dynamically to avoid circular dependencies
-        const voiceQualityService = await import('../services/voiceQualityService');
+        const voiceQualityService = await import('../services/voiceQualityService.js');
         await voiceQualityService.speakWithHighQuality(text);
       } catch (qualityError) {
         console.log('Falling back to standard TTS:', qualityError);
