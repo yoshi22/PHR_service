@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.phrapp",
+      "bundleIdentifier": "com.yoshi22.phrapp-dev",
       "infoPlist": {
         "NSHealthShareUsageDescription": "健康データを同期して、週次ダッシュボードを作成するために必要です。",
         "NSHealthUpdateUsageDescription": "体重・歩数データを取得・記録するために必要です。",
@@ -31,12 +31,11 @@
           "HKQuantityTypeIdentifierDistanceWalking",
           "HKQuantityTypeIdentifierDistanceWalkingRunning",
           "HKWorkoutTypeIdentifier"
-        ],
-        "aps-environment": "development"
+        ]
       }
     },
     "android": {
-      "package": "com.example.phrapp",
+      "package": "com.yoshi22.phrapp-dev",
       "permissions": [
         "com.google.android.apps.fitness.permission.ACTIVITY_READ",
         "com.google.android.apps.fitness.permission.ACTIVITY_WRITE",

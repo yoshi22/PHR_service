@@ -24,58 +24,86 @@ Notifications.setNotificationHandler({
 });
 
 /**
- * Request notification permissions
+ * Request notification permissions (Push notifications disabled for Personal Team)
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
-  let token;
+  try {
+    console.log(`[PushNotification] Initializing on platform: ${Platform.OS}`);
 
-  console.log(`[PushNotification] Initializing on platform: ${Platform.OS}`);
+    // Personal Development Team では プッシュ通知をサポートしていないため、
+    // ローカル通知のみを設定
+    if (__DEV__) {
+      console.log('🚧 [PushNotification] Push notifications disabled for Personal Development Team');
+      console.log('📱 [PushNotification] Local notifications will be used instead');
+      
+      // ローカル通知の権限のみを要求
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      console.log(`[PushNotification] Local notification permission status: ${existingStatus}`);
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        console.log(`[PushNotification] Permission request result: ${status}`);
+        if (status !== 'granted') {
+          console.warn('[PushNotification] Local notification permission denied');
+          return null;
+        }
+      }
+      
+      return 'local-notifications-only';
+    }
 
-  if (Platform.OS === 'android') {
-    console.log('[PushNotification] Setting up Android notification channel');
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
+    // 本番環境でのプッシュ通知処理（Apple Developer Program が必要）
+    let token;
+
+    if (Platform.OS === 'android') {
+      console.log('[PushNotification] Setting up Android notification channel');
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+
+    if (Device.isDevice) {
+      console.log('[PushNotification] Running on a physical device, checking permissions');
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      console.log(`[PushNotification] Existing permission status: ${existingStatus}`);
+      
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        console.log('[PushNotification] Permission not granted, requesting it now');
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+        console.log(`[PushNotification] New permission status: ${finalStatus}`);
+      }
+      
+      if (finalStatus !== 'granted') {
+        console.log('[PushNotification] Failed to get push notification permissions');
+        return null;
+      }
+      
+      // Only get token if permission is granted
+      console.log('[PushNotification] Permission granted, getting push token');
+      try {
+        token = (await Notifications.getExpoPushTokenAsync({
+          projectId: '9e7095cf-b85d-4532-bb80-3b4f132efabb', // Use your actual project ID
+        })).data;
+        console.log(`[PushNotification] Successfully retrieved token: ${token}`);
+      } catch (error) {
+        console.error('[PushNotification] Error getting push token:', error);
+      }
+      
+    } else {
+      console.log('[PushNotification] Not a physical device, skipping push token');
+    }
+
+    return token || null;
+  } catch (error) {
+    console.error('[PushNotification] Error during push notification setup:', error);
+    return null;
   }
-
-  if (Device.isDevice) {
-    console.log('[PushNotification] Running on a physical device, checking permissions');
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    console.log(`[PushNotification] Existing permission status: ${existingStatus}`);
-    
-    let finalStatus = existingStatus;
-    
-    if (existingStatus !== 'granted') {
-      console.log('[PushNotification] Permission not granted, requesting it now');
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-      console.log(`[PushNotification] New permission status: ${finalStatus}`);
-    }
-    
-    if (finalStatus !== 'granted') {
-      console.log('[PushNotification] Failed to get push notification permissions');
-      return null;
-    }
-    
-    // Only get token if permission is granted
-    console.log('[PushNotification] Permission granted, getting push token');
-    try {
-      token = (await Notifications.getExpoPushTokenAsync({
-        projectId: '9e7095cf-b85d-4532-bb80-3b4f132efabb', // Use your actual project ID
-      })).data;
-      console.log(`[PushNotification] Successfully retrieved token: ${token}`);
-    } catch (error) {
-      console.error('[PushNotification] Error getting push token:', error);
-    }
-    
-  } else {
-    console.log('[PushNotification] Not a physical device, skipping push token');
-  }
-
-  return token || null;
 }
 
 /**
