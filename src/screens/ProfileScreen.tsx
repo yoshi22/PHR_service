@@ -19,6 +19,8 @@ import { useToast } from '../context/ToastContext';
 import { useThemeContext } from '../context/ThemeContext';
 import { useCoachFeatures } from '../hooks/useCoachFeatures';
 import PrimaryButton from '../components/PrimaryButton';
+import SettingsManager from '../components/SettingsManager';
+import AdvancedSettings from '../components/AdvancedSettings';
 import ReminderSettingsSection from '../components/ReminderSettingsSection';
 import HealthRiskSettingsSection from '../components/HealthRiskSettingsSection';
 import VoiceSettingsSection from '../components/VoiceSettingsSection';
@@ -376,349 +378,68 @@ export default function ProfileScreen() {
   
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        <View style={styles.header}>
-          <Text style={styles.title}>プロフィール設定</Text>
-          <Text style={styles.email}>{user?.email}</Text>
-        </View>
-        
-        {/* Health Data Settings */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>健康データ</Text>
-          <TouchableOpacity 
-            style={styles.permissionButton}
-            onPress={handleCheckPermissions}
-          >
-            <Text style={styles.permissionButtonText}>
-              {hasPermissions ? '✓ 許可済み' : '健康データへのアクセスを許可する'}
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.helpText}>
-            PHRアプリが歩数や活動データを読み取るために、
-            {Platform.OS === 'ios' ? 'ヘルスケア' : 'Google Fit'}へのアクセス許可が必要です。
-          </Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>プロフィール設定</Text>
+        <Text style={styles.email}>{user?.email}</Text>
+      </View>
 
-          <View style={[styles.setting, styles.stepGoalSetting]}>
-            <Text style={styles.settingLabel}>1日の目標歩数</Text>
-            <View style={styles.stepGoalInputContainer}>
-              <TextInput
-                style={styles.stepGoalInput}
-                value={stepGoal}
-                onChangeText={setStepGoal}
-                keyboardType="numeric"
-                maxLength={5}
-                placeholder="7500"
-              />
-              <Text style={styles.stepGoalUnit}>歩</Text>
-              <TouchableOpacity 
-                style={styles.stepGoalButton}
-                onPress={handleStepGoalUpdate}
-              >
-                <Text style={styles.stepGoalButtonText}>更新</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-        
-        {/* Appearance Settings */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>表示設定</Text>
-          <View style={styles.setting}>
-            <Text style={styles.settingLabel}>ダークモード</Text>
-            <Switch 
-              value={isDarkMode}
-              onValueChange={toggleDarkMode}
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
-              thumbColor={isDarkMode ? '#007AFF' : '#f4f3f4'}
-              testID="theme-toggle"
-            />
-          </View>
-        </View>
-        
-        {/* Notification Settings */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>通知設定</Text>
-          <View style={styles.setting}>
-            <Text style={styles.settingLabel}>毎日のリマインダー</Text>
-            <Switch 
-              value={notificationsEnabled}
-              onValueChange={toggleNotifications}
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
-              thumbColor={notificationsEnabled ? '#007AFF' : '#f4f3f4'}
-            />
-          </View>
-          
-          {notificationsEnabled && (
-            <TouchableOpacity 
-              style={[styles.setting, styles.timePickerButton]} 
-              onPress={() => setShowTimePicker(true)}
-            >
-              <Text style={styles.settingLabel}>通知時刻</Text>
-              <Text style={styles.timeText}>
-                {notificationTime.toLocaleTimeString('ja-JP', { 
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false 
-                })}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* 強化されたリマインダー設定 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>リマインダー強化</Text>
-          <ReminderSettingsSection />
-        </View>
-
-        {/* 健康リスク警告設定 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>健康リスク警告</Text>
-          <HealthRiskSettingsSection />
-        </View>
-        
-        {/* 音声機能設定 */}
-        <View style={styles.section}>
-          <VoiceSettingsSection />
-        </View>
-
-        {/* コーチング設定 */}
-        {localCoachSettings && (
-          <>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>コーチング通知設定</Text>
-              
-              {/* 朝の計画 */}
-              <View style={styles.setting}>
-                <View style={styles.settingLabelContainer}>
-                  <Ionicons name="sunny-outline" size={20} color="#333" style={styles.settingIcon} />
-                  <Text style={styles.settingLabel}>朝の計画</Text>
-                </View>
-                <Switch
-                  value={localCoachSettings.enableMorningPlan}
-                  onValueChange={(value) => handleCoachSettingChange('enableMorningPlan', value)}
-                  trackColor={{ false: '#767577', true: '#81b0ff' }}
-                  thumbColor={localCoachSettings.enableMorningPlan ? '#007AFF' : '#f4f3f4'}
-                />
-              </View>
-
-              {localCoachSettings.enableMorningPlan && (
-                <TouchableOpacity
-                  style={styles.timePickerSetting}
-                  onPress={() => showCoachTimePickerFor('morningPlan')}
-                >
-                  <Text style={styles.timePickerLabel}>朝の計画時刻</Text>
-                  <View style={styles.timeDisplay}>
-                    <Text style={styles.timeDisplayText}>
-                      {formatTime(localCoachSettings.morningPlanTime.hour, localCoachSettings.morningPlanTime.minute)}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={20} color="#333" />
-                  </View>
-                </TouchableOpacity>
-              )}
-
-              {/* 夜の振り返り */}
-              <View style={styles.setting}>
-                <View style={styles.settingLabelContainer}>
-                  <Ionicons name="moon-outline" size={20} color="#333" style={styles.settingIcon} />
-                  <Text style={styles.settingLabel}>夜の振り返り</Text>
-                </View>
-                <Switch
-                  value={localCoachSettings.enableEveningReflection}
-                  onValueChange={(value) => handleCoachSettingChange('enableEveningReflection', value)}
-                  trackColor={{ false: '#767577', true: '#81b0ff' }}
-                  thumbColor={localCoachSettings.enableEveningReflection ? '#007AFF' : '#f4f3f4'}
-                />
-              </View>
-
-              {localCoachSettings.enableEveningReflection && (
-                <TouchableOpacity
-                  style={styles.timePickerSetting}
-                  onPress={() => showCoachTimePickerFor('eveningReflection')}
-                >
-                  <Text style={styles.timePickerLabel}>夜の振り返り時刻</Text>
-                  <View style={styles.timeDisplay}>
-                    <Text style={styles.timeDisplayText}>
-                      {formatTime(localCoachSettings.eveningReflectionTime.hour, localCoachSettings.eveningReflectionTime.minute)}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={20} color="#333" />
-                  </View>
-                </TouchableOpacity>
-              )}
-
-              {/* 週間レビュー */}
-              <View style={styles.setting}>
-                <View style={styles.settingLabelContainer}>
-                  <Ionicons name="calendar-outline" size={20} color="#333" style={styles.settingIcon} />
-                  <Text style={styles.settingLabel}>週間レビュー</Text>
-                </View>
-                <Switch
-                  value={localCoachSettings.enableWeeklyReview}
-                  onValueChange={(value) => handleCoachSettingChange('enableWeeklyReview', value)}
-                  trackColor={{ false: '#767577', true: '#81b0ff' }}
-                  thumbColor={localCoachSettings.enableWeeklyReview ? '#007AFF' : '#f4f3f4'}
-                />
-              </View>
-
-              {localCoachSettings.enableWeeklyReview && (
-                <>
-                  <TouchableOpacity
-                    style={styles.timePickerSetting}
-                    onPress={() => showCoachTimePickerFor('weeklyReview')}
-                  >
-                    <Text style={styles.timePickerLabel}>週間レビュー時刻</Text>
-                    <View style={styles.timeDisplay}>
-                      <Text style={styles.timeDisplayText}>
-                        {formatTime(localCoachSettings.weeklyReviewTime.hour, localCoachSettings.weeklyReviewTime.minute)}
-                      </Text>
-                      <Ionicons name="chevron-forward" size={20} color="#333" />
-                    </View>
-                  </TouchableOpacity>
-
-                  <View style={styles.setting}>
-                    <Text style={styles.timePickerLabel}>週間レビュー曜日</Text>
-                    <Text style={styles.timeDisplayText}>
-                      {formatWeekday(localCoachSettings.weeklyReviewDay)}
-                    </Text>
-                  </View>
-                </>
-              )}
-            </View>
-
-            {/* 通知静寂時間 */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>通知静寂時間</Text>
-              
-              <TouchableOpacity
-                style={styles.setting}
-                onPress={() => showCoachTimePickerFor('quietFrom')}
-              >
-                <Text style={styles.settingLabel}>静寂開始時刻</Text>
-                <View style={styles.timeDisplay}>
-                  <Text style={styles.timeDisplayText}>
-                    {formatTime(localCoachSettings.disableNotificationsFrom.hour, localCoachSettings.disableNotificationsFrom.minute)}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={20} color="#333" />
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.setting}
-                onPress={() => showCoachTimePickerFor('quietTo')}
-              >
-                <Text style={styles.settingLabel}>静寂終了時刻</Text>
-                <View style={styles.timeDisplay}>
-                  <Text style={styles.timeDisplayText}>
-                    {formatTime(localCoachSettings.disableNotificationsTo.hour, localCoachSettings.disableNotificationsTo.minute)}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={20} color="#333" />
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* リマインダー頻度 */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>リマインダー頻度</Text>
-              
-              <View style={styles.frequencySelector}>
-                <TouchableOpacity
-                  style={[
-                    styles.frequencyOption,
-                    localCoachSettings.remindersFrequency === 'low' && styles.selectedFrequency
-                  ]}
-                  onPress={() => handleReminderFrequencyChange('low')}
-                >
-                  <Text
-                    style={[
-                      styles.frequencyText,
-                      localCoachSettings.remindersFrequency === 'low' && styles.selectedFrequencyText
-                    ]}
-                  >
-                    少なめ
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.frequencyOption,
-                    localCoachSettings.remindersFrequency === 'medium' && styles.selectedFrequency
-                  ]}
-                  onPress={() => handleReminderFrequencyChange('medium')}
-                >
-                  <Text
-                    style={[
-                      styles.frequencyText,
-                      localCoachSettings.remindersFrequency === 'medium' && styles.selectedFrequencyText
-                    ]}
-                  >
-                    標準
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.frequencyOption,
-                    localCoachSettings.remindersFrequency === 'high' && styles.selectedFrequency
-                  ]}
-                  onPress={() => handleReminderFrequencyChange('high')}
-                >
-                  <Text
-                    style={[
-                      styles.frequencyText,
-                      localCoachSettings.remindersFrequency === 'high' && styles.selectedFrequencyText
-                    ]}
-                  >
-                    多め
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={styles.saveCoachButton}
-                onPress={handleSaveCoachSettings}
-              >
-                <Text style={styles.saveCoachButtonText}>コーチ設定を保存</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-
-        {/* Time pickers */}
-        {showTimePicker && (
-          <DateTimePicker
-            value={notificationTime}
-            mode="time"
-            is24Hour={true}
-            display="spinner"
-            onChange={handleTimeChange}
+      {/* New Settings Manager */}
+      <SettingsManager
+        notificationsEnabled={notificationsEnabled}
+        onNotificationsToggle={toggleNotifications}
+        isDarkMode={isDarkMode}
+        onDarkModeToggle={toggleDarkMode}
+        stepGoal={stepGoal}
+        onStepGoalUpdate={handleStepGoalUpdate}
+        onStepGoalChange={setStepGoal}
+        AdvancedSettingsComponent={() => (
+          <AdvancedSettings
+            hasPermissions={hasPermissions}
+            onCheckPermissions={handleCheckPermissions}
+            notificationTime={notificationTime}
+            onNotificationTimePress={() => setShowTimePicker(true)}
+            localCoachSettings={localCoachSettings}
+            onCoachSettingChange={(key: string, value: any) => handleCoachSettingChange(key as keyof CoachSettings, value)}
+            showCoachTimePickerFor={showCoachTimePickerFor}
+            formatTime={formatTime}
+            formatWeekday={formatWeekday}
+            onReminderFrequencyChange={handleReminderFrequencyChange}
           />
         )}
+      />
 
-        {showCoachTimePicker && currentCoachTimePickerMode && (
-          <DateTimePicker
-            value={currentCoachTimePickerMode.time}
-            mode="time"
-            is24Hour={true}
-            display="default"
-            onChange={handleCoachTimeChange}
-          />
-        )}
-        
-        {/* Account Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>アカウント</Text>
-          <View style={styles.buttonContainer}>
-            <PrimaryButton 
-              title="ログアウト" 
-              onPress={handleSignOut}
-              style={styles.signOutButton}
-              textStyle={styles.signOutButtonText}
-            />
-          </View>
-        </View>
-        
+      {/* Time pickers */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={notificationTime}
+          mode="time"
+          is24Hour={true}
+          display="spinner"
+          onChange={handleTimeChange}
+        />
+      )}
+
+      {showCoachTimePicker && currentCoachTimePickerMode && (
+        <DateTimePicker
+          value={currentCoachTimePickerMode.time}
+          mode="time"
+          is24Hour={true}
+          display="default"
+          onChange={handleCoachTimeChange}
+        />
+      )}
+      
+      {/* Account Actions */}
+      <View style={styles.accountSection}>
+        <PrimaryButton 
+          title="ログアウト" 
+          onPress={handleSignOut}
+          style={styles.signOutButton}
+          textStyle={styles.signOutButtonText}
+        />
         <Text style={styles.version}>PHRアプリ v1.0.0</Text>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -747,7 +468,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255,255,255,0.8)',
   },
-  section: {
+  accountSection: {
     backgroundColor: '#fff',
     marginVertical: 10,
     padding: 16,
@@ -758,169 +479,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-    color: '#333',
-  },
-  setting: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  settingLabel: {
-    fontSize: 16,
-    color: '#333',
-  },
-  permissionButton: {
-    backgroundColor: '#f0f0f0',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  permissionButtonText: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  helpText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 8,
-  },
-  buttonContainer: {
-    marginTop: 8,
   },
   signOutButton: {
     backgroundColor: '#ff3b30',
+    width: '100%',
   },
   signOutButtonText: {
     color: '#fff',
   },
   version: {
     textAlign: 'center',
-    marginVertical: 20,
+    marginTop: 20,
     color: '#999',
     fontSize: 14,
-  },
-  stepGoalSetting: {
-    marginTop: 16,
-    flexDirection: 'column',
-    alignItems: 'stretch',
-  },
-  stepGoalInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  stepGoalInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    color: '#333',
-  },
-  stepGoalUnit: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 8,
-  },
-  stepGoalButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  stepGoalButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  timePickerButton: {
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  timeText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  settingLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingIcon: {
-    marginRight: 8,
-  },
-  timePickerSetting: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingLeft: 28,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  timePickerLabel: {
-    fontSize: 14,
-    color: '#333',
-  },
-  timeDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timeDisplayText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
-    marginRight: 4,
-  },
-  frequencySelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 16,
-  },
-  frequencyOption: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    alignItems: 'center',
-    marginHorizontal: 4,
-    backgroundColor: '#f0f0f0',
-  },
-  selectedFrequency: {
-    borderColor: '#007AFF',
-    backgroundColor: '#e8f3ff',
-  },
-  frequencyText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-  },
-  selectedFrequencyText: {
-    color: '#007AFF',
-  },
-  saveCoachButton: {
-    marginTop: 16,
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveCoachButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
