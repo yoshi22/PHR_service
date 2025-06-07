@@ -31,7 +31,8 @@
           "HKQuantityTypeIdentifierDistanceWalking",
           "HKQuantityTypeIdentifierDistanceWalkingRunning",
           "HKWorkoutTypeIdentifier"
-        ]
+        ],
+        "aps-environment": "development"
       }
     },
     "android": {
@@ -59,6 +60,11 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1ca73900-a60c-4ccd-af1d-9d04e3441dbc"
+      }
+    }
   }
 }

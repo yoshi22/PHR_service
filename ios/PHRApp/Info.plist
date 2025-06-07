@@ -27,6 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>phrapp</string>
           <string>com.example.phrapp</string>
         </array>
       </dict>
@@ -46,7 +47,7 @@
     <key>NSAppTransportSecurity</key>
     <dict>
       <key>NSAllowsArbitraryLoads</key>
-      <true/>
+      <false/>
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
@@ -54,20 +55,19 @@
     <string>健康データを同期して、週次ダッシュボードを作成するために必要です。</string>
     <key>NSHealthUpdateUsageDescription</key>
     <string>体重・歩数データを取得・記録するために必要です。</string>
-    <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>Mi Bandと接続して健康データを記録するためにBluetoothを使用します。</string>
-    <key>NSBluetoothPeripheralUsageDescription</key>
-    <string>Mi Bandと接続して健康データを記録するためにBluetoothを使用します。</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>音声入力機能を使用するためにマイクへのアクセスが必要です。</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>音声認識機能を使用して音声をテキストに変換します。</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
     <array>
       <string>arm64</string>
-      <string>bluetooth-le</string>
     </array>
     <key>UIBackgroundModes</key>
     <array>
-      <string>bluetooth-central</string>
+      <string>remote-notification</string>
     </array>
     <key>UIRequiresFullScreen</key>
     <false/>
