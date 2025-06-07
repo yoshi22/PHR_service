@@ -40,6 +40,7 @@ import { LoadingProvider } from './context/LoadingContext'
 import { ToastProvider } from './context/ToastContext'
 import { ThemeProvider, useThemeContext } from './context/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
+import { SettingsProvider } from './context/SettingsContext'
 import Toast from 'react-native-toast-message';
 import { initializeNotifications } from './services/notificationService';
 import { initializeVoiceReminders } from './services/voiceReminderService';
@@ -170,7 +171,9 @@ function App() {
         <ToastProvider>
           <ThemeProvider>
             <AuthProvider>
-              <AppContent />
+              <SettingsProvider>
+                <AppContent />
+              </SettingsProvider>
             </AuthProvider>
           </ThemeProvider>
         </ToastProvider>

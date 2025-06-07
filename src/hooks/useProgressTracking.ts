@@ -3,6 +3,7 @@ import { auth } from '../firebase'
 import { useTodaySteps } from './useTodaySteps'
 import { useWeeklyMetrics } from './useWeeklyMetrics'
 import { getUserSettings } from '../services/userSettingsService'
+import { useSettings } from '../context/SettingsContext'
 
 interface ProgressData {
   daily: {
@@ -30,6 +31,8 @@ export function useProgressTracking() {
 
   const { steps: todaySteps } = useTodaySteps()
   const { data: weeklyData } = useWeeklyMetrics()
+  const { settings: userSettings } = useSettings() // Use settings from context
+  const { settings } = useSettings() // Use settings from context
 
   // Calculate progress based on current data
   const calculateProgress = useCallback(async () => {
@@ -40,9 +43,15 @@ export function useProgressTracking() {
     setError(null)
 
     try {
-      // Get user's step goal
-      const settings = await getUserSettings(user.uid)
-      const dailyTarget = settings.stepGoal
+      // Use step goal from context if available, otherwise fetch from database
+      let dailyTarget: number
+      if (userSettings?.stepGoal) {
+        dailyTarget = userSettings.stepGoal
+      } else {
+        const userSettings = await getUserSettings(user.uid)
+        dailyTarget = userSettings.stepGoal
+      }
+      
       const weeklyTarget = dailyTarget * 7
 
       // Calculate daily progress
@@ -70,7 +79,7 @@ export function useProgressTracking() {
     } finally {
       setLoading(false)
     }
-  }, [todaySteps, weeklyData])
+  }, [todaySteps, weeklyData, userSettings?.stepGoal])
 
   useEffect(() => {
     calculateProgress()

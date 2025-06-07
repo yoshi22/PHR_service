@@ -17,6 +17,7 @@ import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { useToast } from '../context/ToastContext';
 import { useThemeContext } from '../context/ThemeContext';
+import { useSettings } from '../context/SettingsContext';
 import { useCoachFeatures } from '../hooks/useCoachFeatures';
 import PrimaryButton from '../components/PrimaryButton';
 import SettingsManager from '../components/SettingsManager';
@@ -41,6 +42,7 @@ export default function ProfileScreen() {
   const { hasPermissions, request: requestPermissions, checkStatus } = usePermissions();
   const { showToast } = useToast();
   const { coachSettings, saveSettings: saveCoachSettings } = useCoachFeatures();
+  const { updateLocalSettings } = useSettings();
   
   // State for theme and notification settings
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -114,12 +116,16 @@ export default function ProfileScreen() {
       }
 
       await updateStepGoal(user.uid, goal);
+      
+      // Update settings context to trigger dashboard refresh
+      updateLocalSettings({ stepGoal: goal });
+      
       showToast('success', '目標歩数を更新しました');
     } catch (error) {
       console.error('Error updating step goal:', error);
       showToast('error', '目標歩数の更新に失敗しました');
     }
-  }, [user, stepGoal, showToast]);
+  }, [user, stepGoal, showToast, updateLocalSettings]);
 
   // Handle notification time change
   const handleTimeChange = useCallback(async (event: any, selectedDate?: Date) => {

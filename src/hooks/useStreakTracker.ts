@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
 import { db, auth } from '../firebase'
+import { useSettings } from '../context/SettingsContext'
+import { getUserSettings } from '../services/userSettingsService'
 
 interface StreakData {
   currentStreak: number
@@ -24,6 +26,7 @@ export function useStreakTracker() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { settings: userSettings } = useSettings() // Use settings from context
 
   // Calculate streak from step data
   const calculateStreak = useCallback(async (stepGoal: number = 7500) => {
@@ -148,16 +151,22 @@ export function useStreakTracker() {
     if (!user) return
 
     try {
-      // Get user's step goal from settings
-      const userSettingsService = await import('../services/userSettingsService.js')
-      const settings = await userSettingsService.getUserSettings(user.uid)
-      await calculateStreak(settings.stepGoal)
+      // Use step goal from context if available, otherwise fetch from database
+      let stepGoal: number
+      if (userSettings?.stepGoal) {
+        stepGoal = userSettings.stepGoal
+      } else {
+        const userSettingsData = await getUserSettings(user.uid)
+        stepGoal = userSettingsData.stepGoal
+      }
+      
+      await calculateStreak(stepGoal)
     } catch (error) {
       console.error('Error fetching streak:', error)
       // Fallback to default goal
       await calculateStreak(7500)
     }
-  }, [calculateStreak])
+  }, [calculateStreak, userSettings?.stepGoal])
 
   useEffect(() => {
     fetchStreak()

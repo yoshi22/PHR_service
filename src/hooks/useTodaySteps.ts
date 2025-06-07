@@ -9,6 +9,7 @@ import { getUserRegistrationDate } from '../services/userProfileService'
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useSettings } from '../context/SettingsContext'
 
 /**
  * Hook to fetch today's steps and save to Firestore.
@@ -26,9 +27,10 @@ export function useTodaySteps() {
 
   // 認証状態を取得
   const { user, isAuthenticated } = useAuth()
+  const { settings: userSettings } = useSettings() // Add settings context
 
   // ストリーク情報を取得する関数
-  const fetchStreakInfo = useCallback(async (userId: string) => {
+  const fetchStreakInfo = useCallback(async (userId: string, stepGoal: number = 7500) => {
     if (!isAuthenticated || !user || user.uid !== userId) {
       console.log('⚠️ Cannot fetch streak info: User not authenticated or unauthorized');
       return;
@@ -72,7 +74,7 @@ export function useTodaySteps() {
       
       // 今日既に目標達成しているか確認
       const todayData = stepsData.find(d => d.date === todayString);
-      const isTodayActive = todayData ? todayData.steps >= 7500 : false;
+      const isTodayActive = todayData ? todayData.steps >= stepGoal : false;
       setIsActiveToday(isTodayActive);
       
       // 連続記録（ストリーク）の計算
@@ -88,7 +90,7 @@ export function useTodaySteps() {
         const targetDateString = targetDate.toISOString().split('T')[0];
         
         const dayData = stepsData.find(d => d.date === targetDateString);
-        const hasSteps = dayData && dayData.steps >= 7500;
+        const hasSteps = dayData && dayData.steps >= stepGoal;
         
         // 現在のストリーク計算（今日を含む）
         if (i === 0) {
@@ -111,7 +113,7 @@ export function useTodaySteps() {
             const checkDateString = checkDate.toISOString().split('T')[0];
             
             const checkDayData = stepsData.find(d => d.date === checkDateString);
-            if (checkDayData && checkDayData.steps >= 7500) {
+            if (checkDayData && checkDayData.steps >= stepGoal) {
               tempLongestStreak++;
             } else {
               break;
@@ -132,7 +134,7 @@ export function useTodaySteps() {
       // ストリークのステータス設定
       if (currentStreakCount === 0) {
         setStreakStatus('ストリークなし');
-      } else if (!yesterdayStepsCount || yesterdayStepsCount < 7500) {
+      } else if (!yesterdayStepsCount || yesterdayStepsCount < stepGoal) {
         setStreakStatus('危険: 昨日の記録がありません');
       } else {
         setStreakStatus('継続中');
@@ -147,6 +149,9 @@ export function useTodaySteps() {
     setLoading(true)
     setError(null)
     try {
+      // Get step goal from settings context or use default
+      const stepGoal = userSettings?.stepGoal || 7500;
+      
       let count: number
       if (Platform.OS === 'ios') {
         await initHealthKit()
@@ -165,12 +170,12 @@ export function useTodaySteps() {
       
       await saveTodaySteps(user.uid, count)
       
-      // ストリーク情報を取得
-      await fetchStreakInfo(user.uid)
+      // ストリーク情報を取得（設定した歩数目標を使用）
+      await fetchStreakInfo(user.uid, stepGoal)
       const today = new Date().toISOString().split('T')[0]
       
       // Regular badges: award if threshold reached
-      if (count >= 7500) {
+      if (count >= stepGoal) {
         await saveBadge(user.uid, today, '7500_steps')
         
         if (!db) {
@@ -191,7 +196,7 @@ export function useTodaySteps() {
         )
         const streak3Snap = await getDocs(streak3Q)
         const stepsList3 = streak3Snap.docs.map(d => d.data().steps as number)
-        if (stepsList3.length === 3 && stepsList3.every(s => s >= 7500)) {
+        if (stepsList3.length === 3 && stepsList3.every(s => s >= stepGoal)) {
           await saveBadge(user.uid, today, '3days_streak')
         }
 
@@ -208,7 +213,7 @@ export function useTodaySteps() {
         )
         const streak5Snap = await getDocs(streak5Q)
         const stepsList5 = streak5Snap.docs.map(d => d.data().steps as number)
-        if (stepsList5.length === 5 && stepsList5.every(s => s >= 7500)) {
+        if (stepsList5.length === 5 && stepsList5.every(s => s >= stepGoal)) {
           await saveBadge(user.uid, today, '5days_streak')
         }
       }
@@ -233,7 +238,7 @@ export function useTodaySteps() {
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, user, fetchStreakInfo])
+  }, [isAuthenticated, user, fetchStreakInfo, userSettings?.stepGoal])
 
   useEffect(() => {
     if (isAuthenticated) {
