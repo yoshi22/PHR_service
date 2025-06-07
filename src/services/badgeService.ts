@@ -86,11 +86,26 @@ export async function getBadges(userId: string): Promise<BadgeRecord[]> {
     orderBy('awardedAt', 'desc')
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({
-    date: d.data().date as string,
-    type: d.data().type as string,
-    awardedAt: (d.data().awardedAt as Timestamp).toDate(),
-  }))
+  return snap.docs.map(d => {
+    const data = d.data();
+    
+    // Safely handle Firestore Timestamp conversion
+    let awardedAt: Date;
+    try {
+      awardedAt = data.awardedAt && typeof data.awardedAt.toDate === 'function' 
+        ? data.awardedAt.toDate() 
+        : new Date();
+    } catch (error: any) {
+      console.warn('Error converting awardedAt timestamp:', error);
+      awardedAt = new Date();
+    }
+    
+    return {
+      date: data.date as string,
+      type: data.type as string,
+      awardedAt,
+    };
+  });
 }
 
 /**
@@ -105,15 +120,30 @@ export function subscribeToBadges(userId: string, onUpdate: (badges: BadgeRecord
   )
   
   return onSnapshot(q, (snapshot) => {
-    const badges = snapshot.docs.map(d => ({
-      date: d.data().date as string,
-      type: d.data().type as string,
-      awardedAt: (d.data().awardedAt as Timestamp).toDate(),
-      // Mark as new if this document was just added
-      isNew: snapshot.docChanges().some(
-        change => change.type === 'added' && change.doc.id === d.id
-      )
-    }));
+    const badges = snapshot.docs.map(d => {
+      const data = d.data();
+      
+      // Safely handle Firestore Timestamp conversion
+      let awardedAt: Date;
+      try {
+        awardedAt = data.awardedAt && typeof data.awardedAt.toDate === 'function' 
+          ? data.awardedAt.toDate() 
+          : new Date();
+      } catch (error: any) {
+        console.warn('Error converting awardedAt timestamp:', error);
+        awardedAt = new Date();
+      }
+      
+      return {
+        date: data.date as string,
+        type: data.type as string,
+        awardedAt,
+        // Mark as new if this document was just added
+        isNew: snapshot.docChanges().some(
+          change => change.type === 'added' && change.doc.id === d.id
+        )
+      };
+    });
     
     onUpdate(badges);
     

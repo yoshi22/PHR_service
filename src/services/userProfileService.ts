@@ -24,11 +24,33 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     }
     
     const userData = userSnap.data();
+    
+    // Safely handle Firestore Timestamp conversion
+    let createdAt: Date;
+    try {
+      createdAt = userData.createdAt && typeof userData.createdAt.toDate === 'function' 
+        ? userData.createdAt.toDate() 
+        : new Date();
+    } catch (error) {
+      console.warn('Error converting createdAt timestamp:', error);
+      createdAt = new Date();
+    }
+    
+    let birthday: Date | undefined;
+    try {
+      birthday = userData.birthday && typeof userData.birthday.toDate === 'function'
+        ? userData.birthday.toDate()
+        : undefined;
+    } catch (error) {
+      console.warn('Error converting birthday timestamp:', error);
+      birthday = undefined;
+    }
+    
     return {
       uid: userData.uid,
       email: userData.email,
-      createdAt: userData.createdAt?.toDate() || new Date(),
-      birthday: userData.birthday?.toDate(),
+      createdAt,
+      birthday,
       name: userData.name
     };
   } catch (error) {

@@ -384,9 +384,21 @@ export const getTodayCheckin = async (userId: string): Promise<DailyCheckin | nu
     // Find today's checkin in the results
     for (const doc of querySnapshot.docs) {
       const data = doc.data();
-      const checkinDate = data.date instanceof Timestamp 
-        ? data.date.toDate() 
-        : new Date(data.date);
+      
+      // Safely handle Firestore Timestamp conversion
+      let checkinDate: Date;
+      try {
+        if (data.date instanceof Timestamp) {
+          checkinDate = data.date.toDate();
+        } else if (data.date && typeof data.date.toDate === 'function') {
+          checkinDate = data.date.toDate();
+        } else {
+          checkinDate = new Date(data.date);
+        }
+      } catch (error: any) {
+        console.warn('Error converting checkin date timestamp:', error);
+        checkinDate = new Date(data.date);
+      }
       
       checkinDate.setHours(0, 0, 0, 0);
       

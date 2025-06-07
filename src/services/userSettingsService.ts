@@ -65,15 +65,27 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
     }
     
     const data = snap.data();
+    
+    // Safely handle Firestore Timestamp conversion
+    let updatedAt: Date;
+    try {
+      updatedAt = data.updatedAt && typeof data.updatedAt.toDate === 'function' 
+        ? data.updatedAt.toDate() 
+        : new Date();
+    } catch (error: any) {
+      console.warn('Error converting updatedAt timestamp:', error);
+      updatedAt = new Date();
+    }
+    
     const settings = {
       stepGoal: data.stepGoal ?? DEFAULT_STEP_GOAL,
-      updatedAt: data.updatedAt.toDate(),
+      updatedAt,
       notificationTime: data.notificationTime ?? DEFAULT_NOTIFICATION_TIME,
     };
     
     console.log('✅ getUserSettings Retrieved Successfully:', settings);
     return settings;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ getUserSettings Error:', {
       error: error.message,
       code: error.code,
