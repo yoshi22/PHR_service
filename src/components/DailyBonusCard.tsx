@@ -40,6 +40,7 @@ export default function DailyBonusCard({ canClaim, consecutiveDays, onPress }: D
 
   return (
     <TouchableOpacity
+      testID="daily-bonus-card-container"
       style={[
         styles.container,
         { 
@@ -83,7 +84,7 @@ export default function DailyBonusCard({ canClaim, consecutiveDays, onPress }: D
       
       {canClaim && (
         <View style={styles.pulseContainer}>
-          <View style={[styles.pulseRing, { borderColor: colors.primary }]} />
+          <View testID="pulse-ring" style={[styles.pulseRing, { borderColor: colors.primary }]} />
         </View>
       )}
     </TouchableOpacity>

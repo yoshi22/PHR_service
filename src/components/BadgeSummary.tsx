@@ -31,12 +31,13 @@ export default function BadgeSummary({ badges, onViewAllPress }: BadgeSummaryPro
       </View>
       
       <View style={styles.progressBarContainer}>
-        <View style={styles.progressBar}>
+        <View style={styles.progressBar} testID="progress-bar">
           <View 
             style={[
               styles.progressFill, 
               { width: `${progressPercentage}%` }
-            ]} 
+            ]}
+            testID="progress-fill"
           />
         </View>
       </View>
@@ -53,7 +54,11 @@ export default function BadgeSummary({ badges, onViewAllPress }: BadgeSummaryPro
                   <Text style={styles.iconText}>
                     {badgeDefinition?.icon || '🏅'}
                   </Text>
-                  {isNew && <View style={styles.newIndicator} />}
+                  {isNew && (
+                    <View style={styles.newIndicator}>
+                      <Text style={styles.newIndicatorText}>新着</Text>
+                    </View>
+                  )}
                 </View>
                 <Text style={styles.badgeName} numberOfLines={2}>
                   {badgeDefinition?.name || badge.type}
@@ -167,10 +172,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
     backgroundColor: '#ff4444',
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  newIndicatorText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: 'bold',
   },
   badgeName: {
     fontSize: 10,

@@ -6,8 +6,8 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native'
  */
 export default function LoadingOverlay() {
   return (
-    <View style={styles.overlay}>
-      <ActivityIndicator size="large" color="#fff" />
+    <View style={styles.overlay} testID="loading-overlay-container">
+      <ActivityIndicator size="large" color="#fff" animating={true} testID="activity-indicator" />
     </View>
   )
 }

@@ -52,6 +52,7 @@ export default function UserLevelCard({
 
   return (
     <TouchableOpacity
+      testID="user-level-card-container"
       style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
       onPress={onPress}
       activeOpacity={onPress ? 0.7 : 1}

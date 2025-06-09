@@ -71,8 +71,10 @@ async function initializeFirebaseApp() {
   }
 }
 
-// Initialize Firebase immediately
-initializeFirebaseApp();
+// Initialize Firebase immediately only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  initializeFirebaseApp();
+}
 
 // Initialize Firebase Auth - getAuth() automatically uses AsyncStorage persistence in React Native
 let auth: Auth | undefined;

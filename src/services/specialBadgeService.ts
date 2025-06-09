@@ -275,14 +275,13 @@ export async function checkSeasonalBadges(userId: string, steps: number, date: s
   const season = getCurrentSeason();
   const currentDate = new Date();
   
-  // Summer Solstice (June 21st) - currently summer
-  if (season === 'summer' && steps >= 10000) {
-    if (currentDate.getMonth() === 5 && currentDate.getDate() === 21) { // June 21st
-      await saveBadge(userId, date, SpecialBadgeType.SUMMER_SOLSTICE);
-    } else if (steps >= 7500) {
-      // Regular summer badge for good activity
-      await saveBadge(userId, date, SpecialBadgeType.SUMMER_SOLSTICE);
-    }
+  // Summer Solstice (June 21st) - special case
+  if (season === 'summer' && currentDate.getMonth() === 5 && currentDate.getDate() === 21 && steps >= 10000) {
+    await saveBadge(userId, date, SpecialBadgeType.SUMMER_SOLSTICE);
+  }
+  // Regular summer badge for good activity (not on solstice)
+  else if (season === 'summer' && steps >= 7500) {
+    await saveBadge(userId, date, SpecialBadgeType.SUMMER_SOLSTICE);
   }
   
   // Other seasonal badges based on season and performance
@@ -358,34 +357,27 @@ export async function checkWeekendBadges(userId: string, steps: number, date: st
  * Check for anniversary badges based on user registration date
  */
 export async function checkAnniversaryBadges(userId: string, userRegistrationDate: Date, date: string): Promise<void> {
-  const currentDate = new Date();
+  const currentDate = new Date(date);
   const registrationDate = new Date(userRegistrationDate);
   
-  // Calculate time difference
+  // Calculate time difference in milliseconds
   const timeDiff = currentDate.getTime() - registrationDate.getTime();
   const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
   
-  // One month (30 days)
-  if (daysDiff >= 30 && daysDiff < 31) {
+  // One month anniversary (28-33 days to account for different month lengths)
+  if (daysDiff >= 28 && daysDiff <= 33) {
     await saveBadge(userId, date, SpecialBadgeType.ONE_MONTH_ANNIVERSARY);
   }
   
-  // Six months (180 days)
-  if (daysDiff >= 180 && daysDiff < 181) {
+  // Six month anniversary (180-185 days to account for different month lengths)
+  if (daysDiff >= 180 && daysDiff <= 185) {
     await saveBadge(userId, date, SpecialBadgeType.SIX_MONTH_ANNIVERSARY);
   }
   
-  // One year (365 days)
-  if (daysDiff >= 365 && daysDiff < 366) {
+  // One year anniversary (365-366 days to account for leap years, strict window)
+  if (daysDiff >= 365 && daysDiff <= 366) {
     await saveBadge(userId, date, SpecialBadgeType.ONE_YEAR_ANNIVERSARY);
   }
-  
-  // Birthday badge (would need user birthday in profile)
-  // For now, check if it's a special day in the year
-  const month = currentDate.getMonth() + 1;
-  const day = currentDate.getDate();
-  // Example: If user sets birthday in profile, check against that
-  // await saveBadge(userId, date, SpecialBadgeType.BIRTHDAY_SPECIAL);
 }
 
 /**

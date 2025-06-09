@@ -83,7 +83,10 @@ export default function StreakCard({
       <View style={styles.stats}>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.text }]}>現在のストリーク</Text>
-          <Text style={[styles.statValue, { color: streakColor }]}>
+          <Text 
+            style={[styles.statValue, { color: streakColor }]}
+            testID="current-streak-value"
+          >
             {currentStreak}日
           </Text>
         </View>
@@ -92,7 +95,10 @@ export default function StreakCard({
         
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.text }]}>最長記録</Text>
-          <Text style={[styles.statValue, { color: colors.text }]}>
+          <Text 
+            style={[styles.statValue, { color: colors.text }]}
+            testID="longest-streak-value"
+          >
             {longestStreak}日
           </Text>
         </View>
