@@ -10,8 +10,8 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
       // Update only if the stored userId matches the authenticated uid
       allow update: if request.auth != null && request.auth.uid == resource.data.userId;
-      // Prevent deletions
-      allow delete: if false;
+      // Allow deletions only if the stored userId matches the authenticated uid
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
     // userBadges コレクションへのアクセス制御

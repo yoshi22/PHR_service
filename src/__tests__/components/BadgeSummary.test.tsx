@@ -29,25 +29,25 @@ describe('BadgeSummary Component', () => {
     {
       date: '2023-12-01',
       type: 'daily_steps',
-      timestamp: 1701388800000,
+      awardedAt: new Date(1701388800000),
       isNew: false
     },
     {
       date: '2023-12-02',
       type: 'steps_10k',
-      timestamp: 1701475200000,
+      awardedAt: new Date(1701475200000),
       isNew: true
     },
     {
       date: '2023-12-03',
       type: 'spring_badge',
-      timestamp: 1701561600000,
+      awardedAt: new Date(1701561600000),
       isNew: false
     },
     {
       date: '2023-12-04',
       type: 'early_bird',
-      timestamp: 1701648000000,
+      awardedAt: new Date(1701648000000),
       isNew: false
     }
   ]
@@ -122,12 +122,12 @@ describe('BadgeSummary Component', () => {
 
     test('shows 100% progress when all badges earned', () => {
       const allBadges: BadgeRecord[] = [
-        { date: '2023-12-01', type: 'daily_steps', timestamp: 1701388800000, isNew: false },
-        { date: '2023-12-02', type: 'steps_10k', timestamp: 1701475200000, isNew: false },
-        { date: '2023-12-03', type: 'spring_badge', timestamp: 1701561600000, isNew: false },
-        { date: '2023-12-04', type: 'early_bird', timestamp: 1701648000000, isNew: false },
-        { date: '2023-12-05', type: 'weekend_warrior', timestamp: 1701734400000, isNew: false },
-        { date: '2023-12-06', type: 'anniversary_1month', timestamp: 1701820800000, isNew: false }
+        { date: '2023-12-01', type: 'daily_steps', awardedAt: new Date(1701388800000), isNew: false },
+        { date: '2023-12-02', type: 'steps_10k', awardedAt: new Date(1701475200000), isNew: false },
+        { date: '2023-12-03', type: 'spring_badge', awardedAt: new Date(1701561600000), isNew: false },
+        { date: '2023-12-04', type: 'early_bird', awardedAt: new Date(1701648000000), isNew: false },
+        { date: '2023-12-05', type: 'weekend_warrior', awardedAt: new Date(1701734400000), isNew: false },
+        { date: '2023-12-06', type: 'anniversary_1month', awardedAt: new Date(1701820800000), isNew: false }
       ]
 
       const { getByTestId } = render(
@@ -182,7 +182,7 @@ describe('BadgeSummary Component', () => {
         {
           date: '2023-12-01',
           type: 'daily_steps',
-          timestamp: 1701388800000,
+          awardedAt: new Date(1701388800000),
           isNew: false
         }
       ]
@@ -200,19 +200,19 @@ describe('BadgeSummary Component', () => {
         {
           date: '2023-12-03',
           type: 'spring_badge',
-          timestamp: 1701561600000,
+          awardedAt: new Date(1701561600000),
           isNew: false
         },
         {
           date: '2023-12-02',
           type: 'steps_10k',
-          timestamp: 1701475200000,
+          awardedAt: new Date(1701475200000),
           isNew: false
         },
         {
           date: '2023-12-01',
           type: 'daily_steps',
-          timestamp: 1701388800000,
+          awardedAt: new Date(1701388800000),
           isNew: false
         }
       ]
@@ -267,13 +267,13 @@ describe('BadgeSummary Component', () => {
         {
           date: '2023-12-01',
           type: 'unknown_badge',
-          timestamp: 1701388800000,
+          awardedAt: new Date(1701388800000),
           isNew: false
         },
         {
           date: '2023-12-02',
           type: 'daily_steps',
-          timestamp: 1701475200000,
+          awardedAt: new Date(1701475200000),
           isNew: false
         }
       ]
@@ -360,7 +360,7 @@ describe('BadgeSummary Component', () => {
       const largeBadgeList: BadgeRecord[] = Array.from({ length: 1000 }, (_, i) => ({
         date: `2023-12-${String((i % 30) + 1).padStart(2, '0')}`,
         type: `badge_${i}`,
-        timestamp: 1701388800000 + i * 86400000,
+        awardedAt: new Date(1701388800000) + i * 86400000,
         isNew: i < 3
       }))
 
@@ -379,7 +379,7 @@ describe('BadgeSummary Component', () => {
       const manyBadges = Array.from({ length: 20 }, (_, i) => ({
         date: `2023-12-${String(i + 1).padStart(2, '0')}`,
         type: `daily_steps`,
-        timestamp: 1701388800000 + i * 86400000,
+        awardedAt: new Date(1701388800000) + i * 86400000,
         isNew: false
       }))
 
@@ -422,13 +422,13 @@ describe('BadgeSummary Component', () => {
         {
           date: '2023-12-01',
           type: 'daily_steps',
-          timestamp: 1701388800000,
+          awardedAt: new Date(1701388800000),
           isNew: false
         },
         {
           date: '2023-12-02',
           type: 'daily_steps',
-          timestamp: 1701475200000,
+          awardedAt: new Date(1701475200000),
           isNew: false
         }
       ]

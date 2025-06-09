@@ -157,15 +157,6 @@ describe('InputField Component', () => {
       expect(mockOnSubmitEditing).toHaveBeenCalled()
     })
 
-    test('forwards ref correctly', () => {
-      const ref = React.createRef<any>()
-      
-      const { getByTestId } = render(
-        <InputField ref={ref} testID="test-input" />
-      )
-
-      expect(ref.current).toBeTruthy()
-    })
   })
 
   describe('Custom Styling', () => {

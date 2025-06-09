@@ -109,7 +109,11 @@ describe('HealthService', () => {
 
     it('should initialize HealthKit successfully on iOS', async () => {
       mockAppleHealthKit.initHealthKit.mockImplementation((permissions, callback) => {
-        callback(''); // No error
+        callback('', {
+          value: 0,
+          startDate: '',
+          endDate: ''
+        }); // No error, dummy HealthValue for initHealthKit
       });
 
       await initHealthKit();
@@ -128,7 +132,11 @@ describe('HealthService', () => {
 
     it('should handle HealthKit initialization failure', async () => {
       mockAppleHealthKit.initHealthKit.mockImplementation((permissions, callback) => {
-        callback('Initialization failed');
+        callback('Initialization failed', {
+          value: 0,
+          startDate: '',
+          endDate: ''
+        }); // Error with dummy HealthValue
       });
 
       await expect(initHealthKit()).rejects.toThrow('Initialization failed');
@@ -154,7 +162,11 @@ describe('HealthService', () => {
 
     it('should get today\'s steps successfully', async () => {
       mockAppleHealthKit.getStepCount.mockImplementation((options, callback) => {
-        callback('', { value: 5000 });
+        callback('', { 
+          value: 5000,
+          startDate: '2024-01-15T00:00:00.000Z',
+          endDate: '2024-01-15T23:59:59.999Z'
+        });
       });
 
       const result = await getTodayStepsIOS();
@@ -171,7 +183,11 @@ describe('HealthService', () => {
 
     it('should handle HealthKit errors', async () => {
       mockAppleHealthKit.getStepCount.mockImplementation((options, callback) => {
-        callback('Failed to get steps', { value: 0 });
+        callback('Failed to get steps', { 
+          value: 0,
+          startDate: '2024-01-15T00:00:00.000Z',
+          endDate: '2024-01-15T23:59:59.999Z'
+        });
       });
 
       const result = await getTodayStepsIOS();
@@ -181,7 +197,11 @@ describe('HealthService', () => {
 
     it('should handle missing step data', async () => {
       mockAppleHealthKit.getStepCount.mockImplementation((options, callback) => {
-        callback('', { value: 0 });
+        callback('', { 
+          value: 0,
+          startDate: '2024-01-15T00:00:00.000Z',
+          endDate: '2024-01-15T23:59:59.999Z'
+        });
       });
 
       const result = await getTodayStepsIOS();
@@ -206,7 +226,11 @@ describe('HealthService', () => {
         expect(startDate.getDate()).toBe(mockDate.getDate());
         expect(endDate.getDate()).toBe(mockDate.getDate());
         
-        callback('', { value: 1000 });
+        callback('', { 
+          value: 1000,
+          startDate: '2024-01-15T00:00:00.000Z',
+          endDate: '2024-01-15T23:59:59.999Z'
+        });
       });
 
       const result = await getTodayStepsIOS();
@@ -344,7 +368,11 @@ describe('HealthService', () => {
     it('should call iOS function on iOS platform', async () => {
       (Platform as any).OS = 'ios';
       mockAppleHealthKit.getStepCount.mockImplementation((options, callback) => {
-        callback('', { value: 4000 });
+        callback('', { 
+          value: 4000,
+          startDate: '2024-01-15T00:00:00.000Z',
+          endDate: '2024-01-15T23:59:59.999Z'
+        });
       });
 
       const result = await getTodaySteps();
@@ -377,7 +405,11 @@ describe('HealthService', () => {
     it('should handle iOS function errors', async () => {
       (Platform as any).OS = 'ios';
       mockAppleHealthKit.getStepCount.mockImplementation((options, callback) => {
-        callback('iOS error', { value: 0 });
+        callback('iOS error', { 
+          value: 0,
+          startDate: '2024-01-15T00:00:00.000Z',
+          endDate: '2024-01-15T23:59:59.999Z'
+        });
       });
 
       const result = await getTodaySteps();

@@ -44,8 +44,23 @@ const mockGetDocs = getDocs as jest.MockedFunction<typeof getDocs>;
 describe('useTodaySteps Hook', () => {
   const mockUser = {
     uid: 'test-user-123',
-    email: 'test@example.com'
-  };
+    email: 'test@example.com',
+    emailVerified: true,
+    isAnonymous: false,
+    metadata: {},
+    providerData: [],
+    refreshToken: 'mock-refresh-token',
+    tenantId: null,
+    delete: jest.fn(),
+    getIdToken: jest.fn(),
+    getIdTokenResult: jest.fn(),
+    reload: jest.fn(),
+    toJSON: jest.fn(),
+    displayName: null,
+    phoneNumber: null,
+    photoURL: null,
+    providerId: 'firebase'
+  } as any;
 
   const mockStepsData = [
     { date: '2024-01-15', steps: 8000 }, // Today
@@ -55,11 +70,21 @@ describe('useTodaySteps Hook', () => {
     { date: '2024-01-11', steps: 8500 }
   ];
 
-  const mockFirestoreSnapshot = {
-    docs: mockStepsData.map(data => ({
-      data: () => data
-    }))
-  };
+    const mockFirestoreSnapshot = {
+      docs: mockStepsData.map(data => ({
+        data: () => data,
+        metadata: {},
+        exists: true,
+        get: jest.fn(),
+        id: 'mock-doc-id',
+        ref: {}
+      })),
+      metadata: {},
+      query: {},
+      size: mockStepsData.length,
+      empty: false,
+      forEach: jest.fn()
+    } as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -73,18 +98,15 @@ describe('useTodaySteps Hook', () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
       isAuthenticated: true,
-      loading: false,
-      error: null,
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      signUp: jest.fn()
+      initializing: false,
+      signOut: jest.fn()
     });
 
     mockUseSettings.mockReturnValue({
-      settings: { stepGoal: 7500 },
+      settings: { stepGoal: 7500, notificationTime: '20:00' },
       loading: false,
-      error: null,
-      updateSettings: jest.fn()
+      refreshSettings: jest.fn(),
+      updateLocalSettings: jest.fn()
     });
 
     mockGetDocs.mockResolvedValue(mockFirestoreSnapshot);
@@ -177,11 +199,8 @@ describe('useTodaySteps Hook', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         isAuthenticated: false,
-        loading: false,
-        error: null,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        initializing: false,
+        signOut: jest.fn()
       });
 
       mockInitHealthKit.mockResolvedValue();
@@ -266,10 +285,10 @@ describe('useTodaySteps Hook', () => {
 
     test('should handle custom step goals from settings', async () => {
       mockUseSettings.mockReturnValue({
-        settings: { stepGoal: 10000 }, // Custom goal
+        settings: { stepGoal: 10000, notificationTime: '20:00' }, // Custom goal
         loading: false,
-        error: null,
-        updateSettings: jest.fn()
+        refreshSettings: jest.fn(),
+        updateLocalSettings: jest.fn()
       });
 
       mockInitHealthKit.mockResolvedValue();
@@ -352,8 +371,20 @@ describe('useTodaySteps Hook', () => {
       ];
 
       mockGetDocs.mockResolvedValue({
-        docs: streakData.map(data => ({ data: () => data }))
-      });
+        docs: streakData.map(data => ({ 
+          data: () => data,
+          metadata: {},
+          exists: true,
+          get: jest.fn(),
+          id: 'mock-doc-id',
+          ref: {}
+        })),
+        metadata: {},
+        query: {},
+        size: streakData.length,
+        empty: false,
+        forEach: jest.fn()
+      } as any);
 
       mockInitHealthKit.mockResolvedValue();
       mockGetTodayStepsIOS.mockResolvedValue(8000);
@@ -493,11 +524,8 @@ describe('useTodaySteps Hook', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         isAuthenticated: false,
-        loading: false,
-        error: null,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        initializing: false,
+        signOut: jest.fn()
       });
 
       renderHook(() => useTodaySteps());
@@ -513,14 +541,11 @@ describe('useTodaySteps Hook', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         isAuthenticated: false,
-        loading: false,
-        error: null,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        initializing: false,
+        signOut: jest.fn()
       });
 
-      rerender();
+      rerender({});
 
       expect(mockInitHealthKit).not.toHaveBeenCalled();
 
@@ -528,17 +553,14 @@ describe('useTodaySteps Hook', () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         isAuthenticated: true,
-        loading: false,
-        error: null,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        initializing: false,
+        signOut: jest.fn()
       });
 
       mockInitHealthKit.mockResolvedValue();
       mockGetTodayStepsIOS.mockResolvedValue(8000);
 
-      rerender();
+      rerender({});
 
       await waitFor(() => {
         expect(mockInitHealthKit).toHaveBeenCalled();
@@ -549,8 +571,8 @@ describe('useTodaySteps Hook', () => {
       mockUseSettings.mockReturnValue({
         settings: null,
         loading: false,
-        error: 'Settings unavailable',
-        updateSettings: jest.fn()
+        refreshSettings: jest.fn(),
+        updateLocalSettings: jest.fn()
       });
 
       mockInitHealthKit.mockResolvedValue();

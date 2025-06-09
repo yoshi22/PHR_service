@@ -4,6 +4,7 @@ import DashboardScreen from '../screens/DashboardScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import ChatScreenEnhanced from '../screens/ChatScreenEnhanced'
 import CoachNavigator from './CoachNavigator'
+import HealthKitDebugScreenNew from '../components/HealthKitDebugScreenNew'
 import { Ionicons } from '@expo/vector-icons'
 import { RouteProp } from '@react-navigation/native'
 
@@ -12,6 +13,7 @@ export type MainTabParamList = {
   Coach: undefined
   Chat: undefined
   Profile: undefined
+  Debug: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -31,6 +33,8 @@ export default function MainTabs() {
             iconName = 'chatbubble-ellipses'
           } else if (route.name === 'Profile') {
             iconName = 'person'
+          } else if (route.name === 'Debug') {
+            iconName = 'bug'
           }
           return <Ionicons name={iconName} size={size} color={color} />
         },
@@ -39,6 +43,7 @@ export default function MainTabs() {
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'ダッシュボード' }} />
       <Tab.Screen name="Coach" component={CoachNavigator} options={{ title: 'コーチング' }} />
       <Tab.Screen name="Chat" component={ChatScreenEnhanced} options={{ title: 'AIチャット' }} />
+      <Tab.Screen name="Debug" component={HealthKitDebugScreenNew} options={{ title: 'デバッグ' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: '設定' }} />
     </Tab.Navigator>
   )

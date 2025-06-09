@@ -226,7 +226,7 @@ describe('PrimaryButton Component', () => {
     test('applies custom text style', () => {
       const customTextStyle = {
         fontSize: 18,
-        fontWeight: 'bold'
+        fontWeight: 'bold' as const
       }
 
       const { getByText } = render(

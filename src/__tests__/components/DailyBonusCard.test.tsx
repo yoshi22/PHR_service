@@ -77,7 +77,7 @@ describe('DailyBonusCard', () => {
       const { root } = render(<DailyBonusCard {...defaultProps} canClaim={true} />)
       
       const starIcon = root.findAllByType('Ionicons').find(
-        icon => icon.props.name === 'star'
+        (icon: any) => icon.props.name === 'star'
       )
       expect(starIcon).toBeTruthy()
     })
@@ -115,7 +115,7 @@ describe('DailyBonusCard', () => {
       const { root } = render(<DailyBonusCard {...defaultProps} canClaim={false} />)
       
       const starIcon = root.findAllByType('Ionicons').find(
-        icon => icon.props.name === 'star'
+        (icon: any) => icon.props.name === 'star'
       )
       expect(starIcon).toBeFalsy()
     })
@@ -295,7 +295,7 @@ describe('DailyBonusCard', () => {
     it('should have proper header layout structure', () => {
       const { root } = render(<DailyBonusCard {...defaultProps} />)
       
-      const headerView = root.findAllByType('View').find(view =>
+      const headerView = root.findAllByType('View').find((view: any) =>
         view.props.style && 
         view.props.style.flexDirection === 'row'
       )
@@ -322,7 +322,7 @@ describe('DailyBonusCard', () => {
       
       const { root } = render(<DailyBonusCard {...defaultProps} />)
       const chevronIcon = root.findAllByType('Ionicons').find(
-        icon => icon.props.name === 'chevron-forward'
+        (icon: any) => icon.props.name === 'chevron-forward'
       )
       expect(chevronIcon).toBeTruthy()
     })

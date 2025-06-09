@@ -25,8 +25,23 @@ const mockUseToast = useToast as jest.MockedFunction<typeof useToast>;
 describe('useBadges Hook', () => {
   const mockUser = {
     uid: 'test-user-123',
-    email: 'test@example.com'
-  };
+    email: 'test@example.com',
+    emailVerified: true,
+    isAnonymous: false,
+    metadata: {},
+    providerData: [],
+    refreshToken: '',
+    tenantId: null,
+    delete: jest.fn(),
+    getIdToken: jest.fn(),
+    getIdTokenResult: jest.fn(),
+    reload: jest.fn(),
+    toJSON: jest.fn(),
+    displayName: null,
+    phoneNumber: null,
+    photoURL: null,
+    providerId: 'firebase'
+  } as any;
 
   const mockBadges: BadgeRecord[] = [
     {
@@ -54,19 +69,14 @@ describe('useBadges Hook', () => {
     
     mockUseAuth.mockReturnValue({
       user: mockUser,
+      initializing: false,
       isAuthenticated: true,
-      loading: false,
-      error: null,
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      signUp: jest.fn()
+      signOut: jest.fn()
     });
 
     mockUseToast.mockReturnValue({
-      showBadgeAcquired: mockShowBadgeAcquired,
-      showSuccess: jest.fn(),
-      showError: jest.fn(),
-      showInfo: jest.fn()
+      showToast: jest.fn(),
+      showBadgeAcquired: mockShowBadgeAcquired
     });
 
     mockGetBadgeMetadata.mockImplementation((type: string) => ({
@@ -125,12 +135,9 @@ describe('useBadges Hook', () => {
     test('should not fetch badges when user is not authenticated', () => {
       mockUseAuth.mockReturnValue({
         user: null,
+        initializing: false,
         isAuthenticated: false,
-        loading: false,
-        error: null,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        signOut: jest.fn()
       });
       
       renderHook(() => useBadges());
@@ -257,7 +264,7 @@ describe('useBadges Hook', () => {
         return mockBadgeListener;
       });
       
-      renderHook(() => useBadges());
+      const { result } = renderHook(() => useBadges());
       
       await waitFor(() => {
         expect(mockOnBadgeAcquired).toHaveBeenCalled();
@@ -429,12 +436,9 @@ describe('useBadges Hook', () => {
     test('should handle cleanup when subscriptions were not established', () => {
       mockUseAuth.mockReturnValue({
         user: null,
+        initializing: false,
         isAuthenticated: false,
-        loading: false,
-        error: null,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        signOut: jest.fn()
       });
       
       const { unmount } = renderHook(() => useBadges());
@@ -451,18 +455,33 @@ describe('useBadges Hook', () => {
       mockGetBadges.mockClear();
       
       // Change user
-      const newUser = { uid: 'new-user-456', email: 'new@example.com' };
+      const newUser = { 
+        uid: 'new-user-456', 
+        email: 'new@example.com',
+        emailVerified: true,
+        isAnonymous: false,
+        metadata: {},
+        providerData: [],
+        refreshToken: '',
+        tenantId: null,
+        delete: jest.fn(),
+        getIdToken: jest.fn(),
+        getIdTokenResult: jest.fn(),
+        reload: jest.fn(),
+        toJSON: jest.fn(),
+        displayName: null,
+        phoneNumber: null,
+        photoURL: null,
+        providerId: 'firebase'
+      } as any;
       mockUseAuth.mockReturnValue({
         user: newUser,
+        initializing: false,
         isAuthenticated: true,
-        loading: false,
-        error: null,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        signOut: jest.fn()
       });
       
-      rerender();
+      rerender({});
       
       await waitFor(() => {
         expect(mockGetBadges).toHaveBeenCalledWith(newUser.uid);
@@ -481,15 +500,12 @@ describe('useBadges Hook', () => {
       // Simulate logout
       mockUseAuth.mockReturnValue({
         user: null,
+        initializing: false,
         isAuthenticated: false,
-        loading: false,
-        error: null,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        signOut: jest.fn()
       });
       
-      rerender();
+      rerender({});
       
       // Should stop fetching and clear state
       expect(result.current.badges).toEqual([]);
