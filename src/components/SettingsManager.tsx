@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -18,6 +20,7 @@ interface SettingsManagerProps {
   onDarkModeToggle: () => void;
   stepGoal: string;
   onStepGoalUpdate: () => void;
+  onStepGoalUpdateWithValue?: (goalValue: string) => void;
   onStepGoalChange: (value: string) => void;
   
   // Advanced settings component
@@ -34,16 +37,50 @@ export default function SettingsManager({
   onDarkModeToggle,
   stepGoal,
   onStepGoalUpdate,
+  onStepGoalUpdateWithValue,
   onStepGoalChange,
   AdvancedSettingsComponent,
 }: SettingsManagerProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [quickSetupComplete, setQuickSetupComplete] = useState(false);
+  
+  // Custom step goal input states
+  const [showCustomStepGoalModal, setShowCustomStepGoalModal] = useState(false);
+  const [customStepGoalInput, setCustomStepGoalInput] = useState('');
 
   // Master toggles for grouped settings
   const [allRemindersEnabled, setAllRemindersEnabled] = useState(true);
   const [allCoachingEnabled, setAllCoachingEnabled] = useState(false);
   const [allHealthAlertsEnabled, setAllHealthAlertsEnabled] = useState(true);
+
+  // Handle custom step goal input
+  const handleCustomStepGoal = () => {
+    setCustomStepGoalInput(stepGoal);
+    setShowCustomStepGoalModal(true);
+  };
+
+  const handleCustomStepGoalSubmit = async () => {
+    const goalValue = parseInt(customStepGoalInput);
+    
+    if (isNaN(goalValue) || goalValue < 1000 || goalValue > 50000) {
+      Alert.alert('入力エラー', '目標歩数は1,000から50,000の間で入力してください');
+      return;
+    }
+
+    console.log('🔄 SettingsManager: Setting custom goal to', goalValue);
+    
+    if (onStepGoalUpdateWithValue) {
+      await onStepGoalUpdateWithValue(customStepGoalInput);
+    } else {
+      onStepGoalChange(customStepGoalInput);
+      setTimeout(async () => {
+        await onStepGoalUpdate();
+        console.log('🔄 SettingsManager: Custom goal updated to', goalValue, 'triggering refresh');
+      }, 100);
+    }
+    
+    setShowCustomStepGoalModal(false);
+  };
 
   const handleQuickSetup = () => {
     Alert.alert(
@@ -137,10 +174,43 @@ export default function SettingsManager({
                   '目標歩数を変更',
                   '新しい目標歩数を選択してください',
                   [
-                    { text: '5000歩', onPress: () => { onStepGoalChange('5000'); onStepGoalUpdate(); }},
-                    { text: '7500歩', onPress: () => { onStepGoalChange('7500'); onStepGoalUpdate(); }},
-                    { text: '10000歩', onPress: () => { onStepGoalChange('10000'); onStepGoalUpdate(); }},
-                    { text: 'カスタム', onPress: () => setShowAdvanced(true) },
+                    { text: '5000歩', onPress: async () => { 
+                      console.log('🔄 SettingsManager: Setting goal to 5000');
+                      if (onStepGoalUpdateWithValue) {
+                        await onStepGoalUpdateWithValue('5000');
+                      } else {
+                        onStepGoalChange('5000'); 
+                        setTimeout(async () => {
+                          await onStepGoalUpdate();
+                          console.log('🔄 SettingsManager: Goal updated to 5000, triggering refresh');
+                        }, 100);
+                      }
+                    }},
+                    { text: '7500歩', onPress: async () => { 
+                      console.log('🔄 SettingsManager: Setting goal to 7500');
+                      if (onStepGoalUpdateWithValue) {
+                        await onStepGoalUpdateWithValue('7500');
+                      } else {
+                        onStepGoalChange('7500'); 
+                        setTimeout(async () => {
+                          await onStepGoalUpdate();
+                          console.log('🔄 SettingsManager: Goal updated to 7500, triggering refresh');
+                        }, 100);
+                      }
+                    }},
+                    { text: '10000歩', onPress: async () => { 
+                      console.log('🔄 SettingsManager: Setting goal to 10000');
+                      if (onStepGoalUpdateWithValue) {
+                        await onStepGoalUpdateWithValue('10000');
+                      } else {
+                        onStepGoalChange('10000'); 
+                        setTimeout(async () => {
+                          await onStepGoalUpdate();
+                          console.log('🔄 SettingsManager: Goal updated to 10000, triggering refresh');
+                        }, 100);
+                      }
+                    }},
+                    { text: 'カスタム', onPress: () => handleCustomStepGoal() },
                     { text: 'キャンセル', style: 'cancel' },
                   ]
                 );
@@ -227,6 +297,47 @@ export default function SettingsManager({
           <AdvancedSettingsComponent />
         </View>
       )}
+
+      {/* Custom Step Goal Modal */}
+      <Modal
+        visible={showCustomStepGoalModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCustomStepGoalModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>カスタム目標歩数を設定</Text>
+            <Text style={styles.modalSubtitle}>1日の目標歩数を入力してください（1,000〜50,000歩）</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              value={customStepGoalInput}
+              onChangeText={setCustomStepGoalInput}
+              placeholder="例: 8000"
+              keyboardType="numeric"
+              autoFocus={true}
+              selectTextOnFocus={true}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setShowCustomStepGoalModal(false)}
+              >
+                <Text style={styles.modalCancelText}>キャンセル</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.modalSubmitButton}
+                onPress={handleCustomStepGoalSubmit}
+              >
+                <Text style={styles.modalSubmitText}>設定</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -382,5 +493,80 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 12,
     overflow: 'hidden',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 24,
+    width: '80%',
+    maxWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    backgroundColor: '#F9F9F9',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+    marginRight: 8,
+  },
+  modalCancelText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  modalSubmitButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+    marginLeft: 8,
+  },
+  modalSubmitText: {
+    fontSize: 16,
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });

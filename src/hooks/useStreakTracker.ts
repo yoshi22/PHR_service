@@ -26,7 +26,7 @@ export function useStreakTracker() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { settings: userSettings } = useSettings() // Use settings from context
+  const { settings } = useSettings() // Use settings from context
 
   // Calculate streak from step data
   const calculateStreak = useCallback(async (stepGoal: number = 7500) => {
@@ -153,8 +153,8 @@ export function useStreakTracker() {
     try {
       // Use step goal from context if available, otherwise fetch from database
       let stepGoal: number
-      if (userSettings?.stepGoal) {
-        stepGoal = userSettings.stepGoal
+      if (settings?.stepGoal) {
+        stepGoal = settings.stepGoal
       } else {
         const userSettingsData = await getUserSettings(user.uid)
         stepGoal = userSettingsData.stepGoal
@@ -166,7 +166,7 @@ export function useStreakTracker() {
       // Fallback to default goal
       await calculateStreak(7500)
     }
-  }, [calculateStreak, userSettings?.stepGoal])
+  }, [calculateStreak, settings?.stepGoal])
 
   useEffect(() => {
     fetchStreak()

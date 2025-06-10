@@ -27,7 +27,7 @@ export function useTodaySteps() {
 
   // 認証状態を取得
   const { user, isAuthenticated } = useAuth()
-  const { settings: userSettings } = useSettings() // Add settings context
+  const { settings } = useSettings() // Use settings context
 
   // ストリーク情報を取得する関数
   const fetchStreakInfo = useCallback(async (userId: string, stepGoal: number = 7500) => {
@@ -150,7 +150,7 @@ export function useTodaySteps() {
     setError(null)
     try {
       // Get step goal from settings context or use default
-      const stepGoal = userSettings?.stepGoal || 7500;
+      const stepGoal = settings?.stepGoal || 7500;
       
       let count: number
       if (Platform.OS === 'ios') {
@@ -238,7 +238,7 @@ export function useTodaySteps() {
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, user, fetchStreakInfo, userSettings?.stepGoal])
+  }, [isAuthenticated, user, fetchStreakInfo, settings?.stepGoal])
 
   useEffect(() => {
     if (isAuthenticated) {

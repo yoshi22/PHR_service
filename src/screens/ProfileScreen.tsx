@@ -42,7 +42,7 @@ export default function ProfileScreen() {
   const { hasPermissions, request: requestPermissions, checkStatus } = usePermissions();
   const { showToast } = useToast();
   const { coachSettings, saveSettings: saveCoachSettings } = useCoachFeatures();
-  const { updateLocalSettings } = useSettings();
+  const { updateLocalSettings, settings, refreshSettings } = useSettings();
   
   // State for theme and notification settings
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -115,17 +115,75 @@ export default function ProfileScreen() {
         return showToast('error', '目標歩数は1,000から50,000の間で設定してください');
       }
 
+      console.log('🔄 ProfileScreen: Starting step goal update:', { from: settings?.stepGoal, to: goal });
+      
+      // Update database first
       await updateStepGoal(user.uid, goal);
+      console.log('✅ ProfileScreen: Database updated successfully');
       
       // Update settings context to trigger dashboard refresh
       updateLocalSettings({ stepGoal: goal });
+      console.log('✅ ProfileScreen: Local settings updated');
+      
+      // Force refresh of settings context from database
+      await refreshSettings();
+      console.log('✅ ProfileScreen: Settings context refreshed');
+      
+      // Force immediate refresh of all data sources with a small delay
+      setTimeout(() => {
+        // Trigger a refresh event that other components can listen to
+        console.log('🔄 ProfileScreen: Step goal updated, triggering app-wide refresh');
+      }, 100);
       
       showToast('success', '目標歩数を更新しました');
     } catch (error) {
       console.error('Error updating step goal:', error);
       showToast('error', '目標歩数の更新に失敗しました');
     }
-  }, [user, stepGoal, showToast, updateLocalSettings]);
+  }, [user, stepGoal, showToast, updateLocalSettings, refreshSettings, settings?.stepGoal]);
+
+  // Handle step goal update with specific value
+  const handleStepGoalUpdateWithValue = useCallback(async (goalValue: string) => {
+    if (!user) {
+      showToast('error', 'ユーザー認証が必要です');
+      return;
+    }
+    
+    try {
+      const goal = parseInt(goalValue);
+      if (isNaN(goal) || goal < 1000 || goal > 50000) {
+        return showToast('error', '目標歩数は1,000から50,000の間で設定してください');
+      }
+
+      console.log('🔄 ProfileScreen: Starting step goal update with value:', { from: settings?.stepGoal, to: goal, goalValue });
+      
+      // Update local state first
+      setStepGoal(goalValue);
+      
+      // Update database
+      await updateStepGoal(user.uid, goal);
+      console.log('✅ ProfileScreen: Database updated successfully');
+      
+      // Update settings context to trigger dashboard refresh
+      updateLocalSettings({ stepGoal: goal });
+      console.log('✅ ProfileScreen: Local settings updated');
+      
+      // Force refresh of settings context from database
+      await refreshSettings();
+      console.log('✅ ProfileScreen: Settings context refreshed');
+      
+      // Force immediate refresh of all data sources with a small delay
+      setTimeout(() => {
+        // Trigger a refresh event that other components can listen to
+        console.log('🔄 ProfileScreen: Step goal updated, triggering app-wide refresh');
+      }, 100);
+      
+      showToast('success', '目標歩数を更新しました');
+    } catch (error) {
+      console.error('Error updating step goal:', error);
+      showToast('error', '目標歩数の更新に失敗しました');
+    }
+  }, [user, showToast, updateLocalSettings, refreshSettings, settings?.stepGoal]);
 
   // Handle notification time change
   const handleTimeChange = useCallback(async (event: any, selectedDate?: Date) => {
@@ -398,6 +456,7 @@ export default function ProfileScreen() {
         onDarkModeToggle={toggleDarkMode}
         stepGoal={stepGoal}
         onStepGoalUpdate={handleStepGoalUpdate}
+        onStepGoalUpdateWithValue={handleStepGoalUpdateWithValue}
         onStepGoalChange={setStepGoal}
         AdvancedSettingsComponent={() => (
           <AdvancedSettings

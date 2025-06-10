@@ -100,6 +100,8 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
  * Update user step goal
  */
 export async function updateStepGoal(userId: string, stepGoal: number): Promise<void> {
+  console.log('🔄 updateStepGoal: Starting update:', { userId, stepGoal });
+  
   // 認証状態を確認
   const user = requireAuth();
   if (user.uid !== userId) {
@@ -108,10 +110,14 @@ export async function updateStepGoal(userId: string, stepGoal: number): Promise<
 
   const firestore = getFirestore();
   const ref = doc(firestore, SETTINGS_COLLECTION, userId);
+  
+  console.log('🔄 updateStepGoal: Updating Firestore document...');
   await setDoc(ref, {
     stepGoal,
     updatedAt: serverTimestamp(),
   }, { merge: true });
+  
+  console.log('✅ updateStepGoal: Firestore update completed');
 }
 
 /**

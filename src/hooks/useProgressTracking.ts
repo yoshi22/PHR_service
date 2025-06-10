@@ -31,7 +31,6 @@ export function useProgressTracking() {
 
   const { steps: todaySteps } = useTodaySteps()
   const { data: weeklyData } = useWeeklyMetrics()
-  const { settings: userSettings } = useSettings() // Use settings from context
   const { settings } = useSettings() // Use settings from context
 
   // Calculate progress based on current data
@@ -45,8 +44,8 @@ export function useProgressTracking() {
     try {
       // Use step goal from context if available, otherwise fetch from database
       let dailyTarget: number
-      if (userSettings?.stepGoal) {
-        dailyTarget = userSettings.stepGoal
+      if (settings?.stepGoal) {
+        dailyTarget = settings.stepGoal
       } else {
         const userSettings = await getUserSettings(user.uid)
         dailyTarget = userSettings.stepGoal
@@ -79,7 +78,7 @@ export function useProgressTracking() {
     } finally {
       setLoading(false)
     }
-  }, [todaySteps, weeklyData, userSettings?.stepGoal])
+  }, [todaySteps, weeklyData, settings?.stepGoal])
 
   useEffect(() => {
     calculateProgress()
