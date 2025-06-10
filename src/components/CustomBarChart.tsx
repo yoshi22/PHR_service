@@ -301,7 +301,7 @@ export default function CustomBarChart({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    alignItems: 'center', // グラフを中央に配置
+    alignItems: 'stretch', // 中央寄せを解除して左寄せに
   },
   svgContainer: {
     alignItems: 'center',
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     width: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 4, // ProgressBarのラベルと同じ位置に合わせる（16+4=20px）
     marginBottom: 8,
   },
   chartTitle: {

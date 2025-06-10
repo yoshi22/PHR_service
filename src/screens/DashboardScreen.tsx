@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     width: '100%', 
     alignItems: 'center', 
     marginBottom: 20,
-    paddingHorizontal: 0, // 余分なパディングを削除
+    paddingHorizontal: 16, // ProgressBarと同じ左端位置に合わせる
   },
   badgeSection: { width: '100%', padding: 16, borderTopWidth: 1, borderColor: '#ddd', marginTop: 10 },
   sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
