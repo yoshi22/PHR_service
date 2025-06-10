@@ -69,15 +69,17 @@ export const getHealthKitStepsData = (): Promise<Array<{ date: string; steps: nu
       for (let i = 0; i < dates.length; i++) {
         const dateStr = dates[i]
         const [y, m, d] = dateStr.split('-').map(Number)
-        const targetDate = new Date(y, m - 1, d)
         
+        // 日本時間で正確な日付範囲を設定
+        const targetDate = new Date(y, m - 1, d)
         const startDate = new Date(targetDate)
-        startDate.setHours(0, 0, 0, 0)
+        startDate.setHours(0, 0, 0, 0) // その日の00:00:00
         const endDate = new Date(targetDate)
-        endDate.setHours(23, 59, 59, 999)
+        endDate.setHours(23, 59, 59, 999) // その日の23:59:59
         
         console.log(`\n🔍 Processing ${dateStr} (${i + 1}/${dates.length})`)
         console.log(`  Time range: ${startDate.toISOString()} to ${endDate.toISOString()}`)
+        console.log(`  Local time: ${startDate.toLocaleString('ja-JP')} to ${endDate.toLocaleString('ja-JP')}`)
         
         const options = {
           startDate: startDate.toISOString(),

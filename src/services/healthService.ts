@@ -97,8 +97,12 @@ export function initHealthKit(): Promise<void> {
 // --- iOS: 当日の歩数取得 ---
 export function getTodayStepsIOS(): Promise<number> {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  // 今日の日付を日本時間で正確に設定
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const start = new Date(today);
+  start.setHours(0, 0, 0, 0); // 今日の00:00:00
+  const end = new Date(today);
+  end.setHours(23, 59, 59, 999); // 今日の23:59:59
   
   const options = { 
     startDate: start.toISOString(), 
@@ -106,6 +110,7 @@ export function getTodayStepsIOS(): Promise<number> {
   };
   
   console.log(`📱 Getting today's steps from ${start.toISOString()} to ${end.toISOString()}`);
+  console.log(`📱 Local time range: ${start.toLocaleString('ja-JP')} to ${end.toLocaleString('ja-JP')}`);
   
   return new Promise((resolve, reject) => {
     AppleHealthKit.getStepCount(options, (err: string, result: HealthValue) => {
