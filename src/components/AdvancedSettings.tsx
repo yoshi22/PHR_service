@@ -24,6 +24,22 @@ interface AdvancedSettingsProps {
   formatTime: (hour: number, minute: number) => string;
   formatWeekday: (day: number) => string;
   onReminderFrequencyChange: (frequency: 'low' | 'medium' | 'high') => void;
+  // Activity tracker props
+  miBandConnected: boolean;
+  miBandSteps?: number;
+  miBandHeartRate?: number;
+  miBandLastSync?: number;
+  appleWatchConnected: boolean;
+  appleWatchSupported: boolean;
+  appleWatchData?: { steps?: number; distance?: number };
+  appleWatchLastSync?: number;
+  fitbitConnected: boolean;
+  fitbitData?: { steps?: number; calories?: number };
+  fitbitLastSync?: number;
+  onMiBandSetup: () => void;
+  onAppleWatchSetup: () => void;
+  onFitbitSetup: () => void;
+  onSyncData: (type: 'miband' | 'applewatch' | 'fitbit') => void;
 }
 
 /**
@@ -40,6 +56,22 @@ export default function AdvancedSettings({
   formatTime,
   formatWeekday,
   onReminderFrequencyChange,
+  // Activity tracker props
+  miBandConnected,
+  miBandSteps,
+  miBandHeartRate,
+  miBandLastSync,
+  appleWatchConnected,
+  appleWatchSupported,
+  appleWatchData,
+  appleWatchLastSync,
+  fitbitConnected,
+  fitbitData,
+  fitbitLastSync,
+  onMiBandSetup,
+  onAppleWatchSetup,
+  onFitbitSetup,
+  onSyncData,
 }: AdvancedSettingsProps) {
   return (
     <View style={styles.container}>
@@ -255,6 +287,134 @@ export default function AdvancedSettings({
         </>
       )}
       
+      {/* Activity Tracker Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>アクティビティトラッカー連携</Text>
+        
+        {/* Mi Band */}
+        <View style={styles.trackerItem}>
+          <View style={styles.trackerHeader}>
+            <View style={styles.trackerInfo}>
+              <Ionicons name="watch" size={24} color="#FF6900" />
+              <View style={styles.trackerTextContainer}>
+                <Text style={styles.trackerName}>Mi Band</Text>
+                <Text style={[
+                  styles.trackerStatus,
+                  { color: miBandConnected ? '#34C759' : '#FF3B30' }
+                ]}>
+                  {miBandConnected ? '接続中' : '未接続'}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[styles.setupButton, { backgroundColor: '#FF6900' }]}
+              onPress={onMiBandSetup}
+            >
+              <Text style={styles.setupButtonText}>設定</Text>
+            </TouchableOpacity>
+          </View>
+          {miBandConnected && (
+            <View style={styles.trackerData}>
+              <Text style={styles.dataText}>歩数: {miBandSteps?.toLocaleString() || '---'}</Text>
+              <Text style={styles.dataText}>心拍数: {miBandHeartRate || '---'} bpm</Text>
+              {miBandLastSync && (
+                <Text style={styles.syncTime}>
+                  最終同期: {new Date(miBandLastSync).toLocaleString('ja-JP')}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* Apple Watch */}
+        {appleWatchSupported && (
+          <View style={styles.trackerItem}>
+            <View style={styles.trackerHeader}>
+              <View style={styles.trackerInfo}>
+                <Ionicons name="watch" size={24} color="#000000" />
+                <View style={styles.trackerTextContainer}>
+                  <Text style={styles.trackerName}>Apple Watch</Text>
+                  <Text style={[
+                    styles.trackerStatus,
+                    { color: appleWatchConnected ? '#34C759' : '#FF3B30' }
+                  ]}>
+                    {appleWatchConnected ? '接続中' : '未接続'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.trackerActions}>
+                <TouchableOpacity
+                  style={[styles.syncButton, { backgroundColor: '#007AFF' }]}
+                  onPress={() => onSyncData('applewatch')}
+                >
+                  <Ionicons name="sync" size={16} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.setupButton, { backgroundColor: '#000000' }]}
+                  onPress={onAppleWatchSetup}
+                >
+                  <Text style={styles.setupButtonText}>設定</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            {appleWatchConnected && appleWatchData && (
+              <View style={styles.trackerData}>
+                <Text style={styles.dataText}>歩数: {appleWatchData.steps?.toLocaleString() || '---'}</Text>
+                <Text style={styles.dataText}>距離: {appleWatchData.distance?.toFixed(2) || '---'} km</Text>
+                {appleWatchLastSync && (
+                  <Text style={styles.syncTime}>
+                    最終同期: {new Date(appleWatchLastSync).toLocaleString('ja-JP')}
+                  </Text>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Fitbit */}
+        <View style={styles.trackerItem}>
+          <View style={styles.trackerHeader}>
+            <View style={styles.trackerInfo}>
+              <Ionicons name="fitness" size={24} color="#00B0B9" />
+              <View style={styles.trackerTextContainer}>
+                <Text style={styles.trackerName}>Fitbit</Text>
+                <Text style={[
+                  styles.trackerStatus,
+                  { color: fitbitConnected ? '#34C759' : '#FF3B30' }
+                ]}>
+                  {fitbitConnected ? '接続中' : '未接続'}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.trackerActions}>
+              <TouchableOpacity
+                style={[styles.syncButton, { backgroundColor: '#007AFF' }]}
+                onPress={() => onSyncData('fitbit')}
+              >
+                <Ionicons name="sync" size={16} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.setupButton, { backgroundColor: '#00B0B9' }]}
+                onPress={onFitbitSetup}
+              >
+                <Text style={styles.setupButtonText}>設定</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {fitbitConnected && fitbitData && (
+            <View style={styles.trackerData}>
+              <Text style={styles.dataText}>歩数: {fitbitData.steps?.toLocaleString() || '---'}</Text>
+              <Text style={styles.dataText}>カロリー: {fitbitData.calories || '---'} kcal</Text>
+              {fitbitLastSync && (
+                <Text style={styles.syncTime}>
+                  最終同期: {new Date(fitbitLastSync).toLocaleString('ja-JP')}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+      </View>
+      
       {/* Developer/Expert Settings */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>エキスパート設定</Text>
@@ -387,5 +547,71 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#D32F2F',
     fontWeight: '500',
+  },
+  // Activity tracker styles
+  trackerItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  trackerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  trackerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  trackerTextContainer: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  trackerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  trackerStatus: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  trackerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  syncButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  setupButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  setupButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  trackerData: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  dataText: {
+    fontSize: 14,
+    marginBottom: 4,
+    color: '#333',
+  },
+  syncTime: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
   },
 });
