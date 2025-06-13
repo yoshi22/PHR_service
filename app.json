@@ -55,7 +55,8 @@
         "expo-build-properties",
         {
           "ios": {
-            "microphonePermission": "音声入力機能のためにマイクを使用します。"
+            "microphonePermission": "音声入力機能のためにマイクを使用します。",
+            "useFrameworks": "static"
           }
         }
       ]
