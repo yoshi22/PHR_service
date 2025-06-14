@@ -1,4 +1,4 @@
-package com.example.phrapp
+package com.yoshi22.phrappdev
 
 import android.os.Build
 import android.os.Bundle

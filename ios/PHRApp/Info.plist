@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>phrapp</string>
-          <string>com.yoshi22.phrapp-dev</string>
+          <string>com.yoshi22.phrapp.dev</string>
         </array>
       </dict>
       <dict>
@@ -51,6 +51,10 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Mi Bandなどのヘルスデバイスとの接続のためにBluetoothアクセスが必要です。</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>ヘルスデバイスとの通信のためにBluetooth周辺機器へのアクセスが必要です。</string>
     <key>NSHealthShareUsageDescription</key>
     <string>健康データを同期して、週次ダッシュボードを作成するために必要です。</string>
     <key>NSHealthUpdateUsageDescription</key>

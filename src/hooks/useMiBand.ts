@@ -3,6 +3,7 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import { Device } from 'react-native-ble-plx';
 import { useAuth } from './useAuth';
 import * as miBandService from '../services/miBandService';
+import * as miBandDebugService from '../services/miBandService_debug';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useMiBand() {
@@ -59,6 +60,36 @@ export function useMiBand() {
     loadLastSyncTime();
   }, []);
 
+  // デバッグ用: 全デバイススキャン
+  const startDebugScan = useCallback(async () => {
+    setError(null);
+    
+    if (!(await checkPermissions())) {
+      return;
+    }
+
+    try {
+      setIsScanning(true);
+      
+      // デバッグサービスを使用して包括的スキャン
+      const foundDevice = await miBandDebugService.scanForMiBandImproved();
+      setIsScanning(false);
+
+      if (foundDevice) {
+        console.log('Debug scan found device:', foundDevice.name, foundDevice.id);
+        setDevice(foundDevice);
+        return foundDevice;
+      } else {
+        setError('デバッグスキャンでもMi Bandが見つかりませんでした。周辺のすべてのBLEデバイスをログで確認してください。');
+        return null;
+      }
+    } catch (e) {
+      setIsScanning(false);
+      setError('デバッグスキャンエラー: ' + e);
+      return null;
+    }
+  }, [checkPermissions]);
+
   // Mi Bandをスキャン
   const startScan = useCallback(async () => {
     setError(null);
@@ -69,15 +100,46 @@ export function useMiBand() {
 
     try {
       setIsScanning(true);
-      const foundDevice = await miBandService.scanForMiBand();
-      setIsScanning(false);
+      
+      // BLEマネージャーを初期化
+      miBandService.initializeBLE();
+      
+      // 少し待ってからBluetooth状態を確認
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Bluetooth状態を確認
+      const bluetoothState = await miBandService.checkBluetoothState();
+      console.log('Bluetooth state before scan:', bluetoothState);
+      
+      if (bluetoothState !== 'PoweredOn') {
+        setIsScanning(false);
+        const stateMessage = bluetoothState === 'Unknown' 
+          ? 'Bluetooth状態を確認できません' 
+          : `Bluetooth状態: ${bluetoothState}`;
+        setError(`${stateMessage}. 設定でBluetoothを有効にしてください。`);
+        return null;
+      }
 
-      if (foundDevice) {
+      // まず通常のスキャンを試行
+      const foundDevice = await miBandService.scanForMiBand();
+      
+      if (!foundDevice) {
+        console.log('通常スキャンで見つからなかったため、デバッグスキャンを実行...');
+        // 通常スキャンで見つからない場合、デバッグスキャンを実行
+        const debugFoundDevice = await miBandDebugService.scanForMiBandImproved();
+        setIsScanning(false);
+        
+        if (debugFoundDevice) {
+          setDevice(debugFoundDevice);
+          return debugFoundDevice;
+        } else {
+          setError('Mi Bandが見つかりませんでした。Mi Bandがペアリングモードになっているか、近くにあることを確認してください。');
+          return null;
+        }
+      } else {
+        setIsScanning(false);
         setDevice(foundDevice);
         return foundDevice;
-      } else {
-        setError('Mi Bandが見つかりませんでした。');
-        return null;
       }
     } catch (e) {
       setIsScanning(false);
@@ -97,6 +159,15 @@ export function useMiBand() {
     try {
       setError(null);
       setIsConnecting(true);
+      
+      // 接続前にBluetooth状態を再確認
+      const bluetoothState = await miBandService.checkBluetoothState();
+      if (bluetoothState !== 'PoweredOn') {
+        setIsConnecting(false);
+        setError(`Bluetooth接続できません: ${bluetoothState}`);
+        return false;
+      }
+      
       const connected = await miBandService.connectToMiBand(targetDevice);
       setIsConnecting(false);
 
@@ -104,12 +175,13 @@ export function useMiBand() {
         setIsConnected(true);
         return true;
       } else {
-        setError('接続に失敗しました。');
+        setError('デバイスへの接続に失敗しました。');
         return false;
       }
     } catch (e) {
       setIsConnecting(false);
-      setError('接続エラー: ' + e);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setError('接続エラー: ' + errorMessage);
       return false;
     }
   }, [device]);
@@ -205,6 +277,7 @@ export function useMiBand() {
     lastSyncTime,
     error,
     startScan,
+    startDebugScan, // デバッグ機能を追加
     connect,
     startHeartRateMonitoring,
     syncStepsData,

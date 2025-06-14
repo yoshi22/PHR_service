@@ -15,12 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yoshi22.phrapp-dev",
+      "bundleIdentifier": "com.yoshi22.phrapp.dev",
       "infoPlist": {
         "NSHealthShareUsageDescription": "健康データを同期して、週次ダッシュボードを作成するために必要です。",
         "NSHealthUpdateUsageDescription": "体重・歩数データを取得・記録するために必要です。",
         "NSMicrophoneUsageDescription": "音声入力機能を使用するためにマイクへのアクセスが必要です。",
-        "NSSpeechRecognitionUsageDescription": "音声認識機能を使用して音声をテキストに変換します。"
+        "NSSpeechRecognitionUsageDescription": "音声認識機能を使用して音声をテキストに変換します。",
+        "NSBluetoothAlwaysUsageDescription": "Mi Bandなどのヘルスデバイスとの接続のためにBluetoothアクセスが必要です。",
+        "NSBluetoothPeripheralUsageDescription": "ヘルスデバイスとの通信のためにBluetooth周辺機器へのアクセスが必要です。"
       },
       "entitlements": {
         "com.apple.developer.healthkit": [
@@ -35,11 +37,17 @@
       }
     },
     "android": {
-      "package": "com.yoshi22.phrapp-dev",
+      "package": "com.yoshi22.phrapp.dev",
       "permissions": [
         "com.google.android.apps.fitness.permission.ACTIVITY_READ",
         "com.google.android.apps.fitness.permission.ACTIVITY_WRITE",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
