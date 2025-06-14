@@ -29,7 +29,6 @@ export const initializeHealthKit = (): Promise<boolean> => {
         console.error('HealthKit initialization error:', error)
         reject(error)
       } else {
-        console.log('HealthKit initialized successfully')
         resolve(true)
       }
     })
@@ -43,7 +42,6 @@ export const initializeHealthKit = (): Promise<boolean> => {
 export const getHealthKitStepsData = (): Promise<Array<{ date: string; steps: number }>> => {
   return new Promise(async (resolve, reject) => {
     if (Platform.OS !== 'ios') {
-      console.log('HealthKit not available on Android platform')
       resolve([])
       return
     }
@@ -60,7 +58,6 @@ export const getHealthKitStepsData = (): Promise<Array<{ date: string; steps: nu
       const dateStr = `${year}-${month}-${day}`
       dates.push(dateStr)
     }
-    console.log(`📊 Fetching HealthKit data with cross-validation for: ${dates.join(', ')}`)
 
     try {
       const results: Array<{ date: string; steps: number }> = []
@@ -77,10 +74,6 @@ export const getHealthKitStepsData = (): Promise<Array<{ date: string; steps: nu
         const endDate = new Date(targetDate)
         endDate.setHours(23, 59, 59, 999) // その日の23:59:59
         
-        console.log(`\n🔍 Processing ${dateStr} (${i + 1}/${dates.length})`)
-        console.log(`  Time range: ${startDate.toISOString()} to ${endDate.toISOString()}`)
-        console.log(`  Local time: ${startDate.toLocaleString('ja-JP')} to ${endDate.toLocaleString('ja-JP')}`)
-        
         const options = {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
@@ -94,8 +87,6 @@ export const getHealthKitStepsData = (): Promise<Array<{ date: string; steps: nu
               resolveSamples(0)
               return
             }
-            
-            console.log(`📱 getDailyStepCountSamples for ${dateStr}:`, samplesData ? samplesData.length : 0, 'samples')
             
             if (!samplesData || !Array.isArray(samplesData)) {
               resolveSamples(0)
@@ -113,8 +104,6 @@ export const getHealthKitStepsData = (): Promise<Array<{ date: string; steps: nu
               const sd = String(sampleDate.getDate()).padStart(2, '0')
               const sampleDateStr = `${sy}-${sm}-${sd}`
               
-              console.log(`    Sample ${index}: ${sample.value} steps, date: ${sampleDateStr}, start: ${sample.startDate}`)
-              
               // Ultra-strict date matching
               if (sampleDateStr === dateStr) {
                 // Additional validation: check if sample falls within our exact time range
@@ -126,18 +115,14 @@ export const getHealthKitStepsData = (): Promise<Array<{ date: string; steps: nu
                   const steps = Math.round(sample.value || 0)
                   totalSteps += steps
                   validSamples++
-                  console.log(`    ✅ Valid sample: ${steps} steps`)
                 } else {
                   invalidSamples++
-                  console.log(`    ❌ Sample outside time range: ${sample.startDate}`)
                 }
               } else {
                 invalidSamples++
-                console.log(`    ❌ Sample date mismatch: ${sampleDateStr} (expected: ${dateStr})`)
               }
             })
             
-            console.log(`  📊 getDailyStepCountSamples result for ${dateStr}: ${totalSteps} steps (${validSamples} valid, ${invalidSamples} invalid samples)`)
             resolveSamples(totalSteps)
           })
         })
@@ -152,57 +137,26 @@ export const getHealthKitStepsData = (): Promise<Array<{ date: string; steps: nu
             }
             
             const steps = stepCountData && typeof stepCountData.value === 'number' ? Math.round(stepCountData.value) : 0
-            console.log(`  📊 getStepCount result for ${dateStr}: ${steps} steps`)
             resolveStepCount(steps)
           })
         })
         
         // Cross-validate the results
-        console.log(`  🔍 Cross-validation for ${dateStr}:`)
-        console.log(`    getDailyStepCountSamples: ${samplesResult} steps`)
-        console.log(`    getStepCount: ${stepCountResult} steps`)
-        
         let finalSteps = samplesResult
         
         // If there's a significant discrepancy, flag it
         if (Math.abs(samplesResult - stepCountResult) > 10 && stepCountResult > 0) {
-          console.log(`  ⚠️ Discrepancy detected for ${dateStr}! Using getStepCount result: ${stepCountResult}`)
           finalSteps = stepCountResult
         } else if (samplesResult === 0 && stepCountResult > 0) {
-          console.log(`  ⚠️ getDailyStepCountSamples returned 0 but getStepCount returned ${stepCountResult}. Using getStepCount.`)
           finalSteps = stepCountResult
         }
         
         results.push({ date: dateStr, steps: finalSteps })
         
-        // Check for duplicates as we go
-        if (results.length > 1) {
-          const currentSteps = finalSteps
-          const previousSteps = results[results.length - 2].steps
-          if (currentSteps === previousSteps && currentSteps > 0) {
-            console.log(`  🚨 DUPLICATE DETECTED: ${dateStr} has same steps (${currentSteps}) as previous date!`)
-            console.log(`  🔍 This suggests a fundamental HealthKit API issue that needs investigation`)
-          }
-        }
-        
         // Add delay to avoid overwhelming HealthKit
         if (i < dates.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 750))
         }
-      }
-      
-      // Final analysis
-      console.log('\n📊 Final cross-validated results:', results)
-      
-      const stepValues = results.filter(r => r.steps > 0).map(r => r.steps)
-      const uniqueSteps = new Set(stepValues)
-      
-      if (stepValues.length > 0 && uniqueSteps.size === 1) {
-        console.log('🚨 CRITICAL: All dates have identical step counts!')
-        console.log(`🚨 This confirms a systematic issue with HealthKit data retrieval`)
-        console.log(`🚨 Identical value: ${stepValues[0]} steps for all ${stepValues.length} days`)
-      } else {
-        console.log('✅ Data shows normal variation across dates')
       }
       
       resolve(results)

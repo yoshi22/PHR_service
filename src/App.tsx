@@ -131,7 +131,6 @@ function App() {
         });
 
         setFirebaseInitialized(true);
-        console.log('✅ Firebase initialized successfully');
         
       } catch (error) {
         console.error('Firebase initialization error:', error);
@@ -189,11 +188,6 @@ const AppContent = () => {
   const { loading: profileLoading, error: profileError } = useUserProfile(user?.uid);
   const [forceUpdate, setForceUpdate] = React.useState(0);
   
-  // 認証状態が変更されたときにコンソールに出力
-  React.useEffect(() => {
-    console.log('🔑 Authentication state changed:', { isAuthenticated, uid: user?.uid });
-  }, [isAuthenticated, user]);
-  
   // Initialize notifications and voice reminders when app starts
   useEffect(() => {
     const initServices = async () => {
@@ -220,7 +214,6 @@ const AppContent = () => {
   useEffect(() => {
     // Profile initialization is now handled by the useUserProfile hook
     if (user) {
-      console.log('User state changed, refreshing permissions');
       // Use the ref instead of the function directly
       refreshPermissionStatusRef.current();
     }

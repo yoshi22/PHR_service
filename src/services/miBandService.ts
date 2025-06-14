@@ -4,17 +4,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
 
 // Mi Band のサービスとキャラクタリスティックUUID
-// Note: これらのUUIDは Mi Band のバージョンによって異なる場合があります
 const SERVICE_UUID = {
   HEART_RATE: '0000180d-0000-1000-8000-00805f9b34fb',
   FITNESS: '0000183e-0000-1000-8000-00805f9b34fb',
-  ACTIVITY: '0000fedd-0000-1000-8000-00805f9b34fb', // Mi Band 特有
+  ACTIVITY: '0000fedd-0000-1000-8000-00805f9b34fb',
 };
 
 const CHARACTERISTIC_UUID = {
   HEART_RATE: '00002a37-0000-1000-8000-00805f9b34fb',
   STEPS: '00002a53-0000-1000-8000-00805f9b34fb',
-  ACTIVITY_DATA: '0000fed9-0000-1000-8000-00805f9b34fb', // Mi Band 特有
+  ACTIVITY_DATA: '0000fed9-0000-1000-8000-00805f9b34fb',
 };
 
 // Mi Band からのデータ型
@@ -31,7 +30,7 @@ export type HealthData = {
     remSleepMinutes?: number;
     awakeMinutes: number;
   };
-  source: 'miband'; // データソースを明示
+  source: 'miband';
 };
 
 let bleManager: BleManager | null = null;
@@ -50,7 +49,6 @@ export const checkBluetoothState = async (): Promise<string> => {
   const manager = initializeBLE();
   try {
     const state = await manager.state();
-    console.log('Bluetooth state:', state);
     
     // 状態を正規化
     switch (state) {
@@ -69,7 +67,6 @@ export const checkBluetoothState = async (): Promise<string> => {
         // Unknownの場合、少し待ってから再試行
         await new Promise(resolve => setTimeout(resolve, 1000));
         const retryState = await manager.state();
-        console.log('Bluetooth state (retry):', retryState);
         return retryState;
     }
   } catch (error) {
@@ -92,7 +89,6 @@ export const scanForMiBand = async (): Promise<Device | null> => {
   }
 
   const savedDeviceId = await AsyncStorage.getItem('mibandDeviceId');
-  console.log('Saved device ID:', savedDeviceId);
 
   return new Promise((resolve, reject) => {
     let subscription: any = null;
@@ -108,7 +104,6 @@ export const scanForMiBand = async (): Promise<Device | null> => {
     };
 
     try {
-      console.log('Starting BLE scan for Mi Band devices...');
       subscription = manager.startDeviceScan(
         null, // Scan all services instead of filtering
         { allowDuplicates: false },
@@ -158,16 +153,6 @@ export const scanForMiBand = async (): Promise<Device | null> => {
           
           if (isMiBandByName || hasMiService || isMiBandByManufacturer || isSavedDevice || 
               (hasHeartRateService && (name.includes('band') || name.includes('fit')))) {
-            console.log(`Mi Band candidate detected: ${device.name || 'Unknown'} (${device.id})`);
-            console.log(`  - Name match: ${isMiBandByName}`);
-            console.log(`  - Service match: ${hasMiService}`);
-            console.log(`  - Manufacturer match: ${isMiBandByManufacturer}`);
-            console.log(`  - Saved device: ${isSavedDevice}`);
-            console.log(`  - Heart rate service: ${hasHeartRateService}`);
-            console.log(`  - Services: ${advServices.join(', ')}`);
-            if (manufacturerData) {
-              console.log(`  - Manufacturer data: ${manufacturerData}`);
-            }
             stopScan();
             resolve(device);
           }
@@ -175,7 +160,6 @@ export const scanForMiBand = async (): Promise<Device | null> => {
       );
 
       scanTimeout = setTimeout(() => {
-        console.log('Scan timeout - no Mi Band found');
         stopScan();
         resolve(null);
       }, 10000);
@@ -224,8 +208,6 @@ export async function scanForMiBandWithCallback(
   };
 
   try {
-    console.log('Starting BLE scan for Mi Band...');
-    
     subscription = manager.startDeviceScan(
       null, // Scan all services for better device detection
       { allowDuplicates: false },
@@ -288,17 +270,6 @@ export async function scanForMiBandWithCallback(
                         (hasCommonFitnessServices && (device.rssi || -100) > -80); // RSSI filter for nearby devices
 
         if (isMiBand) {
-          console.log(`Mi Band candidate found: ${device.name || 'Unknown'} (${device.id})`);
-          console.log(`  - Name match: ${isMiBandByName}`);
-          console.log(`  - Service match: ${hasMiBandService}`);
-          console.log(`  - Manufacturer match: ${isMiBandByManufacturer}`);
-          console.log(`  - Common fitness services: ${hasCommonFitnessServices}`);
-          console.log(`  - RSSI: ${device.rssi}`);
-          console.log(`  - Services: ${serviceUUIDs.join(', ')}`);
-          if (manufacturerData) {
-            console.log(`  - Manufacturer data: ${manufacturerData}`);
-          }
-          
           stopScan();
           onFound(device);
         }
@@ -352,44 +323,6 @@ export async function connectToMiBandExample(): Promise<boolean> {
     return false;
   }
 }
-
-// 全てのBLEデバイスをスキャンする（デバッグ用）
-export const scanAllDevices = async (): Promise<Device[]> => {
-  const manager = initializeBLE();
-  const devices: Device[] = [];
-  
-  return new Promise((resolve) => {
-    let subscription: any = null;
-    
-    console.log('Starting scan for all BLE devices...');
-    
-    subscription = manager.startDeviceScan(
-      null, // すべてのサービス
-      { allowDuplicates: false },
-      (error, device) => {
-        if (error) {
-          console.error('Scan error:', error);
-          return;
-        }
-        
-        if (device) {
-          console.log(`Found: ${device.name || 'Unnamed'} (${device.id})`);
-          devices.push(device);
-        }
-      }
-    );
-    
-    // 15秒でスキャン終了
-    setTimeout(() => {
-      if (subscription && typeof subscription.remove === 'function') {
-        subscription.remove();
-      }
-      manager.stopDeviceScan();
-      console.log(`Total devices found: ${devices.length}`);
-      resolve(devices);
-    }, 15000);
-  });
-};
 
 // Mi Bandに接続
 export const connectToMiBand = async (device: Device): Promise<boolean> => {
