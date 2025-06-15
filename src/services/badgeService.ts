@@ -1,5 +1,5 @@
 import { db } from '../firebase'
-import { collection, query, where, orderBy, getDocs, doc, setDoc, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore'
+import { collection, query, where, orderBy, getDocs, doc, setDoc, serverTimestamp, Timestamp, onSnapshot, getDoc } from 'firebase/firestore'
 import { requireAuth } from '../utils/authUtils'
 import { getFirestore } from '../utils/firebaseUtils'
 
@@ -42,10 +42,16 @@ function notifyBadgeAcquired(badge: BadgeRecord) {
  * Merges to avoid duplication.
  */
 export async function saveBadge(userId: string, date: string, type: string): Promise<void> {
-  // 認証状態を確認
-  const user = requireAuth();
-  if (user.uid !== userId) {
-    throw new Error('Unauthorized access to badge data');
+  try {
+    // 認証状態を確認
+    const user = requireAuth();
+    if (user.uid !== userId) {
+      throw new Error('Unauthorized access to badge data');
+    }
+    console.log('🏅 Saving badge:', { userId, date, type });
+  } catch (authError: any) {
+    console.error('❌ Authentication error in saveBadge:', authError);
+    throw authError;
   }
 
   const firestore = getFirestore();
@@ -53,15 +59,33 @@ export async function saveBadge(userId: string, date: string, type: string): Pro
   const ref = doc(firestore, badgeCollection, id)
   
   // First check if badge already exists to avoid duplicate notifications
-  const docRef = doc(firestore, badgeCollection, id);
-  const docSnap = await getDocs(query(collection(firestore, badgeCollection), where('__name__', '==', id)));
-  const isNew = docSnap.empty;
+  let isNew = true;
+  try {
+    const docSnap = await getDoc(doc(firestore, badgeCollection, id));
+    isNew = !docSnap.exists();
+  } catch (error) {
+    console.warn('Unable to check for existing badge, proceeding with save:', error);
+    isNew = true; // Assume it's new if we can't check
+  }
   
-  await setDoc(
-    ref,
-    { userId, date, type, awardedAt: serverTimestamp() },
-    { merge: true }
-  )
+  try {
+    await setDoc(
+      ref,
+      { userId, date, type, awardedAt: serverTimestamp() },
+      { merge: true }
+    )
+    console.log('✅ Badge saved successfully:', { userId, date, type });
+  } catch (firestoreError: any) {
+    console.error('❌ Firestore error saving badge:', firestoreError);
+    console.error('Firestore error details:', {
+      code: firestoreError?.code,
+      message: firestoreError?.message,
+      userId,
+      date,
+      type
+    });
+    throw firestoreError;
+  }
   
   // If this is a new badge, notify listeners
   if (isNew) {

@@ -229,8 +229,15 @@ export function useTodaySteps() {
         if (userRegistrationDate) {
           await checkAllSpecialBadges(user.uid, count, today, userRegistrationDate)
         }
-      } catch (specialBadgeError) {
-        console.warn('Error checking special badges:', specialBadgeError)
+      } catch (specialBadgeError: any) {
+        console.error('Error checking special badges:', specialBadgeError)
+        console.error('Error details:', {
+          code: specialBadgeError?.code,
+          message: specialBadgeError?.message,
+          userId: user.uid,
+          steps: count,
+          date: today
+        })
         // Don't fail the main flow if special badges fail
       }
     } catch (e: any) {

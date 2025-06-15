@@ -390,12 +390,30 @@ export async function checkAllSpecialBadges(
   userRegistrationDate: Date
 ): Promise<void> {
   try {
-    await Promise.all([
-      checkSeasonalBadges(userId, steps, date),
-      checkSurpriseBadges(userId, steps, date),
-      checkWeekendBadges(userId, steps, date),
-      checkAnniversaryBadges(userId, userRegistrationDate, date)
-    ]);
+    // Check each type of badge individually to isolate errors
+    try {
+      await checkSeasonalBadges(userId, steps, date);
+    } catch (error) {
+      console.warn('Error checking seasonal badges:', error);
+    }
+    
+    try {
+      await checkSurpriseBadges(userId, steps, date);
+    } catch (error) {
+      console.warn('Error checking surprise badges:', error);
+    }
+    
+    try {
+      await checkWeekendBadges(userId, steps, date);
+    } catch (error) {
+      console.warn('Error checking weekend badges:', error);
+    }
+    
+    try {
+      await checkAnniversaryBadges(userId, userRegistrationDate, date);
+    } catch (error) {
+      console.warn('Error checking anniversary badges:', error);
+    }
   } catch (error) {
     console.error('Error checking special badges:', error);
   }
