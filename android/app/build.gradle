@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.yoshi22.phrappdev'
+    namespace 'com.yoshi22.phrapp.dev'
     defaultConfig {
-        applicationId 'com.yoshi22.phrappdev'
+        applicationId 'com.yoshi22.phrapp.dev'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

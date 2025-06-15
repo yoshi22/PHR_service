@@ -1,4 +1,4 @@
-package com.yoshi22.phrappdev
+package com.yoshi22.phrapp.dev
 
 import android.app.Application
 import android.content.res.Configuration

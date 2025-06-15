@@ -1,12 +1,6 @@
-import { initializeApp, getApp, FirebaseApp } from 'firebase/app';
-import {
-  getAuth,
-  onAuthStateChanged,
-  Auth
-} from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -19,85 +13,25 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Validate Firebase configuration
-function validateFirebaseConfig() {
-  const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
-  const missingFields = requiredFields.filter(field => {
-    const value = firebaseConfig[field as keyof typeof firebaseConfig];
-    return !value || value.trim() === '';
-  });
-  
-  if (missingFields.length > 0) {
-    console.error('Firebase configuration:', firebaseConfig);
-    throw new Error(`Firebase configuration missing required fields: ${missingFields.join(', ')}`);
-  }
+// Initialize Firebase using compat mode (v8 API style)
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+  console.log('Firebase initialized using compat mode');
+} else {
+  console.log('Firebase already initialized');
 }
 
-// Initialize Firebase with retry mechanism
-let app: FirebaseApp | undefined;
-let initializationAttempts = 0;
-const maxAttempts = 3;
+// Export Firebase services using compat mode
+export const auth = firebase.auth();
+export const db = firebase.firestore();
 
-async function initializeFirebaseApp() {
-  try {
-    // Validate configuration before initializing
-    validateFirebaseConfig();
-    
-    // Try to get existing app first
-    try {
-      app = getApp();
-    } catch {
-      // No existing app, initialize new one
-      app = initializeApp(firebaseConfig);
-    }
-  } catch (error) {
-    console.error('🔥 Firebase initialization error:', error);
-    if (initializationAttempts < maxAttempts) {
-      initializationAttempts++;
-      setTimeout(initializeFirebaseApp, 1000);
-    } else {
-      console.error('🔥 Firebase initialization failed after multiple attempts');
-      throw new Error('Firebase initialization failed after multiple attempts');
-    }
-  }
-}
-
-// Initialize Firebase immediately only if not in test environment
-if (process.env.NODE_ENV !== 'test') {
-  initializeFirebaseApp();
-}
-
-// Initialize Firebase Auth - getAuth() automatically uses AsyncStorage persistence in React Native
-let auth: Auth | undefined;
-try {
-  if (app) {
-    auth = getAuth(app);
-  }
-} catch (error) {
-  console.error('⚠️ Firebase Auth initialization error:', error);
-  auth = undefined;
-}
-
-// Initialize Firestore
-const db = app ? getFirestore(app) : null;
-
-// Export initialized instances
-export { app, auth, db };
+// Configure Firestore for Asia-Northeast1 region
+db.settings({
+  host: 'asia-northeast1-firestore.googleapis.com',
+  ssl: true
+});
 
 // Export wrapped getAuth for convenience
 export const getFirebaseAuth = () => {
-  try {
-    if (!app) {
-      throw new Error('Firebase app not initialized');
-    }
-    
-    if (!auth) {
-      throw new Error('Firebase Auth not initialized');
-    }
-    
-    return auth;
-  } catch (error) {
-    console.error('Firebase Auth error:', error);
-    throw new Error('Firebase Authの初期化に失敗しました');
-  }
+  return auth;
 };

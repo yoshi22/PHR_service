@@ -1,4 +1,4 @@
-package com.yoshi22.phrappdev
+package com.yoshi22.phrapp.dev
 
 import android.os.Build
 import android.os.Bundle
