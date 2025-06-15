@@ -3,7 +3,6 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import { Device } from 'react-native-ble-plx';
 import { useAuth } from './useAuth';
 import * as miBandService from '../services/miBandService';
-import * as miBandDebugService from '../services/miBandService_debug';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useMiBand() {
@@ -60,36 +59,6 @@ export function useMiBand() {
     loadLastSyncTime();
   }, []);
 
-  // デバッグ用: 全デバイススキャン
-  const startDebugScan = useCallback(async () => {
-    setError(null);
-    
-    if (!(await checkPermissions())) {
-      return;
-    }
-
-    try {
-      setIsScanning(true);
-      
-      // デバッグサービスを使用して包括的スキャン
-      const foundDevice = await miBandDebugService.scanForMiBandImproved();
-      setIsScanning(false);
-
-      if (foundDevice) {
-        console.log('Debug scan found device:', foundDevice.name, foundDevice.id);
-        setDevice(foundDevice);
-        return foundDevice;
-      } else {
-        setError('デバッグスキャンでもMi Bandが見つかりませんでした。周辺のすべてのBLEデバイスをログで確認してください。');
-        return null;
-      }
-    } catch (e) {
-      setIsScanning(false);
-      setError('デバッグスキャンエラー: ' + e);
-      return null;
-    }
-  }, [checkPermissions]);
-
   // Mi Bandをスキャン
   const startScan = useCallback(async () => {
     setError(null);
@@ -109,7 +78,6 @@ export function useMiBand() {
       
       // Bluetooth状態を確認
       const bluetoothState = await miBandService.checkBluetoothState();
-      console.log('Bluetooth state before scan:', bluetoothState);
       
       if (bluetoothState !== 'PoweredOn') {
         setIsScanning(false);
@@ -122,24 +90,14 @@ export function useMiBand() {
 
       // まず通常のスキャンを試行
       const foundDevice = await miBandService.scanForMiBand();
+      setIsScanning(false);
       
-      if (!foundDevice) {
-        console.log('通常スキャンで見つからなかったため、デバッグスキャンを実行...');
-        // 通常スキャンで見つからない場合、デバッグスキャンを実行
-        const debugFoundDevice = await miBandDebugService.scanForMiBandImproved();
-        setIsScanning(false);
-        
-        if (debugFoundDevice) {
-          setDevice(debugFoundDevice);
-          return debugFoundDevice;
-        } else {
-          setError('Mi Bandが見つかりませんでした。Mi Bandがペアリングモードになっているか、近くにあることを確認してください。');
-          return null;
-        }
-      } else {
-        setIsScanning(false);
+      if (foundDevice) {
         setDevice(foundDevice);
         return foundDevice;
+      } else {
+        setError('Mi Bandが見つかりませんでした。Mi Bandがペアリングモードになっているか、近くにあることを確認してください。');
+        return null;
       }
     } catch (e) {
       setIsScanning(false);
@@ -277,7 +235,6 @@ export function useMiBand() {
     lastSyncTime,
     error,
     startScan,
-    startDebugScan, // デバッグ機能を追加
     connect,
     startHeartRateMonitoring,
     syncStepsData,

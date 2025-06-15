@@ -13,21 +13,11 @@ export function useAuth() {
 
   useEffect(() => {
     if (!auth) {
-      console.log('🔐 useAuth: Firebase Auth not available');
       setInitializing(false);
       return;
     }
     
-    console.log('🔐 useAuth: Setting up auth state observer');
     const unsubscribe = onAuthStateChanged(auth, u => {
-      console.log('🔐 useAuth: Auth state changed:', {
-        userId: u?.uid,
-        email: u?.email,
-        emailVerified: u?.emailVerified,
-        isAnonymous: u?.isAnonymous,
-        timestamp: new Date().toISOString()
-      });
-      
       setUser(u)
       setIsAuthenticated(!!u)
       if (initializing) setInitializing(false)

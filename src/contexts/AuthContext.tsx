@@ -39,14 +39,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('🔐 Auth state changed:', {
-        authenticated: !!user,
-        uid: user?.uid,
-        email: user?.email,
-        isAnonymous: user?.isAnonymous,
-        emailVerified: user?.emailVerified
-      });
-      
       setUser(user);
       setInitializing(false);
     });

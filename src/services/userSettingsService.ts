@@ -16,18 +16,8 @@ export interface UserSettings {
  * Get user settings, creates default if not exists
  */
 export async function getUserSettings(userId: string): Promise<UserSettings> {
-  console.log('🔍 getUserSettings Debug:', {
-    userId,
-    timestamp: new Date().toISOString()
-  });
-
   // 認証状態を確認
   const user = requireAuth();
-  console.log('🔍 getUserSettings Auth Check:', {
-    requestedUserId: userId,
-    authenticatedUserId: user.uid,
-    authMatch: user.uid === userId
-  });
   
   if (user.uid !== userId) {
     throw new Error('Unauthorized access to user settings');
@@ -37,18 +27,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
     const firestore = getFirestore();
     const ref = doc(firestore, SETTINGS_COLLECTION, userId);
     
-    console.log('🔍 getUserSettings Firestore Query:', {
-      collection: SETTINGS_COLLECTION,
-      documentId: userId,
-      firestoreExists: !!firestore
-    });
-    
     const snap = await getDoc(ref);
-    
-    console.log('🔍 getUserSettings Query Result:', {
-      documentExists: snap.exists(),
-      hasData: snap.exists() ? !!snap.data() : false
-    });
     
     if (!snap.exists()) {
       // Create default settings
@@ -58,9 +37,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
         notificationTime: DEFAULT_NOTIFICATION_TIME,
       };
       
-      console.log('🔍 getUserSettings Creating Default:', defaultSettings);
       await setDoc(ref, defaultSettings);
-      console.log('✅ getUserSettings Default Created Successfully');
       return defaultSettings;
     }
     
@@ -83,7 +60,6 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
       notificationTime: data.notificationTime ?? DEFAULT_NOTIFICATION_TIME,
     };
     
-    console.log('✅ getUserSettings Retrieved Successfully:', settings);
     return settings;
   } catch (error: any) {
     console.error('❌ getUserSettings Error:', {
@@ -100,8 +76,6 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
  * Update user step goal
  */
 export async function updateStepGoal(userId: string, stepGoal: number): Promise<void> {
-  console.log('🔄 updateStepGoal: Starting update:', { userId, stepGoal });
-  
   // 認証状態を確認
   const user = requireAuth();
   if (user.uid !== userId) {
@@ -111,13 +85,10 @@ export async function updateStepGoal(userId: string, stepGoal: number): Promise<
   const firestore = getFirestore();
   const ref = doc(firestore, SETTINGS_COLLECTION, userId);
   
-  console.log('🔄 updateStepGoal: Updating Firestore document...');
   await setDoc(ref, {
     stepGoal,
     updatedAt: serverTimestamp(),
   }, { merge: true });
-  
-  console.log('✅ updateStepGoal: Firestore update completed');
 }
 
 /**

@@ -31,10 +31,6 @@ function validateFirebaseConfig() {
     console.error('Firebase configuration:', firebaseConfig);
     throw new Error(`Firebase configuration missing required fields: ${missingFields.join(', ')}`);
   }
-  
-  console.log('Firebase configuration validated successfully');
-  console.log('Project ID:', firebaseConfig.projectId);
-  console.log('Auth Domain:', firebaseConfig.authDomain);
 }
 
 // Initialize Firebase with retry mechanism
@@ -44,26 +40,20 @@ const maxAttempts = 3;
 
 async function initializeFirebaseApp() {
   try {
-    console.log('🔥 Starting Firebase initialization...');
-    
     // Validate configuration before initializing
     validateFirebaseConfig();
     
     // Try to get existing app first
     try {
       app = getApp();
-      console.log('🔥 Using existing Firebase app');
     } catch {
       // No existing app, initialize new one
-      console.log('🔥 Initializing new Firebase app...');
       app = initializeApp(firebaseConfig);
-      console.log('🔥 Firebase app initialized successfully');
     }
   } catch (error) {
     console.error('🔥 Firebase initialization error:', error);
     if (initializationAttempts < maxAttempts) {
       initializationAttempts++;
-      console.log(`🔥 Retrying Firebase initialization (attempt ${initializationAttempts}/${maxAttempts})`);
       setTimeout(initializeFirebaseApp, 1000);
     } else {
       console.error('🔥 Firebase initialization failed after multiple attempts');
@@ -81,9 +71,7 @@ if (process.env.NODE_ENV !== 'test') {
 let auth: Auth | undefined;
 try {
   if (app) {
-    console.log('🔐 Initializing Firebase Auth with automatic React Native persistence');
     auth = getAuth(app);
-    console.log('🔐 Firebase Auth initialized successfully');
   }
 } catch (error) {
   console.error('⚠️ Firebase Auth initialization error:', error);

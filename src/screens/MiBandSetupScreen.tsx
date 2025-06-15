@@ -14,8 +14,6 @@ import { useMiBand } from '../hooks/useMiBand';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import * as miBandService from '../services/miBandService';
-import { Device } from 'react-native-ble-plx';
 
 const MiBandSetupScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -29,7 +27,6 @@ const MiBandSetupScreen: React.FC = () => {
     lastSyncTime,
     error,
     startScan,
-    startDebugScan, // デバッグ機能を追加
     connect,
     startHeartRateMonitoring,
     syncStepsData,
@@ -37,7 +34,6 @@ const MiBandSetupScreen: React.FC = () => {
   } = useMiBand();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [debugDevices, setDebugDevices] = useState<Device[]>([]);
 
   // デバイスの接続
   const handleConnect = useCallback(async () => {
@@ -50,17 +46,6 @@ const MiBandSetupScreen: React.FC = () => {
       await connect();
     }
   }, [device, startScan, connect]);
-
-  // デバッグスキャン
-  const handleDebugScan = useCallback(async () => {
-    // 全デバイスをスキャン、同一IDの重複を除去してリスト表示
-    setDebugDevices([]);
-    const devices = await miBandService.scanAllDevices();
-    const uniqueDevices = devices.filter((dev, i, arr) =>
-      arr.findIndex(d => d.id === dev.id) === i
-    );
-    setDebugDevices(uniqueDevices);
-  }, [connect]);
 
   // データの同期
   const handleSync = useCallback(async () => {
@@ -224,45 +209,9 @@ const MiBandSetupScreen: React.FC = () => {
                 </>
               )}
             </TouchableOpacity>
-            
-            {/* デバッグスキャンボタンを追加 */}
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: '#FF9800' }]}
-              onPress={handleDebugScan}
-              disabled={isScanning || isConnecting}
-            >
-              {isScanning || isConnecting ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="bug" size={20} color="#FFFFFF" />
-                  <Text style={styles.buttonText}>
-                    デバッグスキャン（全デバイス検索）
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
           </>
         )}
       </View>
-
-      {/* デバッグスキャン結果リスト */}
-      {debugDevices.length > 0 && (
-        <View style={{ marginTop: 16 }}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>検出デバイス一覧</Text>
-          {debugDevices.map(dev => (
-            <TouchableOpacity
-              key={dev.id}
-              style={[styles.button, { backgroundColor: colors.card, paddingVertical: 8 }]}
-              onPress={() => connect(dev)}
-            >
-              <Text style={{ color: colors.text }}>
-                {dev.name || 'Unknown'} ({dev.id.substring(0, 8)})
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
 
       <View style={[styles.helpCard, { backgroundColor: colors.card }]}>
         <Text style={[styles.cardTitle, { color: colors.text }]}>使い方</Text>
@@ -274,9 +223,6 @@ const MiBandSetupScreen: React.FC = () => {
         </Text>
         <Text style={{ color: colors.text, marginBottom: 8 }}>
           3. 「データを同期」ボタンをタップして健康データを同期します
-        </Text>
-        <Text style={{ color: colors.text, marginBottom: 8, fontSize: 12, opacity: 0.8 }}>
-          📝 通常スキャンで見つからない場合は「デバッグスキャン」をお試しください
         </Text>
       </View>
     </ScrollView>

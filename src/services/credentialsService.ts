@@ -23,7 +23,6 @@ export async function saveCredentials(credentials: SavedCredentials): Promise<vo
       await AsyncStorage.setItem(STORAGE_KEYS.REMEMBER_ME, 'true');
       await AsyncStorage.setItem(STORAGE_KEYS.SAVED_EMAIL, credentials.email);
       await AsyncStorage.setItem(STORAGE_KEYS.SAVED_PASSWORD, credentials.password);
-      console.log('✅ Credentials saved successfully');
     } else {
       // 記憶しない場合は保存された情報を削除
       await clearCredentials();
@@ -46,7 +45,6 @@ export async function loadCredentials(): Promise<SavedCredentials | null> {
       const password = await AsyncStorage.getItem(STORAGE_KEYS.SAVED_PASSWORD);
       
       if (email && password) {
-        console.log('✅ Credentials loaded successfully');
         return {
           email,
           password,
@@ -72,7 +70,6 @@ export async function clearCredentials(): Promise<void> {
       STORAGE_KEYS.SAVED_EMAIL,
       STORAGE_KEYS.SAVED_PASSWORD,
     ]);
-    console.log('✅ Credentials cleared successfully');
   } catch (error) {
     console.error('❌ Error clearing credentials:', error);
   }

@@ -40,8 +40,6 @@ export async function initializeTimeBasedReminders(): Promise<void> {
 // Initialize location-based reminders (Mock implementation)
 export async function initializeLocationReminders(): Promise<boolean> {
   try {
-    console.log('Location-based reminders temporarily disabled');
-    
     // Initialize time-based reminders instead
     await initializeTimeBasedReminders();
     
@@ -128,7 +126,6 @@ export async function scheduleExerciseReminders(enabled: boolean): Promise<void>
 // Set home location for context-aware reminders (Mock implementation)
 export async function setHomeLocation(): Promise<boolean> {
   try {
-    console.log('Location feature temporarily disabled');
     return false;
   } catch (error) {
     console.error('Error setting home location:', error);

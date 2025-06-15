@@ -30,11 +30,8 @@ interface StepsResponse {
  */
 export async function checkPermissions(): Promise<boolean> {
   try {
-    console.log('Checking health permissions...');
-    
     // Check stored permission state only for now
     const storedValue = await AsyncStorage.getItem(PERMISSIONS_KEY);
-    console.log('Stored permission value:', storedValue);
     
     const isGranted = storedValue === 'true';
     return isGranted;
@@ -46,8 +43,6 @@ export async function checkPermissions(): Promise<boolean> {
 
 // --- iOS: HealthKit 初期化 & 権限リクエスト ---
 export function initHealthKit(): Promise<void> {
-  console.log('Initializing HealthKit...');
-  
   try {
     const permissions: HealthKitPermissions = {
       permissions: {
@@ -67,17 +62,14 @@ export function initHealthKit(): Promise<void> {
         return;
       }
       
-      console.log('Calling AppleHealthKit.initHealthKit...');
       AppleHealthKit.initHealthKit(permissions, (error: string) => {
         if (error) {
           console.error('HealthKit init error:', error);
           reject(new Error(error));
         } else {
-          console.log('HealthKit initialized successfully');
           // Store that permissions were granted
           AsyncStorage.setItem(PERMISSIONS_KEY, 'true')
             .then(() => {
-              console.log('Permission status stored');
               resolve();
             })
             .catch(err => {
@@ -109,9 +101,6 @@ export function getTodayStepsIOS(): Promise<number> {
     endDate: end.toISOString() 
   };
   
-  console.log(`📱 Getting today's steps from ${start.toISOString()} to ${end.toISOString()}`);
-  console.log(`📱 Local time range: ${start.toLocaleString('ja-JP')} to ${end.toLocaleString('ja-JP')}`);
-  
   return new Promise((resolve, reject) => {
     AppleHealthKit.getStepCount(options, (err: string, result: HealthValue) => {
       if (err) {
@@ -119,7 +108,6 @@ export function getTodayStepsIOS(): Promise<number> {
         // Return 0 instead of throwing error to match test expectations
         resolve(0);
       } else {
-        console.log(`📊 HealthKit returned today's steps:`, result);
         resolve(result.value || 0);
       }
     });
@@ -128,8 +116,6 @@ export function getTodayStepsIOS(): Promise<number> {
 
 // --- Android: Google Fit 初期化 & 権限リクエスト ---
 export async function initGoogleFit(): Promise<void> {
-  console.log('Initializing Google Fit...');
-  
   const options = {
     scopes: [
       Scopes.FITNESS_ACTIVITY_READ,
@@ -137,7 +123,6 @@ export async function initGoogleFit(): Promise<void> {
   };
   
   try {
-    console.log('Calling GoogleFit.authorize...');
     const authorized = await GoogleFit.authorize(options);
     
     // Type safety check
@@ -147,10 +132,7 @@ export async function initGoogleFit(): Promise<void> {
       throw new Error('Google Fit 認証でエラーが発生しました');
     }
     
-    console.log('Google Fit authorization response:', JSON.stringify(authorized));
-    
     if (authorized.success === true) {
-      console.log('Google Fit authorization successful');
       // Store permission status on successful authorization
       await AsyncStorage.setItem(PERMISSIONS_KEY, 'true');
     } else {
@@ -181,9 +163,6 @@ export async function getTodayStepsAndroid(): Promise<number> {
       startDate: start.toISOString(),
       endDate: end.toISOString()
     }) as StepsResponse[];
-    
-    // Google Fitからのデータを確認
-    console.log('Google Fit steps data:', JSON.stringify(res));
     
     if (!res || res.length === 0) {
       return 0;
