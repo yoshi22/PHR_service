@@ -1,9 +1,16 @@
 import { auth, db } from '../firebase';
-import { Auth, User } from 'firebase/auth';
-import { Firestore } from 'firebase/firestore';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+
+type Auth = firebase.auth.Auth;
+type User = firebase.User;
+type Firestore = firebase.firestore.Firestore;
 
 /**
- * Gets the authenticated Firebase Auth instance or throws an error
+ * Gets the Firebase Auth instance or throws an error if not initialized.
+ * @returns Firebase Auth instance
+ * @throws Error if Firebase Auth is not initialized
  */
 export function getAuth(): Auth {
   if (!auth) {
@@ -13,7 +20,9 @@ export function getAuth(): Auth {
 }
 
 /**
- * Gets the Firebase Firestore instance or throws an error
+ * Gets the Firebase Firestore instance or throws an error if not initialized.
+ * @returns Firebase Firestore instance
+ * @throws Error if Firebase Firestore is not initialized
  */
 export function getFirestore(): Firestore {
   if (!db) {
@@ -23,21 +32,13 @@ export function getFirestore(): Firestore {
 }
 
 /**
- * Gets the current authenticated user or throws an error
+ * Gets the current authenticated user or throws an error if not authenticated.
+ * @returns Current authenticated user
+ * @throws Error if no user is authenticated
  */
 export function getCurrentUser(): User {
   const authInstance = getAuth();
   const user = authInstance.currentUser;
-  
-  // デバッグ用ログ
-  console.log('🔍 getCurrentUser Debug:');
-  console.log('- Auth instance exists:', !!authInstance);
-  console.log('- Current user exists:', !!user);
-  if (user) {
-    console.log('- User ID:', user.uid);
-    console.log('- User email:', user.email);
-    console.log('- User verified:', user.emailVerified);
-  }
   
   if (!user) {
     throw new Error('No authenticated user found');
@@ -46,7 +47,8 @@ export function getCurrentUser(): User {
 }
 
 /**
- * Gets the current authenticated user or returns null if not authenticated
+ * Gets the current authenticated user or returns null if not authenticated.
+ * @returns Current user or null if not authenticated
  */
 export function getCurrentUserSafe(): User | null {
   if (!auth) {
@@ -56,7 +58,8 @@ export function getCurrentUserSafe(): User | null {
 }
 
 /**
- * Checks if Firebase is properly initialized
+ * Checks if Firebase services are properly initialized.
+ * @returns True if both Auth and Firestore are initialized
  */
 export function isFirebaseInitialized(): boolean {
   return !!(auth && db);

@@ -1,19 +1,20 @@
-import { User } from 'firebase/auth';
+import { User } from 'firebase/compat/auth';
 import { getAuth, getCurrentUser } from './firebaseUtils';
 
 /**
- * 認証済みユーザーを取得し、認証されていない場合はエラーを投げる
- * options.silent=trueならエラーをスローせずにnullを返す
+ * Gets the authenticated user or throws an error if not authenticated.
+ * @param options - Configuration options
+ * @param options.silent - If true, returns null instead of throwing error
+ * @returns Authenticated user or null (when silent=true)
  */
-export const requireAuth = (options: { silent?: boolean } = {}): User => {
+export const requireAuth = (options: { silent?: boolean } = {}): User | null => {
   const { silent = false } = options;
   const authInstance = getAuth();
   const user = authInstance.currentUser;
   
   if (!user) {
     if (silent) {
-      console.warn('User not authenticated - silent mode');
-      return null as unknown as User; // TypeScript対策
+      return null;
     }
     throw new Error('User must be authenticated to perform this operation');
   }
@@ -22,7 +23,8 @@ export const requireAuth = (options: { silent?: boolean } = {}): User => {
 };
 
 /**
- * 認証状態を待機する
+ * Waits for authentication state to be determined.
+ * @returns Promise that resolves to the current user or null
  */
 export const waitForAuth = (): Promise<User | null> => {
   return new Promise((resolve) => {
@@ -35,7 +37,9 @@ export const waitForAuth = (): Promise<User | null> => {
 };
 
 /**
- * 認証済みユーザーを待機する（認証されるまで待つ）
+ * Waits for an authenticated user (will throw if not authenticated).
+ * @returns Promise that resolves to the authenticated user
+ * @throws Error if user is not authenticated
  */
 export const waitForAuthenticatedUser = async (): Promise<User> => {
   const user = await waitForAuth();
