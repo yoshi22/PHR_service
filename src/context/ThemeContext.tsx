@@ -1,19 +1,22 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DefaultTheme, DarkTheme as NavigationDarkTheme, Theme } from '@react-navigation/native';
+import { colors } from '../styles';
 
-// 拡張テーマの型定義
+/**
+ * Extended theme interface with additional color definitions
+ */
 export interface ExtendedTheme extends Theme {
   colors: Theme['colors'] & {
-    // 追加のカラー定義
+    // Navigation colors
     primary: string;
     background: string;
     card: string;
     text: string;
     border: string;
     notification: string;
-    // アプリケーション固有のカラー
+    // Application-specific colors
     accent: string;
     success: string;
     error: string;
@@ -24,135 +27,229 @@ export interface ExtendedTheme extends Theme {
     buttonText: string;
     inputBackground: string;
     shadow: string;
+    // Additional semantic colors
+    textSecondary: string;
+    surface: string;
+    overlay: string;
   };
 }
 
-// ライトテーマ
+/**
+ * Light theme configuration
+ */
 export const LightTheme: ExtendedTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#3498db',
-    background: '#F7F7F7',
-    card: '#FFFFFF',
-    text: '#333333',
-    border: '#e0e0e0',
-    notification: '#FF3B30',
-    accent: '#2ecc71',
-    success: '#27ae60',
-    error: '#e74c3c',
-    warning: '#f39c12',
-    info: '#3498db',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#3498db',
-    buttonText: '#FFFFFF',
-    inputBackground: '#FFFFFF',
-    shadow: 'rgba(0, 0, 0, 0.1)',
+    primary: colors.primary,
+    background: colors.background,
+    card: colors.surface,
+    text: colors.text,
+    border: colors.border,
+    notification: colors.error,
+    accent: colors.secondary,
+    success: colors.success,
+    error: colors.error,
+    warning: colors.warning,
+    info: colors.info,
+    cardBackground: colors.surface,
+    buttonBackground: colors.primary,
+    buttonText: colors.textInverse,
+    inputBackground: colors.backgroundSecondary,
+    shadow: colors.shadow,
+    textSecondary: colors.textSecondary,
+    surface: colors.surface,
+    overlay: colors.overlay,
   },
 };
 
-// ダークテーマ
+/**
+ * Dark theme configuration
+ */
 export const DarkTheme: ExtendedTheme = {
   ...NavigationDarkTheme,
   colors: {
     ...NavigationDarkTheme.colors,
-    primary: '#3498db',
+    primary: colors.primary,
     background: '#121212',
     card: '#1E1E1E',
-    text: '#FFFFFF',
+    text: colors.textInverse,
     border: '#2D2D2D',
-    notification: '#FF453A',
-    accent: '#2ecc71',
-    success: '#2ecc71',
-    error: '#e74c3c',
-    warning: '#f39c12',
-    info: '#3498db',
+    notification: colors.error,
+    accent: colors.secondary,
+    success: colors.success,
+    error: colors.error,
+    warning: colors.warning,
+    info: colors.info,
     cardBackground: '#2D2D2D',
-    buttonBackground: '#3498db',
-    buttonText: '#FFFFFF',
+    buttonBackground: colors.primary,
+    buttonText: colors.textInverse,
     inputBackground: '#333333',
     shadow: 'rgba(0, 0, 0, 0.3)',
+    textSecondary: '#8E8E93',
+    surface: '#1E1E1E',
+    overlay: colors.overlay,
   },
 };
 
-// テーマコンテキストの型定義
-interface ThemeContextProps {
+/**
+ * Theme context type definition
+ */
+interface ThemeContextType {
   theme: ExtendedTheme;
   isDarkMode: boolean;
-  toggleTheme: () => void;
-  setDarkMode: (isDark: boolean) => void;
+  isLoading: boolean;
+  toggleTheme: () => Promise<void>;
+  setDarkMode: (isDark: boolean) => Promise<void>;
+  resetToSystemTheme: () => Promise<void>;
 }
 
-// テーマコンテキスト作成
-const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
+/**
+ * Default context value
+ */
+const defaultContextValue: ThemeContextType = {
+  theme: LightTheme,
+  isDarkMode: false,
+  isLoading: true,
+  toggleTheme: async () => {},
+  setDarkMode: async () => {},
+  resetToSystemTheme: async () => {},
+};
 
-// テーマプロバイダーコンポーネント
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // システムの色スキーム設定を取得
+/**
+ * Theme context for theme management
+ */
+const ThemeContext = createContext<ThemeContextType>(defaultContextValue);
+
+/**
+ * Theme provider props
+ */
+interface ThemeProviderProps {
+  children: React.ReactNode;
+}
+
+/**
+ * Theme storage key
+ */
+const THEME_STORAGE_KEY = 'themePreference';
+
+/**
+ * Theme provider component for theme management
+ */
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const colorScheme = useColorScheme();
-  
-  // ダークモードの状態管理
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  
-  // 初期化時にテーマ設定を読み込む
-  useEffect(() => {
-    const loadThemePreference = async () => {
-      try {
-        const themePreference = await AsyncStorage.getItem('themePreference');
-        
-        if (themePreference === null) {
-          // 保存された設定がない場合はシステム設定に基づく
-          setIsDarkMode(colorScheme === 'dark');
-        } else {
-          // 保存された設定を使用
-          setIsDarkMode(themePreference === 'dark');
-        }
-      } catch (error) {
-        console.error('テーマ設定の読み込みエラー:', error);
-        // エラー時はシステム設定をデフォルトとして使用
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  /**
+   * Load theme preference from storage
+   */
+  const loadThemePreference = useCallback(async () => {
+    try {
+      const themePreference = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+      
+      if (themePreference === null) {
+        // Use system preference if no saved preference
         setIsDarkMode(colorScheme === 'dark');
+      } else {
+        // Use saved preference
+        setIsDarkMode(themePreference === 'dark');
       }
-    };
-    
-    loadThemePreference();
+    } catch (error) {
+      console.error('Failed to load theme preference:', error);
+      // Fallback to system preference
+      setIsDarkMode(colorScheme === 'dark');
+    } finally {
+      setIsLoading(false);
+    }
   }, [colorScheme]);
-  
-  // テーマ切り替え関数
-  const toggleTheme = async () => {
+
+  /**
+   * Save theme preference to storage
+   */
+  const saveThemePreference = useCallback(async (isDark: boolean) => {
+    try {
+      await AsyncStorage.setItem(THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Failed to save theme preference:', error);
+    }
+  }, []);
+
+  /**
+   * Toggle between light and dark theme
+   */
+  const toggleTheme = useCallback(async () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    try {
-      await AsyncStorage.setItem('themePreference', newMode ? 'dark' : 'light');
-    } catch (error) {
-      console.error('テーマ設定の保存エラー:', error);
-    }
-  };
-  
-  // ダークモード設定関数
-  const setDarkMode = async (isDark: boolean) => {
+    await saveThemePreference(newMode);
+  }, [isDarkMode, saveThemePreference]);
+
+  /**
+   * Set specific theme mode
+   */
+  const setDarkMode = useCallback(async (isDark: boolean) => {
     setIsDarkMode(isDark);
+    await saveThemePreference(isDark);
+  }, [saveThemePreference]);
+
+  /**
+   * Reset to system theme preference
+   */
+  const resetToSystemTheme = useCallback(async () => {
     try {
-      await AsyncStorage.setItem('themePreference', isDark ? 'dark' : 'light');
+      await AsyncStorage.removeItem(THEME_STORAGE_KEY);
+      setIsDarkMode(colorScheme === 'dark');
     } catch (error) {
-      console.error('テーマ設定の保存エラー:', error);
+      console.error('Failed to reset theme preference:', error);
     }
-  };
-  
-  // 現在のテーマを選択
-  const theme = isDarkMode ? DarkTheme : LightTheme;
-  
+  }, [colorScheme]);
+
+  /**
+   * Load theme preference on mount and color scheme change
+   */
+  useEffect(() => {
+    loadThemePreference();
+  }, [loadThemePreference]);
+
+  /**
+   * Current theme based on mode
+   */
+  const theme = useMemo(() => isDarkMode ? DarkTheme : LightTheme, [isDarkMode]);
+
+  /**
+   * Memoized context value to prevent unnecessary re-renders
+   */
+  const contextValue = useMemo<ThemeContextType>(() => ({
+    theme,
+    isDarkMode,
+    isLoading,
+    toggleTheme,
+    setDarkMode,
+    resetToSystemTheme,
+  }), [theme, isDarkMode, isLoading, toggleTheme, setDarkMode, resetToSystemTheme]);
+
   return (
-    <ThemeContext.Provider value={{ theme, isDarkMode, toggleTheme, setDarkMode }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
-// テーマフックの作成
-export const useThemeContext = (): ThemeContextProps => {
+/**
+ * Hook to use theme context
+ * @returns Theme context value
+ * @throws Error if used outside of ThemeProvider
+ */
+export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useThemeContext must be used within a ThemeProvider');
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
 };
+
+/**
+ * Backward compatibility alias
+ * @deprecated Use useTheme instead
+ */
+export const useThemeContext = useTheme;
