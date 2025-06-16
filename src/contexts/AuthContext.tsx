@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { User } from 'firebase/compat/auth';
 import { auth } from '../firebase';
 
 interface AuthContextType {
@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return;
     }
     
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
       setInitializing(false);
     });
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!auth) {
         throw new Error('Firebase Auth not initialized');
       }
-      await firebaseSignOut(auth);
+      await auth.signOut();
     } catch (error) {
       console.error('Sign out error:', error);
       throw error;

@@ -65,6 +65,13 @@
           "ios": {
             "microphonePermission": "音声入力機能のためにマイクを使用します。",
             "useFrameworks": "static"
+          },
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          },
+          "web": {
+            "bundler": "metro"
           }
         }
       ]
