@@ -5,7 +5,7 @@ import { getUserSettings } from '../services/userSettingsService';
 /**
  * User settings interface
  */
-interface UserSettings {
+export interface UserSettings {
   stepGoal: number;
   notificationTime: string;
 }
@@ -13,7 +13,7 @@ interface UserSettings {
 /**
  * Settings context type definition
  */
-interface SettingsContextType {
+export interface SettingsContextType {
   settings: UserSettings | null;
   isLoading: boolean;
   error: string | null;

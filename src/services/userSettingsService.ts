@@ -18,6 +18,9 @@ export interface UserSettings {
 export async function getUserSettings(userId: string): Promise<UserSettings> {
   // 認証状態を確認
   const user = requireAuth();
+  if (!user) {
+    throw new Error('User must be authenticated');
+  }
   
   if (user.uid !== userId) {
     throw new Error('Unauthorized access to user settings');
@@ -78,6 +81,9 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
 export async function updateStepGoal(userId: string, stepGoal: number): Promise<void> {
   // 認証状態を確認
   const user = requireAuth();
+  if (!user) {
+    throw new Error('User must be authenticated');
+  }
   if (user.uid !== userId) {
     throw new Error('Unauthorized access to user settings');
   }
@@ -97,6 +103,9 @@ export async function updateStepGoal(userId: string, stepGoal: number): Promise<
 export async function updateNotificationTime(userId: string, notificationTime: string): Promise<void> {
   // 認証状態を確認
   const user = requireAuth();
+  if (!user) {
+    throw new Error('User must be authenticated');
+  }
   if (user.uid !== userId) {
     throw new Error('Unauthorized access to user settings');
   }

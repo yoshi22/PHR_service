@@ -45,6 +45,9 @@ export async function saveBadge(userId: string, date: string, type: string): Pro
   try {
     // 認証状態を確認
     const user = requireAuth();
+    if (!user) {
+      throw new Error('User must be authenticated');
+    }
     if (user.uid !== userId) {
       throw new Error('Unauthorized access to badge data');
     }

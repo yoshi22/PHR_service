@@ -1,4 +1,4 @@
-import { User } from 'firebase/compat/auth';
+import firebase from 'firebase/compat/app';
 import { getAuth, getCurrentUser } from './firebaseUtils';
 
 /**
@@ -7,7 +7,7 @@ import { getAuth, getCurrentUser } from './firebaseUtils';
  * @param options.silent - If true, returns null instead of throwing error
  * @returns Authenticated user or null (when silent=true)
  */
-export const requireAuth = (options: { silent?: boolean } = {}): User | null => {
+export const requireAuth = (options: { silent?: boolean } = {}): firebase.User | null => {
   const { silent = false } = options;
   const authInstance = getAuth();
   const user = authInstance.currentUser;
@@ -26,10 +26,10 @@ export const requireAuth = (options: { silent?: boolean } = {}): User | null => 
  * Waits for authentication state to be determined.
  * @returns Promise that resolves to the current user or null
  */
-export const waitForAuth = (): Promise<User | null> => {
+export const waitForAuth = (): Promise<firebase.User | null> => {
   return new Promise((resolve) => {
     const authInstance = getAuth();
-    const unsubscribe = authInstance.onAuthStateChanged((user: User | null) => {
+    const unsubscribe = authInstance.onAuthStateChanged((user: firebase.User | null) => {
       unsubscribe();
       resolve(user);
     });
@@ -41,7 +41,7 @@ export const waitForAuth = (): Promise<User | null> => {
  * @returns Promise that resolves to the authenticated user
  * @throws Error if user is not authenticated
  */
-export const waitForAuthenticatedUser = async (): Promise<User> => {
+export const waitForAuthenticatedUser = async (): Promise<firebase.User> => {
   const user = await waitForAuth();
   if (!user) {
     throw new Error('Authentication required');

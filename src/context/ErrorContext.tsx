@@ -6,7 +6,7 @@ import ErrorFallback from '../components/ErrorFallback';
 /**
  * Error context type definition with comprehensive error handling
  */
-interface ErrorContextType {
+export interface ErrorContextType {
   error: string | null;
   showError: (message: string, onRetry?: () => void) => void;
   clearError: () => void;

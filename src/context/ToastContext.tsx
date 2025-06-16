@@ -4,13 +4,13 @@ import Toast from 'react-native-toast-message';
 /**
  * Toast type definitions
  */
-type ToastType = 'success' | 'error' | 'info' | 'warning';
-type ToastPosition = 'top' | 'bottom';
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
+export type ToastPosition = 'top' | 'bottom';
 
 /**
  * Toast configuration interface
  */
-interface ToastConfig {
+export interface ToastConfig {
   type: ToastType;
   text1: string;
   text2?: string;
@@ -22,8 +22,8 @@ interface ToastConfig {
 /**
  * Toast context type definition
  */
-interface ToastContextType {
-  showToast: (config: ToastConfig) => void;
+export interface ToastContextType {
+  showToast: (type: ToastType, text1: string, text2?: string) => void;
   showSuccess: (text1: string, text2?: string) => void;
   showError: (text1: string, text2?: string) => void;
   showInfo: (text1: string, text2?: string) => void;
@@ -62,16 +62,16 @@ interface ToastProviderProps {
  */
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   /**
-   * Show toast with custom configuration
+   * Show toast with backward compatible API
    */
-  const showToast = useCallback((config: ToastConfig) => {
+  const showToast = useCallback((type: ToastType, text1: string, text2?: string) => {
     Toast.show({
-      type: config.type,
-      text1: config.text1,
-      text2: config.text2,
-      position: config.position || 'bottom',
-      visibilityTime: config.visibilityTime || 3000,
-      autoHide: config.autoHide !== false,
+      type,
+      text1,
+      text2,
+      position: 'bottom',
+      visibilityTime: 3000,
+      autoHide: true,
     });
   }, []);
 
@@ -79,61 +79,35 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
    * Show success toast
    */
   const showSuccess = useCallback((text1: string, text2?: string) => {
-    showToast({
-      type: 'success',
-      text1,
-      text2,
-      visibilityTime: 3000,
-    });
+    showToast('success', text1, text2);
   }, [showToast]);
 
   /**
    * Show error toast
    */
   const showError = useCallback((text1: string, text2?: string) => {
-    showToast({
-      type: 'error',
-      text1,
-      text2,
-      visibilityTime: 4000,
-    });
+    showToast('error', text1, text2);
   }, [showToast]);
 
   /**
    * Show info toast
    */
   const showInfo = useCallback((text1: string, text2?: string) => {
-    showToast({
-      type: 'info',
-      text1,
-      text2,
-      visibilityTime: 3000,
-    });
+    showToast('info', text1, text2);
   }, [showToast]);
 
   /**
    * Show warning toast
    */
   const showWarning = useCallback((text1: string, text2?: string) => {
-    showToast({
-      type: 'warning',
-      text1,
-      text2,
-      visibilityTime: 3500,
-    });
+    showToast('warning', text1, text2);
   }, [showToast]);
 
   /**
    * Show badge acquired notification
    */
   const showBadgeAcquired = useCallback((badgeName: string) => {
-    showToast({
-      type: 'success',
-      text1: '🏅 新しいバッジを獲得しました！',
-      text2: badgeName,
-      position: 'bottom',
-      visibilityTime: 4000,
-    });
+    showToast('success', '🏅 新しいバッジを獲得しました！', badgeName);
   }, [showToast]);
 
   /**

@@ -5,7 +5,7 @@ import { colors } from '../styles';
 /**
  * Loading context type definition
  */
-interface LoadingContextType {
+export interface LoadingContextType {
   isLoading: boolean;
   setLoading: (loading: boolean) => void;
   startLoading: () => void;

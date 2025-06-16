@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User } from 'firebase/compat/auth';
+import firebase from 'firebase/compat/app';
 import { auth } from '../firebase';
 
 interface AuthContextType {
-  user: User | null;
+  user: firebase.User | null;
   initializing: boolean;
   isAuthenticated: boolean;
   signOut: () => Promise<void>;
@@ -29,7 +29,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<firebase.User | null>(null);
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {

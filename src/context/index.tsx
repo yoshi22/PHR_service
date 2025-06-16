@@ -1,6 +1,12 @@
 /**
  * Centralized context exports for easy imports and consistent naming
  */
+import React from 'react';
+import { ErrorProvider, useError } from './ErrorContext';
+import { LoadingProvider, useLoading } from './LoadingContext';
+import { ToastProvider, useToast } from './ToastContext';
+import { ThemeProvider, useTheme } from './ThemeContext';
+import { SettingsProvider, useSettings } from './SettingsContext';
 
 // Error context
 export { ErrorProvider, useError } from './ErrorContext';

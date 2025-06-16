@@ -95,7 +95,7 @@ export const DarkTheme: ExtendedTheme = {
 /**
  * Theme context type definition
  */
-interface ThemeContextType {
+export interface ThemeContextType {
   theme: ExtendedTheme;
   isDarkMode: boolean;
   isLoading: boolean;
