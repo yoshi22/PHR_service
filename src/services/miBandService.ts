@@ -75,8 +75,36 @@ export const checkBluetoothState = async (): Promise<string> => {
   }
 };
 
+// Mi Bandを検索する（リトライ機能付き）
+export const scanForMiBandWithRetry = async (maxRetries: number = 2): Promise<Device | null> => {
+  console.log(`🔍 Starting MiBand scan with retry (max ${maxRetries} attempts)...`);
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`📡 Scan attempt ${attempt}/${maxRetries}`);
+    
+    try {
+      const device = await scanForMiBand(15000 + (attempt * 5000)); // スキャン時間を段階的に延長
+      if (device) {
+        console.log(`✅ Device found on attempt ${attempt}: ${device.name || device.id}`);
+        return device;
+      }
+    } catch (error) {
+      console.warn(`⚠️ Scan attempt ${attempt} failed:`, error);
+    }
+    
+    // 最後の試行でなければ待機
+    if (attempt < maxRetries) {
+      console.log(`⏳ Waiting 2s before retry...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+  
+  console.log('❌ All scan attempts failed');
+  return null;
+};
+
 // Mi Bandを検索する（Promise版）
-export const scanForMiBand = async (): Promise<Device | null> => {
+export const scanForMiBand = async (scanTimeout: number = 10000): Promise<Device | null> => {
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
     console.warn('BLE scanning is only supported on iOS and Android');
     return null;
@@ -92,24 +120,26 @@ export const scanForMiBand = async (): Promise<Device | null> => {
 
   return new Promise((resolve, reject) => {
     let subscription: any = null;
-    let scanTimeout: NodeJS.Timeout;
-    const targetServices = ['FEE0', 'FEE1', 'FE95', '180D', '180F'];
+    let scanTimeoutHandle: NodeJS.Timeout;
+    const targetServices = ['FEE0', 'FEE1', 'FE95', '180D', '180F', '1800', '1801', '181C'];
 
     const stopScan = () => {
       if (subscription && typeof subscription.remove === 'function') {
         subscription.remove();
       }
       manager.stopDeviceScan();
-      if (scanTimeout) clearTimeout(scanTimeout);
+      if (scanTimeoutHandle) clearTimeout(scanTimeoutHandle);
     };
 
     try {
+      console.log(`📡 Starting BLE scan for ${scanTimeout}ms...`);
+      
       subscription = manager.startDeviceScan(
-        null, // Scan all services instead of filtering
+        null, // Scan all services for better compatibility
         { allowDuplicates: false },
         (error, device) => {
           if (error) {
-            console.error('Device scan error:', error);
+            console.error('❌ Device scan error:', error);
             stopScan();
             reject(error);
             return;
@@ -120,22 +150,27 @@ export const scanForMiBand = async (): Promise<Device | null> => {
           const advServices = device.serviceUUIDs || [];
           const manufacturerData = device.manufacturerData;
           
-          // より包括的なMi Band検出ロジック
-          const hasMiService = advServices.some(u =>
-            targetServices.includes(u.replace(/-/g, '').toUpperCase())
-          );
+          console.log(`🔍 Found device: ${device.name || 'Unknown'} (${device.id}) with services: ${advServices.join(', ')}`);
           
-          const isMiBandByName = name.includes('mi band') || 
-                                name.includes('mi-band') ||
-                                name.includes('miban') ||
-                                name.includes('miband') ||
+          // より包括的なMi Band検出ロジック
+          const hasMiService = advServices.some(u => {
+            const cleanUuid = u.replace(/-/g, '').toUpperCase();
+            return targetServices.includes(cleanUuid);
+          });
+          
+          // 名前による検出（より柔軟な条件）
+          const isMiBandByName = name.includes('mi') ||
+                                name.includes('band') || 
                                 name.includes('xiaomi') ||
                                 name.includes('huami') ||
                                 name.includes('amazfit') ||
                                 name.includes('mili') ||
-                                name.includes('redmi');
+                                name.includes('redmi') ||
+                                name.includes('fitness') ||
+                                name.includes('watch') ||
+                                name.includes('tracker');
           
-          // Xiaomi/Huamiの製造者データをチェック (0x157 = 343, 0x27d = 637)
+          // 製造者データによる検出
           const isMiBandByManufacturer = manufacturerData && (
             manufacturerData.includes('157') || 
             manufacturerData.includes('27d') ||
@@ -151,21 +186,41 @@ export const scanForMiBand = async (): Promise<Device | null> => {
             u.toLowerCase().includes('180d') || u.toLowerCase().includes('0000180d')
           );
           
-          if (isMiBandByName || hasMiService || isMiBandByManufacturer || isSavedDevice || 
-              (hasHeartRateService && (name.includes('band') || name.includes('fit')))) {
+          // バッテリーサービスを持つデバイス
+          const hasBatteryService = advServices.some(u => 
+            u.toLowerCase().includes('180f') || u.toLowerCase().includes('0000180f')
+          );
+          
+          // より広範囲のマッチング条件
+          const isLikelyMiBand = isMiBandByName || 
+                               hasMiService || 
+                               isMiBandByManufacturer || 
+                               isSavedDevice ||
+                               (hasHeartRateService && hasBatteryService) ||
+                               (hasHeartRateService && (name.includes('band') || name.includes('fit') || name.includes('mi')));
+          
+          if (isLikelyMiBand) {
+            console.log(`✅ Potential MiBand detected: ${device.name || device.id}`);
+            console.log(`   - Name match: ${isMiBandByName}`);
+            console.log(`   - Service match: ${hasMiService}`);
+            console.log(`   - Manufacturer match: ${isMiBandByManufacturer}`);
+            console.log(`   - Saved device: ${isSavedDevice}`);
+            console.log(`   - Heart rate service: ${hasHeartRateService}`);
+            
             stopScan();
             resolve(device);
           }
         }
       );
 
-      scanTimeout = setTimeout(() => {
+      scanTimeoutHandle = setTimeout(() => {
+        console.log(`⏰ Scan timeout after ${scanTimeout}ms`);
         stopScan();
         resolve(null);
-      }, 10000);
+      }, scanTimeout);
 
     } catch (err) {
-      console.error('Failed to start scan:', err);
+      console.error('❌ Failed to start scan:', err);
       stopScan();
       reject(err);
     }
