@@ -35,7 +35,6 @@ const ProfileNavigator = () => {
         headerTitleStyle: {
           fontWeight: '600' as any,
           fontSize: typography.sizes.lg,
-          color: colors.text,
         },
         headerBackTitleStyle: {
           fontSize: typography.sizes.sm,
