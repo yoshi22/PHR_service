@@ -4,7 +4,7 @@
 
 // Core style systems
 export { colors, type ColorKey } from './colors';
-export { typography, fontWeights, type FontWeight, type TypographyKey } from './typography';
+export { typography, modernTypography, fontWeights, type FontWeight, type TypographyKey } from './typography';
 export { spacing, spacingHelpers, type SpacingKey } from './spacing';
 export { 
   commonStyles, 

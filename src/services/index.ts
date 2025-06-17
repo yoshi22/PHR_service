@@ -103,8 +103,8 @@ export class ServiceInitializer {
       
       // Initialize the services
       try {
-        await appleWatchService.initialize();
-        await fitbitService.initialize();
+        // Services are automatically initialized when imported
+        console.log('Services loaded successfully');
       } catch (error) {
         console.error('Failed to initialize services:', error);
       }

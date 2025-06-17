@@ -10,7 +10,7 @@ import {
   StatusBar,
   Dimensions
 } from 'react-native'
-import { colors, typography, spacing, common } from '../styles'
+import { colors, modernTypography as typography, spacing, common } from '../styles'
 import PrimaryButton from './PrimaryButton'
 
 interface ModalProps {
@@ -207,6 +207,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 0,
+    maxWidth: undefined,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 8,
+    backgroundColor: colors.surface,
   },
   
   header: {
@@ -219,7 +226,9 @@ const styles = StyleSheet.create({
   },
   
   title: {
-    ...typography.h3,
+    fontSize: typography.sizes['3xl'],
+    lineHeight: typography.lineHeights['3xl'],
+    fontWeight: '600',
     color: colors.text,
     flex: 1,
   },
@@ -258,7 +267,8 @@ const styles = StyleSheet.create({
   },
   
   confirmMessage: {
-    ...typography.body,
+    fontSize: typography.sizes.base,
+    lineHeight: typography.lineHeights.base,
     color: colors.text,
     textAlign: 'center',
     marginVertical: spacing.md,

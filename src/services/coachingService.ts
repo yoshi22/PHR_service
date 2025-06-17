@@ -262,7 +262,7 @@ export class CoachingService extends BaseService {
 
         // Clear cached goals
         if (this.config.enableCaching) {
-          await StorageUtils.remove(userId, 'USER_PROFILE');
+          await StorageUtils.removeByType(userId, 'USER_PROFILE');
         }
 
         this.log('info', 'Goal created successfully', { userId, goalId: docRef.id, type: goal.type });
@@ -461,7 +461,7 @@ export class CoachingService extends BaseService {
 
         // Clear cached settings
         if (this.config.enableCaching) {
-          await StorageUtils.remove(userId, 'USER_SETTINGS');
+          await StorageUtils.removeByType(userId, 'USER_SETTINGS');
         }
 
         this.log('info', 'Coaching settings updated', { userId, updatedFields: Object.keys(settings) });
@@ -499,7 +499,7 @@ export class CoachingService extends BaseService {
           throw new Error('Failed to retrieve user goals');
         }
 
-        const goals = goalsResult.data;
+        const goals = goalsResult.data || [];
         const periodGoals = goals.filter(goal => {
           const goalStart = goal.startDate || goal.createdAt;
           return goalStart >= startDate && goalStart <= endDate;
@@ -522,9 +522,9 @@ export class CoachingService extends BaseService {
           const checkDate = new Date(today);
           checkDate.setDate(today.getDate() - i);
           
-          const hasActivity = goals.some(goal => 
+          const hasActivity = goals?.some(goal => 
             goal.completedDates?.includes(checkDate.toISOString().split('T')[0])
-          );
+          ) || false;
           
           if (hasActivity) {
             streakDays++;

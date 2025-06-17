@@ -185,8 +185,5 @@ export type TypographyKey = keyof typeof typography;
 // Default export for backward compatibility
 export default typography;
 
-// Export modern typography for new components
-export { modernTypography as typography };
-
 // Re-export for compatibility
 export const structuredTypography = modernTypography;

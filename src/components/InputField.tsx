@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { View, Text, TextInput, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native'
-import { colors, typography, spacing } from '../styles'
+import { colors, modernTypography as typography, spacing } from '../styles'
 
 interface InputFieldProps extends TextInputProps {
   label?: string
@@ -61,7 +61,7 @@ export default function InputField({
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
         
         <TextInput
-          style={[styles.input, leftIcon && styles.inputWithLeftIcon, rightIcon && styles.inputWithRightIcon, style]}
+          style={[styles.input, leftIcon ? styles.inputWithLeftIcon : undefined, rightIcon ? styles.inputWithRightIcon : undefined, style].filter(Boolean)}
           onFocus={(e) => {
             setIsFocused(true);
             props.onFocus?.(e);
@@ -98,7 +98,8 @@ const styles = StyleSheet.create({
   },
   
   label: {
-    ...typography.caption,
+    fontSize: typography.sizes.sm,
+    lineHeight: typography.lineHeights.sm,
     color: colors.text,
     marginBottom: spacing.xs,
     fontWeight: '500',
@@ -147,6 +148,7 @@ const styles = StyleSheet.create({
   
   // States
   focused: {
+    borderWidth: 1,
     borderColor: colors.primary,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 0 },
@@ -156,17 +158,20 @@ const styles = StyleSheet.create({
   },
   
   error: {
+    borderWidth: 1,
     borderColor: colors.status.error,
   },
   
   disabled: {
     backgroundColor: colors.neutral[100],
+    borderWidth: 1,
     borderColor: colors.neutral[200],
   },
   
   input: {
     flex: 1,
-    ...typography.body,
+    fontSize: typography.sizes.base,
+    lineHeight: typography.lineHeights.base,
     color: colors.text,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -191,13 +196,15 @@ const styles = StyleSheet.create({
   },
   
   errorText: {
-    ...typography.caption,
+    fontSize: typography.sizes.sm,
+    lineHeight: typography.lineHeights.sm,
     color: colors.status.error,
     marginTop: spacing.xs,
   },
   
   helperText: {
-    ...typography.caption,
+    fontSize: typography.sizes.sm,
+    lineHeight: typography.lineHeights.sm,
     color: colors.neutral[500],
     marginTop: spacing.xs,
   },

@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native'
-import { colors, typography, spacing } from '../styles'
+import { colors, modernTypography as typography, spacing } from '../styles'
 
 interface BadgeProps {
   children: React.ReactNode
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   
   // Text styles
   text: {
-    fontFamily: typography.fonts.medium,
+    fontWeight: '500',
     textAlign: 'center',
   },
   

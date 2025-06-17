@@ -1,6 +1,6 @@
 import React from 'react'
 import { TouchableOpacity, Text, StyleSheet, StyleProp, ViewStyle, TextStyle, ActivityIndicator } from 'react-native'
-import { colors, typography, spacing, common } from '../styles'
+import { colors, modernTypography as typography, spacing, common } from '../styles'
 
 interface PrimaryButtonProps {
   title: string
@@ -40,7 +40,7 @@ export default function PrimaryButton({
   };
   
   const getTextStyle = () => {
-    const baseStyle = [styles.text, styles[`${size}Text`]];
+    const baseStyle = [styles.text, styles[`${size}Text` as keyof typeof styles]];
     
     if (variant === 'outline' && !isDisabled) {
       baseStyle.push(styles.outlineText);
@@ -67,7 +67,7 @@ export default function PrimaryButton({
           color={variant === 'outline' ? colors.primary : colors.surface} 
         />
       ) : (
-        <Text style={[...getTextStyle(), textStyle]}>{title}</Text>
+        <Text style={[getTextStyle(), textStyle].flat()}>{title}</Text>
       )}
     </TouchableOpacity>
   )
@@ -118,13 +118,19 @@ const styles = StyleSheet.create({
   // Disabled state
   disabled: {
     backgroundColor: colors.neutral[300],
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0,
+    shadowRadius: 2,
     elevation: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: spacing.sm,
   },
   
   // Text styles
   text: {
-    fontFamily: typography.fonts.medium,
+    fontWeight: '500',
     textAlign: 'center',
   },
   
