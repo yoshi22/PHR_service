@@ -1,23 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Platform } from 'react-native';
-import { useAuth } from './useAuth';
-import { appleWatchService } from '../services/appleWatchService';
+import { useAuth } from '../contexts/AuthContext';
+import { appleWatchService, HealthKitData, WorkoutData } from '../services/appleWatchService';
+import { ServiceResult } from '../services/types';
 
-interface HealthKitData {
-  steps: number;
-  heartRate: number;
-  calories: number;
-  distance: number;
-  workouts: WorkoutData[];
-}
-
-interface WorkoutData {
-  type: string;
-  duration: number;
-  calories: number;
-  startDate: Date;
-  endDate: Date;
-}
+// Types are now imported from the service
 
 export function useAppleWatch() {
   const { user } = useAuth();
@@ -31,16 +18,18 @@ export function useAppleWatch() {
   // 初期化時に接続状態を確認
   useEffect(() => {
     const initializeConnection = async () => {
-      if (Platform.OS !== 'ios') {
+      if (!appleWatchService.isSupported()) {
         setError('Apple Watch integration is only available on iOS');
         return;
       }
 
       try {
-        const connected = await appleWatchService.checkConnection();
-        const connectionState = appleWatchService.getConnectionState();
+        const connectionResult = await appleWatchService.checkConnection();
+        if (connectionResult.success && connectionResult.data !== undefined) {
+          setIsConnected(connectionResult.data);
+        }
         
-        setIsConnected(connected);
+        const connectionState = appleWatchService.getConnectionState();
         setIsAuthorized(connectionState.isAuthorized);
         setLastSyncTime(connectionState.lastSyncTime);
       } catch (err) {
@@ -54,7 +43,7 @@ export function useAppleWatch() {
 
   // HealthKit権限をリクエスト
   const requestPermissions = useCallback(async () => {
-    if (Platform.OS !== 'ios') {
+    if (!appleWatchService.isSupported()) {
       setError('Apple Watch integration is only available on iOS');
       return false;
     }
@@ -63,16 +52,23 @@ export function useAppleWatch() {
     setIsLoading(true);
 
     try {
-      const authorized = await appleWatchService.requestHealthKitPermissions();
-      setIsAuthorized(authorized);
-      setIsConnected(authorized);
+      const result = await appleWatchService.requestPermissions();
       setIsLoading(false);
       
-      if (!authorized) {
-        setError('HealthKit権限が許可されませんでした');
+      if (result.success && result.data !== undefined) {
+        setIsAuthorized(result.data);
+        setIsConnected(result.data);
+        
+        if (!result.data) {
+          setError('HealthKit権限が許可されませんでした');
+        }
+        
+        return result.data;
+      } else {
+        const errorMessage = typeof result.error === 'string' ? result.error : result.error?.message || 'HealthKit権限のリクエストに失敗しました';
+        setError(errorMessage);
+        return false;
       }
-
-      return authorized;
     } catch (err) {
       setIsLoading(false);
       setError('HealthKit権限のリクエストに失敗しました: ' + err);
@@ -91,12 +87,18 @@ export function useAppleWatch() {
     setIsLoading(true);
 
     try {
-      const data = await appleWatchService.syncHealthData();
-      setHealthData(data);
-      setLastSyncTime(new Date());
+      const result = await appleWatchService.syncHealthData();
       setIsLoading(false);
       
-      return data;
+      if (result.success && result.data) {
+        setHealthData(result.data);
+        setLastSyncTime(new Date());
+        return result.data;
+      } else {
+        const errorMessage = typeof result.error === 'string' ? result.error : result.error?.message || 'ヘルスデータの同期に失敗しました';
+        setError(errorMessage);
+        return null;
+      }
     } catch (err) {
       setIsLoading(false);
       setError('ヘルスデータの同期に失敗しました: ' + err);
@@ -114,8 +116,15 @@ export function useAppleWatch() {
     setError(null);
 
     try {
-      const workouts = await appleWatchService.getWorkouts(startDate, endDate);
-      return workouts;
+      const result = await appleWatchService.getWorkouts(startDate, endDate);
+      
+      if (result.success && result.data) {
+        return result.data;
+      } else {
+        const errorMessage = typeof result.error === 'string' ? result.error : result.error?.message || 'ワークアウトデータの取得に失敗しました';
+        setError(errorMessage);
+        return [];
+      }
     } catch (err) {
       setError('ワークアウトデータの取得に失敗しました: ' + err);
       return [];
@@ -128,12 +137,18 @@ export function useAppleWatch() {
     setIsLoading(true);
 
     try {
-      await appleWatchService.disconnect();
-      setIsConnected(false);
-      setIsAuthorized(false);
-      setHealthData(null);
-      setLastSyncTime(null);
+      const result = await appleWatchService.disconnect();
       setIsLoading(false);
+      
+      if (result.success) {
+        setIsConnected(false);
+        setIsAuthorized(false);
+        setHealthData(null);
+        setLastSyncTime(null);
+      } else {
+        const errorMessage = typeof result.error === 'string' ? result.error : result.error?.message || '切断に失敗しました';
+        setError(errorMessage);
+      }
     } catch (err) {
       setIsLoading(false);
       setError('切断に失敗しました: ' + err);
@@ -143,10 +158,12 @@ export function useAppleWatch() {
   // 接続状態を更新
   const refreshConnectionState = useCallback(async () => {
     try {
-      const connected = await appleWatchService.checkConnection();
-      const connectionState = appleWatchService.getConnectionState();
+      const connectionResult = await appleWatchService.checkConnection();
+      if (connectionResult.success && connectionResult.data !== undefined) {
+        setIsConnected(connectionResult.data);
+      }
       
-      setIsConnected(connected);
+      const connectionState = appleWatchService.getConnectionState();
       setIsAuthorized(connectionState.isAuthorized);
       setLastSyncTime(connectionState.lastSyncTime);
     } catch (err) {

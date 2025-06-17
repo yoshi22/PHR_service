@@ -13,7 +13,9 @@ export * from './utils/storageUtils';
 export * from './types';
 export * from './constants';
 
-// Individual services (will be added as they are refactored)
+// Individual services
+export { appleWatchService } from './appleWatchService';
+export { fitbitService } from './fitbitService';
 // export { UserProfileService } from './UserProfileService';
 // export { HealthDataService } from './HealthDataService';
 // export { BadgeService } from './BadgeService';
@@ -88,7 +90,17 @@ export class ServiceInitializer {
       console.log('Initializing services...');
       
       // Initialize services here as they are refactored
-      // Example:
+      console.log('Registering Apple Watch service...');
+      ServiceRegistry.register('appleWatch', appleWatchService);
+      
+      console.log('Registering Fitbit service...');
+      ServiceRegistry.register('fitbit', fitbitService);
+      
+      // Initialize the services
+      await appleWatchService.initialize();
+      await fitbitService.initialize();
+      
+      // Example for future services:
       // const userProfileService = ServiceFactory.getInstance(UserProfileService, 'UserProfileService');
       // ServiceRegistry.register('userProfile', userProfileService);
 
@@ -125,6 +137,10 @@ const Services = {
   ServiceRegistry,
   ServiceInitializer,
   ServiceFactory,
+  
+  // Service instances
+  appleWatch: appleWatchService,
+  fitbit: fitbitService,
 };
 
 export default Services;

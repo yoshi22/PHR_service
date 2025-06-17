@@ -18,6 +18,48 @@ export class StorageUtils {
   }
 
   /**
+   * Stores data with expiration (generic version)
+   */
+  static async setWithExpiry<T>(
+    key: string,
+    data: T,
+    ttlMs: number
+  ): Promise<void> {
+    const expiry = Date.now() + ttlMs;
+    const cacheEntry = {
+      data,
+      expiry,
+    };
+    await AsyncStorage.setItem(key, JSON.stringify(cacheEntry));
+  }
+
+  /**
+   * Gets data with expiration check (generic version)
+   */
+  static async getWithExpiry<T>(key: string): Promise<T | null> {
+    const stored = await AsyncStorage.getItem(key);
+    if (!stored) return null;
+
+    try {
+      const cacheEntry = JSON.parse(stored);
+      if (cacheEntry.expiry && Date.now() > cacheEntry.expiry) {
+        await AsyncStorage.removeItem(key);
+        return null;
+      }
+      return cacheEntry.data as T;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Removes data from storage (generic version)
+   */
+  static async remove(key: string): Promise<void> {
+    await AsyncStorage.removeItem(key);
+  }
+
+  /**
    * Stores data with metadata and expiration
    */
   static async set<T>(
@@ -69,7 +111,7 @@ export class StorageUtils {
       // Check expiration
       if (metadata.expiry && new Date(metadata.expiry) < new Date()) {
         console.log('Cache expired, removing:', key);
-        await this.remove(userId, type);
+        await this.removeByType(userId, type);
         return createSuccessResult(null);
       }
 
@@ -81,9 +123,9 @@ export class StorageUtils {
   }
 
   /**
-   * Removes data from storage
+   * Removes data from storage by user and type
    */
-  static async remove(
+  static async removeByType(
     userId: string,
     type: keyof typeof STORAGE_KEYS
   ): Promise<ServiceResult<void>> {

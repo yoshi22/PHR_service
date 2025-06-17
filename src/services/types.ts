@@ -59,6 +59,27 @@ export interface DateRange {
 }
 
 /**
+ * Common health metrics interface
+ */
+export interface HealthMetrics {
+  steps: number;
+  heartRate: number;
+  calories: number;
+  distance: number;
+  timestamp: Date;
+}
+
+/**
+ * Connection state interface
+ */
+export interface ConnectionState {
+  isConnected: boolean;
+  isAuthorized: boolean;
+  lastSyncTime: Date | null;
+  error?: string;
+}
+
+/**
  * Health data point structure
  */
 export interface HealthDataPoint {

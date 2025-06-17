@@ -1,17 +1,18 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
+import { BaseService } from './base/BaseService';
+import { ServiceResult, HealthMetrics, ConnectionState } from './types';
+import { StorageUtils } from './utils/storageUtils';
+import { createSuccessResult, createErrorResult } from './utils/serviceUtils';
 
-// Fitbit Web API連携サービス
-interface FitbitData {
-  steps: number;
-  heartRate: number;
-  calories: number;
-  distance: number;
+/**
+ * Fitbit Web API連携サービス
+ */
+export interface FitbitData extends HealthMetrics {
   sleepData: SleepData | null;
   activities: ActivityData[];
 }
 
-interface SleepData {
+export interface SleepData {
   totalMinutesAsleep: number;
   totalTimeInBed: number;
   efficiency: number;
@@ -19,7 +20,7 @@ interface SleepData {
   endTime: Date;
 }
 
-interface ActivityData {
+export interface ActivityData {
   activityName: string;
   duration: number;
   calories: number;
@@ -27,12 +28,10 @@ interface ActivityData {
   startTime: Date;
 }
 
-interface FitbitConnectionState {
-  isConnected: boolean;
-  isAuthorized: boolean;
+export interface FitbitConnectionState extends ConnectionState {
   accessToken: string | null;
   refreshToken: string | null;
-  lastSyncTime: Date | null;
+  tokenExpiry: Date | null;
 }
 
 interface FitbitAuthConfig {
@@ -42,14 +41,33 @@ interface FitbitAuthConfig {
   scope: string;
 }
 
-class FitbitService {
+class FitbitService extends BaseService {
   private connectionState: FitbitConnectionState = {
     isConnected: false,
     isAuthorized: false,
     accessToken: null,
     refreshToken: null,
+    tokenExpiry: null,
     lastSyncTime: null,
   };
+
+  constructor() {
+    super('FitbitService');
+  }
+
+  /**
+   * Initialize the service
+   */
+  protected async onInitialize(): Promise<void> {
+    await this.loadConnectionState();
+  }
+
+  /**
+   * Dispose of service resources
+   */
+  protected async onDispose(): Promise<void> {
+    // Clean up any resources if needed
+  }
 
   private authConfig: FitbitAuthConfig = {
     clientId: process.env.EXPO_PUBLIC_FITBIT_CLIENT_ID || '', // .envファイルから取得
@@ -58,8 +76,10 @@ class FitbitService {
     scope: 'activity heartrate nutrition profile settings sleep social weight',
   };
 
-  // Fitbit OAuth認証を開始
-  async startAuthentication(): Promise<void> {
+  /**
+   * Fitbit OAuth認証を開始
+   */
+  async startAuthentication(): Promise<ServiceResult<void>> {
     try {
       const authUrl = this.buildAuthUrl();
       
@@ -67,12 +87,16 @@ class FitbitService {
       const supported = await Linking.canOpenURL(authUrl);
       if (supported) {
         await Linking.openURL(authUrl);
+        this.log('info', 'Fitbit authentication started');
+        return createSuccessResult(undefined);
       } else {
-        throw new Error('Cannot open Fitbit authentication URL');
+        return createErrorResult('URL_NOT_SUPPORTED', 'Cannot open Fitbit authentication URL');
       }
     } catch (error) {
-      console.error('Failed to start Fitbit authentication:', error);
-      throw error;
+      this.log('error', 'Failed to start Fitbit authentication', error);
+      return createErrorResult('AUTH_START_FAILED', 
+        error instanceof Error ? error.message : 'Authentication start failed'
+      );
     }
   }
 
@@ -89,8 +113,10 @@ class FitbitService {
     return `https://www.fitbit.com/oauth2/authorize?${params.toString()}`;
   }
 
-  // 認証コードからアクセストークンを取得
-  async handleAuthCallback(authCode: string): Promise<boolean> {
+  /**
+   * 認証コードからアクセストークンを取得
+   */
+  async handleAuthCallback(authCode: string): Promise<ServiceResult<boolean>> {
     try {
       const tokenData = await this.exchangeCodeForToken(authCode);
       
@@ -99,19 +125,20 @@ class FitbitService {
         this.connectionState.refreshToken = tokenData.refresh_token;
         this.connectionState.isAuthorized = true;
         this.connectionState.isConnected = true;
+        this.connectionState.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000));
 
-        // トークンを保存
-        await AsyncStorage.setItem('fitbitAccessToken', tokenData.access_token);
-        await AsyncStorage.setItem('fitbitRefreshToken', tokenData.refresh_token);
-        await AsyncStorage.setItem('fitbitAuthorized', 'true');
-
-        return true;
+        await this.saveConnectionState();
+        
+        this.log('info', 'Fitbit authentication completed successfully');
+        return createSuccessResult(true);
       }
       
-      return false;
+      return createSuccessResult(false);
     } catch (error) {
-      console.error('Failed to handle Fitbit auth callback:', error);
-      return false;
+      this.log('error', 'Failed to handle Fitbit auth callback', error);
+      return createErrorResult('AUTH_CALLBACK_FAILED', 
+        error instanceof Error ? error.message : 'Auth callback failed'
+      );
     }
   }
 
@@ -142,32 +169,33 @@ class FitbitService {
     return await response.json();
   }
 
-  // 保存されたトークンを読み込んで接続状態を復元
-  async restoreConnection(): Promise<boolean> {
+  /**
+   * 保存されたトークンを読み込んで接続状態を復元
+   */
+  async restoreConnection(): Promise<ServiceResult<boolean>> {
     try {
-      const accessToken = await AsyncStorage.getItem('fitbitAccessToken');
-      const refreshToken = await AsyncStorage.getItem('fitbitRefreshToken');
-      const authorized = await AsyncStorage.getItem('fitbitAuthorized');
+      await this.loadConnectionState();
 
-      if (accessToken && refreshToken && authorized === 'true') {
-        this.connectionState.accessToken = accessToken;
-        this.connectionState.refreshToken = refreshToken;
-        this.connectionState.isAuthorized = true;
-        this.connectionState.isConnected = true;
-
+      if (this.connectionState.accessToken && this.connectionState.refreshToken && this.connectionState.isAuthorized) {
         // トークンの有効性を確認
         const isValid = await this.validateToken();
         if (!isValid) {
-          await this.refreshAccessToken();
+          const refreshResult = await this.refreshAccessToken();
+          if (!refreshResult.success) {
+            return refreshResult;
+          }
         }
 
-        return true;
+        this.log('info', 'Fitbit connection restored successfully');
+        return createSuccessResult(true);
       }
 
-      return false;
+      return createSuccessResult(false);
     } catch (error) {
-      console.error('Failed to restore Fitbit connection:', error);
-      return false;
+      this.log('error', 'Failed to restore Fitbit connection', error);
+      return createErrorResult('CONNECTION_RESTORE_FAILED', 
+        error instanceof Error ? error.message : 'Connection restore failed'
+      );
     }
   }
 
@@ -191,10 +219,12 @@ class FitbitService {
     }
   }
 
-  // アクセストークンを更新
-  private async refreshAccessToken(): Promise<boolean> {
+  /**
+   * アクセストークンを更新
+   */
+  private async refreshAccessToken(): Promise<ServiceResult<boolean>> {
     if (!this.connectionState.refreshToken) {
-      return false;
+      return createErrorResult('NO_REFRESH_TOKEN', 'No refresh token available');
     }
 
     try {
@@ -218,24 +248,29 @@ class FitbitService {
         const tokenData = await response.json();
         this.connectionState.accessToken = tokenData.access_token;
         this.connectionState.refreshToken = tokenData.refresh_token;
+        this.connectionState.tokenExpiry = new Date(Date.now() + (tokenData.expires_in * 1000));
 
-        await AsyncStorage.setItem('fitbitAccessToken', tokenData.access_token);
-        await AsyncStorage.setItem('fitbitRefreshToken', tokenData.refresh_token);
-
-        return true;
+        await this.saveConnectionState();
+        
+        this.log('info', 'Fitbit token refreshed successfully');
+        return createSuccessResult(true);
       }
 
-      return false;
+      return createErrorResult('TOKEN_REFRESH_FAILED', `Token refresh failed: ${response.statusText}`);
     } catch (error) {
-      console.error('Failed to refresh Fitbit token:', error);
-      return false;
+      this.log('error', 'Failed to refresh Fitbit token', error);
+      return createErrorResult('TOKEN_REFRESH_ERROR', 
+        error instanceof Error ? error.message : 'Token refresh error'
+      );
     }
   }
 
-  // Fitbitからデータを同期
-  async syncFitbitData(): Promise<FitbitData | null> {
+  /**
+   * Fitbitからデータを同期
+   */
+  async syncFitbitData(): Promise<ServiceResult<FitbitData>> {
     if (!this.connectionState.isConnected || !this.connectionState.accessToken) {
-      throw new Error('Fitbit is not connected');
+      return createErrorResult('NOT_CONNECTED', 'Fitbit is not connected');
     }
 
     try {
@@ -255,18 +290,22 @@ class FitbitService {
         heartRate: heartRateData?.restingHeartRate || 0,
         calories: caloriesData?.value || 0,
         distance: 0, // 歩数から概算で計算可能
+        timestamp: new Date(),
         sleepData: sleepData,
         activities: activitiesData,
       };
 
       // 最後の同期時間を保存
       this.connectionState.lastSyncTime = new Date();
-      await AsyncStorage.setItem('fitbitLastSync', this.connectionState.lastSyncTime.toISOString());
+      await this.saveConnectionState();
 
-      return fitbitData;
+      this.log('info', 'Fitbit data synced successfully', { fitbitData });
+      return createSuccessResult(fitbitData);
     } catch (error) {
-      console.error('Failed to sync Fitbit data:', error);
-      return null;
+      this.log('error', 'Failed to sync Fitbit data', error);
+      return createErrorResult('DATA_SYNC_FAILED', 
+        error instanceof Error ? error.message : 'Data sync failed'
+      );
     }
   }
 
@@ -366,23 +405,64 @@ class FitbitService {
     return [];
   }
 
-  // 接続状態を取得
+  /**
+   * 接続状態を取得
+   */
   getConnectionState(): FitbitConnectionState {
     return { ...this.connectionState };
   }
 
-  // 接続を切断
-  async disconnect(): Promise<void> {
-    this.connectionState.isConnected = false;
-    this.connectionState.isAuthorized = false;
-    this.connectionState.accessToken = null;
-    this.connectionState.refreshToken = null;
-    this.connectionState.lastSyncTime = null;
-    
-    await AsyncStorage.removeItem('fitbitAccessToken');
-    await AsyncStorage.removeItem('fitbitRefreshToken');
-    await AsyncStorage.removeItem('fitbitAuthorized');
-    await AsyncStorage.removeItem('fitbitLastSync');
+  /**
+   * 接続を切断
+   */
+  async disconnect(): Promise<ServiceResult<void>> {
+    try {
+      this.connectionState.isConnected = false;
+      this.connectionState.isAuthorized = false;
+      this.connectionState.accessToken = null;
+      this.connectionState.refreshToken = null;
+      this.connectionState.tokenExpiry = null;
+      this.connectionState.lastSyncTime = null;
+      
+      await StorageUtils.remove('fitbitConnectionState');
+      
+      this.log('info', 'Fitbit disconnected successfully');
+      return createSuccessResult(undefined);
+    } catch (error) {
+      this.log('error', 'Failed to disconnect Fitbit', error);
+      return createErrorResult('DISCONNECT_FAILED', 
+        error instanceof Error ? error.message : 'Disconnect failed'
+      );
+    }
+  }
+
+  /**
+   * 接続状態を保存
+   */
+  private async saveConnectionState(): Promise<void> {
+    try {
+      await StorageUtils.setWithExpiry(
+        'fitbitConnectionState',
+        this.connectionState,
+        86400000 // 24 hours
+      );
+    } catch (error) {
+      this.log('error', 'Failed to save Fitbit connection state', error);
+    }
+  }
+
+  /**
+   * 接続状態を読み込み
+   */
+  private async loadConnectionState(): Promise<void> {
+    try {
+      const saved = await StorageUtils.getWithExpiry<FitbitConnectionState>('fitbitConnectionState');
+      if (saved) {
+        this.connectionState = { ...this.connectionState, ...saved };
+      }
+    } catch (error) {
+      this.log('error', 'Failed to load Fitbit connection state', error);
+    }
   }
 }
 
