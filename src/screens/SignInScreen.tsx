@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import * as React from 'react'
 import { View, Text, StyleSheet, Alert } from 'react-native'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase'
@@ -7,6 +7,9 @@ import PrimaryButton from '../components/PrimaryButton'
 import LoadingOverlay from '../components/LoadingOverlay'
 import Checkbox from '../components/Checkbox'
 import { saveCredentials, loadCredentials } from '../services/credentialsService'
+import { colors, modernTypography as typography, spacing } from '../styles'
+
+const { useState, useEffect } = React;
 
 export default function SignInScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('')
@@ -92,13 +95,39 @@ export default function SignInScreen({ navigation }: { navigation: any }) {
         testID="remember-me-checkbox"
       />
       {loading && <LoadingOverlay />}
-      <PrimaryButton title="ログイン" onPress={onPressLogin} disabled={loading} testID="login-button" />
-      <PrimaryButton title="新規登録はこちら" onPress={() => navigation.navigate('SignUp')} testID="signup-link" />
+      <View style={styles.buttonContainer}>
+        <PrimaryButton title="ログイン" onPress={onPressLogin} disabled={loading} testID="login-button" />
+        <PrimaryButton 
+          title="新規登録はこちら" 
+          onPress={() => navigation.navigate('SignUp')} 
+          variant="outline"
+          testID="signup-link" 
+          style={styles.signupButton}
+        />
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 16 },
-  title: { fontSize: 24, marginBottom: 16, textAlign: 'center' }
+  container: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    padding: spacing.md,
+    backgroundColor: colors.background,
+  },
+  title: { 
+    fontSize: typography.sizes['2xl'], 
+    fontWeight: '700' as any,
+    marginBottom: spacing.lg, 
+    textAlign: 'center',
+    color: colors.text,
+  },
+  buttonContainer: {
+    marginTop: spacing.lg,
+    gap: spacing.md,
+  },
+  signupButton: {
+    marginTop: spacing.sm,
+  },
 })

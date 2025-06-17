@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { View, Text, StyleSheet, Alert, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
@@ -9,17 +9,43 @@ import InputField from '../components/InputField';
 import PrimaryButton from '../components/PrimaryButton';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { formatDate } from '../utils/formatDate';
-import colors from '../styles/colors';
-import typography from '../styles/typography';
+import { colors, modernTypography as typography, spacing } from '../styles';
+
+const { useState } = React;
 
 const DEFAULT_STEP_GOAL = 7500;
 const DEFAULT_NOTIFICATION_TIME = '20:00';
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  title: { fontSize: 24, marginBottom: 24, textAlign: 'center' },
-  picker: { width: '100%', marginTop: 12 },
-  flex: { flex: 1 },
+  container: { 
+    padding: spacing.md,
+    backgroundColor: colors.background,
+  },
+  title: { 
+    fontSize: typography.sizes['2xl'], 
+    fontWeight: '700' as any,
+    marginBottom: spacing.xl, 
+    textAlign: 'center',
+    color: colors.text,
+  },
+  picker: { 
+    width: '100%', 
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: spacing.sm,
+  },
+  flex: { 
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  buttonContainer: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  dateButton: {
+    marginBottom: spacing.md,
+  },
 });
 
 export default function SignUpScreen({ navigation }: { navigation: any }) {
@@ -141,7 +167,7 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={[styles.title, typography.h2, { color: colors.primary }]}>新規登録</Text>
+        <Text style={styles.title}>新規登録</Text>
         <InputField
           label="メールアドレス"
           placeholder="user@example.com"
@@ -161,6 +187,8 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
         <PrimaryButton
           title={`生年月日: ${formatDate(birthDate)}`}
           onPress={() => setShowPicker(true)}
+          variant="outline"
+          style={styles.dateButton}
         />
         {showPicker && (
           <DateTimePicker
@@ -207,7 +235,9 @@ export default function SignUpScreen({ navigation }: { navigation: any }) {
         />
 
         {loading && <LoadingOverlay />}
-        <PrimaryButton title={loading ? '登録中…' : '登録する'} onPress={onPressSignUp} disabled={loading} />
+        <View style={styles.buttonContainer}>
+          <PrimaryButton title={loading ? '登録中…' : '登録する'} onPress={onPressSignUp} disabled={loading} />
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
