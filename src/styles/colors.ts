@@ -68,6 +68,28 @@ export const colors = {
   overlay: 'rgba(0, 0, 0, 0.5)',
   modalBackground: '#FFFFFF',
   shadow: 'rgba(0, 0, 0, 0.1)',
+  
+  // Neutral color scale for design system
+  neutral: {
+    50: '#F9FAFB',
+    100: '#F3F4F6',
+    200: '#E5E7EB',
+    300: '#D1D5DB',
+    400: '#9CA3AF',
+    500: '#6B7280',
+    600: '#4B5563',
+    700: '#374151',
+    800: '#1F2937',
+    900: '#111827',
+  },
+  
+  // Status colors grouped for design system
+  status: {
+    success: '#4CAF50',
+    error: '#FF3B30',
+    warning: '#FF9800',
+    info: '#2196F3',
+  },
 } as const;
 
 // Type definition for color keys

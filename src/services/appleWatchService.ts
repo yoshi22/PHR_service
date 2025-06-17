@@ -278,7 +278,7 @@ class AppleWatchService extends BaseService {
     }
 
     try {
-      return new Promise((resolve, reject) => {
+      const workouts = await new Promise<WorkoutData[]>((resolve, reject) => {
         const options = {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
@@ -290,11 +290,11 @@ class AppleWatchService extends BaseService {
             return;
           }
           
-          const workouts: WorkoutData[] = [];
+          const workoutList: WorkoutData[] = [];
           
           if (results && results.data && results.data.length > 0) {
             results.data.forEach((workout: any) => {
-              workouts.push({
+              workoutList.push({
                 type: this.getWorkoutTypeDisplay(workout.activityType || workout.activityName),
                 duration: workout.duration / 60, // 分単位に変換
                 calories: workout.calories || 0,
@@ -304,7 +304,7 @@ class AppleWatchService extends BaseService {
             });
           }
           
-          resolve(workouts);
+          resolve(workoutList);
         });
       });
 

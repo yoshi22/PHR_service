@@ -133,9 +133,60 @@ export const typography: Record<string, TextStyle> = {
   },
 } as const;
 
+/**
+ * Modern design system typography structure
+ */
+export const modernTypography = {
+  // Font family definitions
+  fonts: {
+    regular: 'System',
+    medium: 'System',
+    bold: 'System',
+  },
+  
+  // Size scale
+  sizes: {
+    xs: 11,
+    sm: 12,
+    base: 14,
+    lg: 16,
+    xl: 18,
+    '2xl': 20,
+    '3xl': 24,
+    '4xl': 28,
+    '5xl': 32,
+  },
+  
+  // Line height scale
+  lineHeights: {
+    xs: 16,
+    sm: 16,
+    base: 20,
+    lg: 24,
+    xl: 28,
+    '2xl': 32,
+    '3xl': 36,
+    '4xl': 40,
+    '5xl': 44,
+  },
+  
+  // Structured styles
+  h1: typography.h1,
+  h2: typography.h2,
+  h3: typography.titleLarge,
+  body: typography.body,
+  caption: typography.caption,
+} as const;
+
 // Type definitions
 export type FontWeight = keyof typeof fontWeights;
 export type TypographyKey = keyof typeof typography;
 
 // Default export for backward compatibility
 export default typography;
+
+// Export modern typography for new components
+export { modernTypography as typography };
+
+// Re-export for compatibility
+export const structuredTypography = modernTypography;

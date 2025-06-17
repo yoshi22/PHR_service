@@ -19,11 +19,6 @@ export { default as BadgeList } from './BadgeList'
 export { default as BadgeSummary } from './BadgeSummary'
 export { default as StreakCard } from './StreakCard'
 export { default as CustomBarChart } from './CustomBarChart'
-export { default as VoiceButton } from './VoiceButton'
-export { default as CoachingChat } from './CoachingChat'
-export { default as SpeechToTextButton } from './SpeechToTextButton'
-export { default as FitnessDeviceCard } from './FitnessDeviceCard'
 export { default as ErrorFallback } from './ErrorFallback'
 
-// Convenience type exports
-export type { ConfirmModalProps } from './Modal'
+// Note: VoiceButton, CoachingChat, SpeechToTextButton, FitnessDeviceCard will be added later

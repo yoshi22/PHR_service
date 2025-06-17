@@ -12,7 +12,9 @@ export {
   cardStyles, 
   buttonStyles, 
   inputStyles, 
-  textStyles 
+  textStyles,
+  shadows,
+  common
 } from './common';
 
 // Default exports for backward compatibility
@@ -25,7 +27,7 @@ export { default as CommonStyles } from './common';
 import { colors as colorsImport } from './colors';
 import { typography as typographyImport } from './typography';
 import { spacing as spacingImport, spacingHelpers as spacingHelpersImport } from './spacing';
-import { commonStyles as commonStylesImport } from './common';
+import { commonStyles as commonStylesImport, shadows as shadowsImport, common as commonImport } from './common';
 
 export const theme = {
   colors: colorsImport,
@@ -33,6 +35,8 @@ export const theme = {
   spacing: spacingImport,
   spacingHelpers: spacingHelpersImport,
   commonStyles: commonStylesImport,
+  shadows: shadowsImport,
+  common: commonImport,
 } as const;
 
 // Type definitions for the complete theme

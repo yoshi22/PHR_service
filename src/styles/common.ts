@@ -291,5 +291,56 @@ export const textStyles = {
   textCenter: commonStyles.textCenter,
 };
 
+/**
+ * Shadow definitions for consistent elevation
+ */
+export const shadows = {
+  light: {
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  
+  medium: {
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  
+  heavy: {
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+};
+
+/**
+ * Common object with all reusable styles
+ */
+export const common = {
+  shadows,
+  styles: commonStyles,
+  layout: layoutStyles,
+  cards: cardStyles,
+  buttons: buttonStyles,
+  inputs: inputStyles,
+  text: textStyles,
+};
+
 // Default export
 export default commonStyles;

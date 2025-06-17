@@ -3,6 +3,7 @@
  */
 
 // Core service infrastructure
+import { BaseService, ServiceFactory } from './base/BaseService';
 export { BaseService, ServiceFactory } from './base/BaseService';
 
 // Service utilities
@@ -12,6 +13,10 @@ export * from './utils/storageUtils';
 // Service types and constants
 export * from './types';
 export * from './constants';
+
+// Import services first
+import { appleWatchService } from './appleWatchService';
+import { fitbitService } from './fitbitService';
 
 // Individual services
 export { appleWatchService } from './appleWatchService';
@@ -97,8 +102,12 @@ export class ServiceInitializer {
       ServiceRegistry.register('fitbit', fitbitService);
       
       // Initialize the services
-      await appleWatchService.initialize();
-      await fitbitService.initialize();
+      try {
+        await appleWatchService.initialize();
+        await fitbitService.initialize();
+      } catch (error) {
+        console.error('Failed to initialize services:', error);
+      }
       
       // Example for future services:
       // const userProfileService = ServiceFactory.getInstance(UserProfileService, 'UserProfileService');
@@ -122,8 +131,8 @@ export class ServiceInitializer {
   /**
    * Disposes of all services
    */
-  static dispose(): void {
-    ServiceFactory.disposeAll();
+  static async dispose(): Promise<void> {
+    await ServiceFactory.disposeAll();
     ServiceRegistry.clear();
     this.initialized = false;
     console.log('Services disposed');
