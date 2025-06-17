@@ -1,32 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Linking } from 'react-native';
-import { useAuth } from './useAuth';
-import { fitbitService } from '../services/fitbitService';
+import { useAuth } from '../contexts/AuthContext';
+import { fitbitService, FitbitData, SleepData, ActivityData } from '../services/fitbitService';
+import { ServiceResult } from '../services/types';
 
-interface FitbitData {
-  steps: number;
-  heartRate: number;
-  calories: number;
-  distance: number;
-  sleepData: SleepData | null;
-  activities: ActivityData[];
-}
-
-interface SleepData {
-  totalMinutesAsleep: number;
-  totalTimeInBed: number;
-  efficiency: number;
-  startTime: Date;
-  endTime: Date;
-}
-
-interface ActivityData {
-  activityName: string;
-  duration: number;
-  calories: number;
-  steps: number;
-  startTime: Date;
-}
+// Types are now imported from the service
 
 export function useFitbit() {
   const { user } = useAuth();
@@ -41,10 +19,12 @@ export function useFitbit() {
   useEffect(() => {
     const initializeConnection = async () => {
       try {
-        const restored = await fitbitService.restoreConnection();
+        const result = await fitbitService.restoreConnection();
         const connectionState = fitbitService.getConnectionState();
         
-        setIsConnected(restored);
+        if (result.success && result.data !== undefined) {
+          setIsConnected(result.data);
+        }
         setIsAuthorized(connectionState.isAuthorized);
         setLastSyncTime(connectionState.lastSyncTime);
       } catch (err) {
@@ -92,8 +72,13 @@ export function useFitbit() {
     setIsLoading(true);
 
     try {
-      await fitbitService.startAuthentication();
-      // OAuth認証は外部ブラウザで行われるため、ここでは処理を待たない
+      const result = await fitbitService.startAuthentication();
+      if (!result.success) {
+        setIsLoading(false);
+        const errorMessage = typeof result.error === 'string' ? result.error : result.error?.message || 'Fitbit認証の開始に失敗しました';
+        setError(errorMessage);
+      }
+      // OAuth認証は外部ブラウザで行われるため、成功時はここでは処理を待たない
     } catch (err) {
       setIsLoading(false);
       setError('Fitbit認証の開始に失敗しました: ' + err);
@@ -105,16 +90,17 @@ export function useFitbit() {
     setIsLoading(true);
 
     try {
-      const success = await fitbitService.handleAuthCallback(authCode);
+      const result = await fitbitService.handleAuthCallback(authCode);
       
-      if (success) {
+      if (result.success && result.data) {
         const connectionState = fitbitService.getConnectionState();
         setIsConnected(true);
         setIsAuthorized(true);
         setLastSyncTime(connectionState.lastSyncTime);
         setError(null);
       } else {
-        setError('Fitbit認証に失敗しました');
+        const errorMessage = typeof result.error === 'string' ? result.error : result.error?.message || 'Fitbit認証に失敗しました';
+        setError(errorMessage);
       }
     } catch (err) {
       setError('認証処理中にエラーが発生しました: ' + err);
@@ -134,12 +120,18 @@ export function useFitbit() {
     setIsLoading(true);
 
     try {
-      const data = await fitbitService.syncFitbitData();
-      setFitbitData(data);
-      setLastSyncTime(new Date());
+      const result = await fitbitService.syncFitbitData();
       setIsLoading(false);
       
-      return data;
+      if (result.success && result.data) {
+        setFitbitData(result.data);
+        setLastSyncTime(new Date());
+        return result.data;
+      } else {
+        const errorMessage = typeof result.error === 'string' ? result.error : result.error?.message || 'Fitbitデータの同期に失敗しました';
+        setError(errorMessage);
+        return null;
+      }
     } catch (err) {
       setIsLoading(false);
       setError('Fitbitデータの同期に失敗しました: ' + err);
@@ -153,12 +145,18 @@ export function useFitbit() {
     setIsLoading(true);
 
     try {
-      await fitbitService.disconnect();
-      setIsConnected(false);
-      setIsAuthorized(false);
-      setFitbitData(null);
-      setLastSyncTime(null);
+      const result = await fitbitService.disconnect();
       setIsLoading(false);
+      
+      if (result.success) {
+        setIsConnected(false);
+        setIsAuthorized(false);
+        setFitbitData(null);
+        setLastSyncTime(null);
+      } else {
+        const errorMessage = typeof result.error === 'string' ? result.error : result.error?.message || '切断に失敗しました';
+        setError(errorMessage);
+      }
     } catch (err) {
       setIsLoading(false);
       setError('切断に失敗しました: ' + err);
@@ -168,10 +166,12 @@ export function useFitbit() {
   // 接続状態を更新
   const refreshConnectionState = useCallback(async () => {
     try {
-      const restored = await fitbitService.restoreConnection();
+      const result = await fitbitService.restoreConnection();
       const connectionState = fitbitService.getConnectionState();
       
-      setIsConnected(restored);
+      if (result.success && result.data !== undefined) {
+        setIsConnected(result.data);
+      }
       setIsAuthorized(connectionState.isAuthorized);
       setLastSyncTime(connectionState.lastSyncTime);
     } catch (err) {

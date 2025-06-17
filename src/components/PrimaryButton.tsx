@@ -1,66 +1,155 @@
 import React from 'react'
-import { TouchableOpacity, Text, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native'
-import { useTheme } from '@react-navigation/native'
+import { TouchableOpacity, Text, StyleSheet, StyleProp, ViewStyle, TextStyle, ActivityIndicator } from 'react-native'
+import { colors, typography, spacing, common } from '../styles'
 
 interface PrimaryButtonProps {
   title: string
   onPress: () => void
   disabled?: boolean
+  loading?: boolean
+  variant?: 'primary' | 'secondary' | 'danger' | 'outline'
+  size?: 'small' | 'medium' | 'large'
   style?: StyleProp<ViewStyle>
   textStyle?: StyleProp<TextStyle>
   testID?: string
 }
 
-export default function PrimaryButton({ title, onPress, disabled, style, textStyle, testID }: PrimaryButtonProps) {
-  // Try to get theme colors, but have defaults if not in a NavigationContainer
-  let colors = {
-    primary: '#007AFF',
-    border: '#CCCCCC',
-    text: '#FFFFFF'
+export default function PrimaryButton({ 
+  title, 
+  onPress, 
+  disabled = false, 
+  loading = false,
+  variant = 'primary', 
+  size = 'medium',
+  style, 
+  textStyle, 
+  testID 
+}: PrimaryButtonProps) {
+  const isDisabled = disabled || loading;
+  
+  const getButtonStyle = () => {
+    const baseStyle = [styles.button, styles[size]];
+    
+    if (isDisabled) {
+      baseStyle.push(styles.disabled);
+    } else {
+      baseStyle.push(styles[variant]);
+    }
+    
+    return baseStyle;
   };
   
-  try {
-    // This may throw an error if not in a NavigationContainer
-    const theme = useTheme();
-    if (theme && theme.colors) {
-      colors.primary = theme.colors.primary;
-      colors.border = theme.colors.border;
+  const getTextStyle = () => {
+    const baseStyle = [styles.text, styles[`${size}Text`]];
+    
+    if (variant === 'outline' && !isDisabled) {
+      baseStyle.push(styles.outlineText);
+    } else if (isDisabled) {
+      baseStyle.push(styles.disabledText);
+    } else {
+      baseStyle.push(styles.defaultText);
     }
-  } catch (error) {
-    // Fallback to default colors if theme is not available
-    console.log('Theme not available, using default colors');
-  }
+    
+    return baseStyle;
+  };
   
   return (
     <TouchableOpacity
-      style={[
-        styles.button, 
-        { backgroundColor: colors.primary },
-        disabled && [styles.disabled, { backgroundColor: colors.border }],
-        style
-      ]}
+      style={[...getButtonStyle(), style]}
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
       testID={testID}
+      activeOpacity={0.8}
     >
-      <Text style={[styles.text, { color: '#FFFFFF' }, textStyle]}>{title}</Text>
+      {loading ? (
+        <ActivityIndicator 
+          size={size === 'small' ? 'small' : 'small'} 
+          color={variant === 'outline' ? colors.primary : colors.surface} 
+        />
+      ) : (
+        <Text style={[...getTextStyle(), textStyle]}>{title}</Text>
+      )}
     </TouchableOpacity>
   )
 }
 
 const styles = StyleSheet.create({
+  // Base button style
   button: {
-    backgroundColor: '#007AFF',
-    padding: 12,
-    borderRadius: 6,
     alignItems: 'center',
-    marginTop: 12,
+    justifyContent: 'center',
+    borderRadius: spacing.sm,
+    ...common.shadows.light,
   },
+  
+  // Size variants
+  small: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    minHeight: 32,
+  },
+  medium: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    minHeight: 44,
+  },
+  large: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    minHeight: 52,
+  },
+  
+  // Color variants
+  primary: {
+    backgroundColor: colors.primary,
+  },
+  secondary: {
+    backgroundColor: colors.neutral[600],
+  },
+  danger: {
+    backgroundColor: colors.status.error,
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  
+  // Disabled state
   disabled: {
-    backgroundColor: '#A0A0A0',
+    backgroundColor: colors.neutral[300],
+    shadowOpacity: 0,
+    elevation: 0,
   },
+  
+  // Text styles
   text: {
-    color: '#fff',
-    fontSize: 16,
+    fontFamily: typography.fonts.medium,
+    textAlign: 'center',
+  },
+  
+  // Text size variants
+  smallText: {
+    fontSize: typography.sizes.sm,
+    lineHeight: typography.lineHeights.sm,
+  },
+  mediumText: {
+    fontSize: typography.sizes.base,
+    lineHeight: typography.lineHeights.base,
+  },
+  largeText: {
+    fontSize: typography.sizes.lg,
+    lineHeight: typography.lineHeights.lg,
+  },
+  
+  // Text color variants
+  defaultText: {
+    color: colors.surface,
+  },
+  outlineText: {
+    color: colors.primary,
+  },
+  disabledText: {
+    color: colors.neutral[500],
   },
 })
