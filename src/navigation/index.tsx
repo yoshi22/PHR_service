@@ -1,55 +1,104 @@
-// src/navigation/index.tsx
-import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import MainTabs from './MainTabs'
+/**
+ * Main App Navigator - Root navigation structure
+ * Uses type-safe navigation with centralized route definitions
+ */
 
-// 各画面コンポーネント
+import * as React from 'react'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { colors, modernTypography as typography } from '../styles'
+import MainTabs from './MainTabs'
+import type { RootStackParamList } from './types'
+import { ROUTES } from './types'
+
+// Screen components
 import SignInScreen from '../screens/SignInScreen'
 import SignUpScreen from '../screens/SignUpScreen'
-import DashboardScreen from '../screens/DashboardScreen'
 import BadgeGalleryScreen from '../screens/BadgeGalleryScreen'
-
-export type RootStackParamList = {
-  SignIn: undefined
-  SignUp: undefined
-  Dashboard: undefined
-  BadgeGallery: undefined
-  MainTabs: undefined
-}
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
-export default function AppNavigator({ signedIn }: { signedIn: boolean }) {
-  return signedIn ? (
-    // @ts-ignore - Temporary fix for React Navigation v7 type issue
-    <Stack.Navigator initialRouteName="MainTabs">
+interface AppNavigatorProps {
+  signedIn: boolean;
+}
+
+/**
+ * Default screen options for consistent styling
+ */
+const defaultScreenOptions = {
+  headerStyle: {
+    backgroundColor: colors.surface,
+  },
+  headerTintColor: colors.text,
+  headerTitleStyle: {
+    fontSize: typography.sizes.lg,
+    fontWeight: '600' as any,
+    color: colors.text,
+  },
+  headerBackTitleStyle: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+  },
+};
+
+/**
+ * Main App Navigator component
+ * Handles authenticated and unauthenticated navigation flows
+ */
+export default function AppNavigator({ signedIn }: AppNavigatorProps) {
+  if (signedIn) {
+    return (
+      <Stack.Navigator 
+        initialRouteName={ROUTES.MAIN_TABS}
+        screenOptions={defaultScreenOptions}
+      >
+        <Stack.Screen
+          name={ROUTES.MAIN_TABS}
+          component={MainTabs}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name={ROUTES.BADGE_GALLERY}
+          component={BadgeGalleryScreen}
+          options={{ 
+            title: 'バッジコレクション',
+            headerBackTitle: 'ダッシュボード',
+            presentation: 'modal',
+          }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  return (
+    <Stack.Navigator 
+      initialRouteName={ROUTES.SIGN_IN}
+      screenOptions={{
+        ...defaultScreenOptions,
+        headerStyle: {
+          backgroundColor: colors.background,
+        },
+      }}
+    >
       <Stack.Screen
-        name="MainTabs"
-        component={MainTabs}
-        options={{ headerShown: false }}
+        name={ROUTES.SIGN_IN}
+        component={SignInScreen}
+        options={{ 
+          title: 'ログイン',
+          headerShown: false, // Clean auth experience
+        }}
       />
       <Stack.Screen
-        name="BadgeGallery"
-        component={BadgeGalleryScreen}
+        name={ROUTES.SIGN_UP}
+        component={SignUpScreen}
         options={{ 
-          title: 'バッジコレクション',
-          headerBackTitle: 'ダッシュボード'
+          title: '新規登録',
+          headerBackTitle: 'ログイン',
         }}
       />
     </Stack.Navigator>
-  ) : (
-    // @ts-ignore - Temporary fix for React Navigation v7 type issue
-    <Stack.Navigator initialRouteName="SignIn">
-      <Stack.Screen
-        name="SignIn"
-        component={SignInScreen}
-        options={{ title: 'ログイン' }}
-      />
-      <Stack.Screen
-        name="SignUp"
-        component={SignUpScreen}
-        options={{ title: '新規登録' }}
-      />
-    </Stack.Navigator>
-  )
+  );
 }
+
+// Export types for use in other files
+export type { RootStackParamList } from './types';
+export { ROUTES } from './types';

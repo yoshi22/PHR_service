@@ -74,7 +74,7 @@ export class HealthDataService extends BaseService {
       return createSuccessResult(weeklyData);
     } catch (error) {
       this.log('error', 'Failed to fetch weekly steps data', error);
-      return createErrorResult('健康データの取得に失敗しました', error);
+      return createErrorResult('OPERATION_FAILED', error);
     }
   }
 
@@ -166,11 +166,11 @@ export class HealthDataService extends BaseService {
         this.log('info', 'Health data repair completed successfully');
         return createSuccessResult(true);
       } else {
-        return createErrorResult('データの修復に失敗しました', result.error);
+        return createErrorResult('OPERATION_FAILED', result.error);
       }
     } catch (error) {
       this.log('error', 'Failed to repair health data', error);
-      return createErrorResult('データの修復中にエラーが発生しました', error);
+      return createErrorResult('OPERATION_FAILED', error);
     }
   }
 

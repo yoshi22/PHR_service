@@ -14,7 +14,9 @@ if ((global as any).originalXMLHttpRequest == null) {
 (global as any).fetch = (global as any).originalFetch;
 (global as any).FormData = (global as any).originalFormData;
 
-import React, { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+
+const { useEffect, useRef, useState } = React;
 import {
   View,
   ActivityIndicator,
@@ -165,19 +167,21 @@ function App() {
   }
 
   return (
-    <ErrorProvider>
-      <LoadingProvider>
-        <ToastProvider>
-          <ThemeProvider>
-            <AuthProvider>
-              <SettingsProvider>
-                <AppContent />
-              </SettingsProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </ToastProvider>
-      </LoadingProvider>
-    </ErrorProvider>
+    <SafeAreaProvider>
+      <ErrorProvider>
+        <LoadingProvider>
+          <ToastProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <SettingsProvider>
+                  <AppContent />
+                </SettingsProvider>
+              </AuthProvider>
+            </ThemeProvider>
+          </ToastProvider>
+        </LoadingProvider>
+      </ErrorProvider>
+    </SafeAreaProvider>
   );
 }
 
@@ -235,41 +239,25 @@ const AppContent = () => {
   // ログインしているがまだ権限を取得していない状態の場合、権限リクエスト画面を表示
   if (user && !permissionsGranted) {
     return (
-      <ErrorProvider>
-        <LoadingProvider>
-          <ToastProvider>
-            <ThemeProvider>
-              <PermissionsScreen 
-                onPermissionGranted={() => {
-                  console.log('Permission granted callback in App.tsx');
-                  // PermissionsScreen コンポーネントは一度だけこれを呼び出します
-                  // 状態を更新して再レンダリングを促す
-                  setForceUpdate(prev => prev + 1);
-                  // 少し遅延させて権限更新を行う
-                  setTimeout(() => {
-                    refreshPermissionStatusRef.current();
-                  }, 500);
-                }} 
-              />
-              <Toast />
-            </ThemeProvider>
-          </ToastProvider>
-        </LoadingProvider>
-      </ErrorProvider>
+      <>
+        <PermissionsScreen 
+          onPermissionGranted={() => {
+            console.log('Permission granted callback in App.tsx');
+            // PermissionsScreen コンポーネントは一度だけこれを呼び出します
+            // 状態を更新して再レンダリングを促す
+            setForceUpdate(prev => prev + 1);
+            // 少し遅延させて権限更新を行う
+            setTimeout(() => {
+              refreshPermissionStatusRef.current();
+            }, 500);
+          }} 
+        />
+        <Toast />
+      </>
     )
   }
 
-  return (
-    <ErrorProvider>
-      <LoadingProvider>
-        <ToastProvider>
-          <ThemeProvider>
-            <ThemedApp user={user} />
-          </ThemeProvider>
-        </ToastProvider>
-      </LoadingProvider>
-    </ErrorProvider>
-  )
+  return <ThemedApp user={user} />
 }
 
 const styles = StyleSheet.create({
