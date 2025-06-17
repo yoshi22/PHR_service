@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
-import { auth } from '../firebase'
+import * as React from 'react'
+import { useAuth } from './useAuth'
 import { useTodaySteps } from './useTodaySteps'
 import { useWeeklyMetrics } from './useWeeklyMetrics'
-import { getUserSettings } from '../services/userSettingsService'
 import { useSettings } from '../context/SettingsContext'
+
+const { useState, useEffect, useCallback } = React;
 
 interface ProgressData {
   daily: {
@@ -20,6 +21,7 @@ interface ProgressData {
 
 /**
  * Hook to calculate daily and weekly progress towards goals
+ * Uses modern React patterns and the new service architecture
  */
 export function useProgressTracking() {
   const [progressData, setProgressData] = useState<ProgressData>({
@@ -33,23 +35,18 @@ export function useProgressTracking() {
   const { data: weeklyData } = useWeeklyMetrics()
   const { settings } = useSettings() // Use settings from context
 
+  const { user } = useAuth()
+
   // Calculate progress based on current data
   const calculateProgress = useCallback(async () => {
-    const user = auth?.currentUser
     if (!user || todaySteps === null) return
 
     setLoading(true)
     setError(null)
 
     try {
-      // Use step goal from context if available, otherwise fetch from database
-      let dailyTarget: number
-      if (settings?.stepGoal) {
-        dailyTarget = settings.stepGoal
-      } else {
-        const userSettings = await getUserSettings(user.uid)
-        dailyTarget = userSettings.stepGoal
-      }
+      // Use step goal from settings context (default to 7500 if not available)
+      const dailyTarget = settings?.stepGoal || 7500
       
       const weeklyTarget = dailyTarget * 7
 
@@ -73,7 +70,7 @@ export function useProgressTracking() {
         }
       })
     } catch (error: any) {
-      console.error('Error calculating progress:', error)
+      console.error('❌ useProgressTracking: Error calculating progress:', error)
       setError(error.message || 'プログレス情報の取得に失敗しました')
     } finally {
       setLoading(false)

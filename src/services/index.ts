@@ -17,10 +17,12 @@ export * from './constants';
 // Import services first
 import { appleWatchService } from './appleWatchService';
 import { fitbitService } from './fitbitService';
+import { healthDataService } from './healthDataService';
 
 // Individual services
 export { appleWatchService } from './appleWatchService';
 export { fitbitService } from './fitbitService';
+export { healthDataService } from './healthDataService';
 // export { UserProfileService } from './UserProfileService';
 // export { HealthDataService } from './HealthDataService';
 // export { BadgeService } from './BadgeService';
@@ -101,6 +103,9 @@ export class ServiceInitializer {
       console.log('Registering Fitbit service...');
       ServiceRegistry.register('fitbit', fitbitService);
       
+      console.log('Registering Health Data service...');
+      ServiceRegistry.register('healthData', healthDataService);
+      
       // Initialize the services
       try {
         // Services are automatically initialized when imported
@@ -150,6 +155,7 @@ const Services = {
   // Service instances
   appleWatch: appleWatchService,
   fitbit: fitbitService,
+  healthData: healthDataService,
 };
 
 export default Services;
