@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import * as React from 'react'
+const { useState } = React;
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native'
 import { useTheme, useNavigation } from '@react-navigation/native'
 import { useWeeklyMetrics } from '../hooks/useWeeklyMetrics'
@@ -14,6 +15,10 @@ import BadgeSummary from '../components/BadgeSummary'
 import ProgressBar from '../components/ProgressBar'
 import StreakCard from '../components/StreakCard'
 import CustomBarChart from '../components/CustomBarChart'
+import PrimaryButton from '../components/PrimaryButton'
+import ErrorMessage from '../components/ErrorMessage'
+import LoadingSpinner from '../components/LoadingSpinner'
+import { colors, modernTypography as typography, spacing, common } from '../styles'
 
 /**
  * Dashboard Screen placeholder for weekly metrics chart
@@ -35,12 +40,12 @@ export default function DashboardScreen() {
   
   React.useEffect(() => {
     setLoading(loading || badgesLoading || progressLoading || streakLoading)
-  }, [loading, badgesLoading, progressLoading, streakLoading])
+  }, [loading, badgesLoading, progressLoading, streakLoading, setLoading])
 
   React.useEffect(() => {
     if (error) showError(error, refetch)
     if (badgesError) showError(badgesError, () => {})
-  }, [error, badgesError])
+  }, [error, badgesError, showError, refetch])
 
   const steps = data.map(d => d.steps)
   
@@ -63,10 +68,20 @@ export default function DashboardScreen() {
   const uniqueSteps = Array.from(new Set(steps))
   if (uniqueSteps.length <= 1) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>週間ダッシュボード</Text>
-        <Text>今週の歩数データが不足しています</Text>
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.emptyStateContainer}>
+          <Text style={[styles.title, { color: colors.text }]}>週間ダッシュボード</Text>
+          <ErrorMessage 
+            message="今週の歩数データが不足しています" 
+          />
+          <PrimaryButton 
+            title="データを更新" 
+            onPress={refetch}
+            size="medium"
+            style={styles.retryButton}
+          />
+        </View>
+      </SafeAreaView>
     )
   }
   
@@ -103,7 +118,7 @@ export default function DashboardScreen() {
               current={progressData.weekly.current}
               target={progressData.weekly.target}
               unit="歩"
-              color="#34C759"
+              color="#4CAF50"
             />
           </View>
         </View>
@@ -123,9 +138,9 @@ export default function DashboardScreen() {
             onBarPress={handleBarPress}
             colors={{
               primary: colors.primary,
-              secondary: '#007AFF80',
-              goal: '#FF6B35',
-              average: '#34C759',
+              secondary: `${colors.primary}80`,
+              goal: '#FF9800',
+              average: '#4CAF50',
               text: colors.text,
               grid: '#E0E0E0',
               background: colors.card
@@ -153,7 +168,10 @@ export default function DashboardScreen() {
         {/* Badge section */}
         <View style={styles.badgeSection}>
           {badgesError ? (
-            <Text style={{ color: 'red' }}>{badgesError}</Text>
+            <ErrorMessage 
+              message={badgesError} 
+              onRetry={() => {}}
+            />
           ) : (
             <BadgeSummary 
               badges={badges} 
@@ -171,57 +189,83 @@ const styles = StyleSheet.create({
     flex: 1, 
     justifyContent: 'flex-start', 
     alignItems: 'center', 
-    paddingTop: 5, // SafeAreaViewを使用するのでpaddingTopを減らす
-    paddingHorizontal: 10,
-    backgroundColor: '#F7F7F7',
+    paddingTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.background,
   },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
+  title: { 
+    fontSize: typography.sizes.xl, 
+    fontWeight: '700' as any, 
+    marginBottom: spacing.md,
+    color: colors.text,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  retryButton: {
+    marginTop: spacing.lg,
+  },
   gamificationSection: {
     width: '100%',
-    marginBottom: 20,
-    paddingHorizontal: 16,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   progressSection: {
     width: '100%',
-    marginTop: 16,
-    gap: 12,
+    marginTop: spacing.md,
+    gap: spacing.sm,
   },
   chartWrapper: { 
     position: 'relative', 
     width: '100%', 
     alignItems: 'center', 
-    marginBottom: 20,
-    paddingHorizontal: 16, // ProgressBarと同じ左端位置に合わせる
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
-  badgeSection: { width: '100%', padding: 16, borderTopWidth: 1, borderColor: '#ddd', marginTop: 10 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  subTitle: { fontSize: 20, fontWeight: '600', marginBottom: 8 },
+  badgeSection: { 
+    width: '100%', 
+    padding: spacing.md, 
+    borderTopWidth: 1, 
+    borderColor: colors.neutral[300], 
+    marginTop: spacing.sm 
+  },
+  sectionTitle: { 
+    fontSize: typography.sizes.lg, 
+    fontWeight: '600' as any, 
+    marginBottom: spacing.xs,
+    color: colors.text,
+  },
+  subTitle: { 
+    fontSize: typography.sizes.xl, 
+    fontWeight: '600' as any, 
+    marginBottom: spacing.xs,
+    color: colors.text,
+  },
   tooltipContainer: {
     position: 'absolute',
-    backgroundColor: '#fff',
-    padding: 8,
-    borderRadius: 8,
+    backgroundColor: colors.surface,
+    padding: spacing.xs,
+    borderRadius: spacing.sm,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: colors.primary,
     zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    ...common.shadows.medium,
     minWidth: 100,
     alignItems: 'center',
   },
   tooltipTitle: {
-    color: '#007AFF',
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 2,
+    color: colors.primary,
+    fontSize: typography.sizes.xs,
+    fontWeight: '600' as any,
+    marginBottom: spacing.xs,
   },
   tooltipText: {
-    color: '#333',
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: colors.text,
+    fontSize: typography.sizes.sm,
+    fontWeight: '700' as any,
   },
   tooltipTriangle: {
     position: 'absolute',
@@ -235,7 +279,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: '#007AFF',
+    borderTopColor: colors.primary,
     transform: [{ rotate: '180deg' }]
   },
 })
