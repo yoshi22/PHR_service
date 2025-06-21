@@ -7,9 +7,6 @@ import CreateGoalScreen from '../screens/CreateGoalScreen';
 import GoalListScreen from '../screens/GoalListScreen';
 import GoalDetailScreen from '../screens/GoalDetailScreen';
 import ChatScreen from '../screens/ChatScreen';
-import MiBandSetupScreen from '../screens/MiBandSetupScreen';
-import AppleWatchSetupScreen from '../screens/AppleWatchSetupScreen';
-import FitbitSetupScreen from '../screens/FitbitSetupScreen';
 import ExerciseLibraryScreen from '../screens/ExerciseLibraryScreen';
 
 // Stack型の定義を追加
@@ -20,9 +17,6 @@ export type CoachStackParamList = {
   EditGoal: { goalId: string };
   GoalList: undefined;
   Chat: { initialMessage?: string; systemInstruction?: string };
-  MiBandSetup: undefined;
-  AppleWatchSetup: undefined;
-  FitbitSetup: undefined;
   ExerciseLibrary: undefined;
 };
 
@@ -69,21 +63,6 @@ const CoachNavigator = () => {
         name="Chat" 
         component={ChatScreen} 
         options={{ title: 'AIコーチ' }} 
-      />
-      <Stack.Screen 
-        name="MiBandSetup" 
-        component={MiBandSetupScreen} 
-        options={{ title: 'Mi Band 連携' }} 
-      />
-      <Stack.Screen 
-        name="AppleWatchSetup" 
-        component={AppleWatchSetupScreen} 
-        options={{ title: 'Apple Watch 連携' }} 
-      />
-      <Stack.Screen 
-        name="FitbitSetup" 
-        component={FitbitSetupScreen} 
-        options={{ title: 'Fitbit 連携' }} 
       />
       <Stack.Screen 
         name="ExerciseLibrary" 

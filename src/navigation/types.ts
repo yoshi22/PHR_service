@@ -15,10 +15,6 @@ export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   BadgeGallery: undefined;
   
-  // Setup Screens
-  AppleWatchSetup: undefined;
-  FitbitSetup: undefined;
-  MiBandSetup: undefined;
   
   // Goal Management
   GoalList: undefined;
@@ -60,9 +56,6 @@ export type MainTabParamList = {
 export type ProfileStackParamList = {
   ProfileMain: undefined;
   ProfileEdit: undefined;
-  AppleWatchSetup: undefined;
-  FitbitSetup: undefined;
-  MiBandSetup: undefined;
   GoalList: undefined;
   CreateGoal: undefined;
   GoalDetail: { goalId: string };
@@ -140,10 +133,6 @@ export const ROUTES = {
   DASHBOARD: 'Dashboard' as const,
   BADGE_GALLERY: 'BadgeGallery' as const,
   
-  // Setup
-  APPLE_WATCH_SETUP: 'AppleWatchSetup' as const,
-  FITBIT_SETUP: 'FitbitSetup' as const,
-  MIBAND_SETUP: 'MiBandSetup' as const,
   
   // Goals
   GOAL_LIST: 'GoalList' as const,

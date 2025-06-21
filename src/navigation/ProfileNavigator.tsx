@@ -11,9 +11,6 @@ import type { ProfileStackParamList } from './types';
 
 // Screen components
 import ProfileScreen from '../screens/ProfileScreen';
-import MiBandSetupScreen from '../screens/MiBandSetupScreen';
-import AppleWatchSetupScreen from '../screens/AppleWatchSetupScreen';
-import FitbitSetupScreen from '../screens/FitbitSetupScreen';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
@@ -54,30 +51,6 @@ const ProfileNavigator = () => {
           title: '設定', 
           headerShown: false 
         }}
-      />
-      <Stack.Screen 
-        name="MiBandSetup" 
-        component={MiBandSetupScreen} 
-        options={{ 
-          title: 'Mi Band 連携',
-          headerBackTitle: '設定',
-        }} 
-      />
-      <Stack.Screen 
-        name="AppleWatchSetup" 
-        component={AppleWatchSetupScreen} 
-        options={{ 
-          title: 'Apple Watch 連携',
-          headerBackTitle: '設定',
-        }} 
-      />
-      <Stack.Screen 
-        name="FitbitSetup" 
-        component={FitbitSetupScreen} 
-        options={{ 
-          title: 'Fitbit 連携',
-          headerBackTitle: '設定',
-        }} 
       />
     </Stack.Navigator>
   );

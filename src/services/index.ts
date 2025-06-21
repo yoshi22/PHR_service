@@ -15,13 +15,9 @@ export * from './types';
 export * from './constants';
 
 // Import services first
-import { appleWatchService } from './appleWatchService';
-import { fitbitService } from './fitbitService';
 import { healthDataService } from './healthDataService';
 
 // Individual services
-export { appleWatchService } from './appleWatchService';
-export { fitbitService } from './fitbitService';
 export { healthDataService } from './healthDataService';
 // export { UserProfileService } from './UserProfileService';
 // export { HealthDataService } from './HealthDataService';
@@ -97,12 +93,6 @@ export class ServiceInitializer {
       console.log('Initializing services...');
       
       // Initialize services here as they are refactored
-      console.log('Registering Apple Watch service...');
-      ServiceRegistry.register('appleWatch', appleWatchService);
-      
-      console.log('Registering Fitbit service...');
-      ServiceRegistry.register('fitbit', fitbitService);
-      
       console.log('Registering Health Data service...');
       ServiceRegistry.register('healthData', healthDataService);
       
@@ -153,8 +143,6 @@ const Services = {
   ServiceFactory,
   
   // Service instances
-  appleWatch: appleWatchService,
-  fitbit: fitbitService,
   healthData: healthDataService,
 };
 

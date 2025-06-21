@@ -17,9 +17,6 @@ import { useNavigation, useFocusEffect, NavigationProp } from '@react-navigation
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { useCoachFeatures } from '../hooks/useCoachFeatures';
-import { useMiBand } from '../hooks/useMiBand';
-import { useAppleWatch } from '../hooks/useAppleWatch';
-import { useFitbit } from '../hooks/useFitbit';
 import { CoachStackParamList } from '../navigation/CoachNavigator';
 import CoachGoalCard from '../components/CoachGoalCard';
 import WeeklyReviewPrompt from '../components/WeeklyReviewPrompt';
@@ -45,29 +42,6 @@ const CoachHomeScreen: React.FC = () => {
     todayCheckin,
     loadTodayCheckin
   } = useCoachFeatures();
-  const {
-    isConnected: miBandConnected,
-    steps,
-    heartRate,
-    lastSyncTime,
-  } = useMiBand();
-  
-  const {
-    isConnected: appleWatchConnected,
-    isAuthorized: appleWatchAuthorized,
-    healthData: appleWatchData,
-    lastSyncTime: appleWatchLastSync,
-    isSupported: appleWatchSupported,
-    syncHealthData: syncAppleWatchData,
-  } = useAppleWatch();
-  
-  const {
-    isConnected: fitbitConnected,
-    isAuthorized: fitbitAuthorized,
-    fitbitData,
-    lastSyncTime: fitbitLastSync,
-    syncFitbitData,
-  } = useFitbit();
 
   const [refreshing, setRefreshing] = useState(false);
   const [showWeeklyPrompt, setShowWeeklyPrompt] = useState(false);

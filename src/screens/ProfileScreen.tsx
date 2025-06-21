@@ -19,16 +19,11 @@ import { useToast } from '../context/ToastContext';
 import { useThemeContext } from '../context/ThemeContext';
 import { useSettings } from '../context/SettingsContext';
 import { useCoachFeatures } from '../hooks/useCoachFeatures';
-import { useMiBand } from '../hooks/useMiBand';
-import { useAppleWatch } from '../hooks/useAppleWatch';
-import { useFitbit } from '../hooks/useFitbit';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 // Navigation type definition for Profile Screen
 type ProfileStackParamList = {
-  MiBandSetup: undefined;
-  AppleWatchSetup: undefined;
-  FitbitSetup: undefined;
+  // No additional navigation needed for now
 };
 import PrimaryButton from '../components/PrimaryButton';
 import SettingsManager from '../components/SettingsManager';
@@ -55,31 +50,6 @@ export default function ProfileScreen() {
   const { coachSettings, saveSettings: saveCoachSettings } = useCoachFeatures();
   const { updateLocalSettings, settings, refreshSettings } = useSettings();
   const navigation = useNavigation<NavigationProp<ProfileStackParamList>>();
-  
-  // Activity tracker hooks
-  const {
-    isConnected: miBandConnected,
-    steps: miBandSteps,
-    heartRate: miBandHeartRate,
-    lastSyncTime: miBandLastSync,
-  } = useMiBand();
-  
-  const {
-    isConnected: appleWatchConnected,
-    isAuthorized: appleWatchAuthorized,
-    healthData: appleWatchData,
-    lastSyncTime: appleWatchLastSync,
-    isSupported: appleWatchSupported,
-    syncHealthData: syncAppleWatchData,
-  } = useAppleWatch();
-  
-  const {
-    isConnected: fitbitConnected,
-    isAuthorized: fitbitAuthorized,
-    fitbitData,
-    lastSyncTime: fitbitLastSync,
-    syncFitbitData,
-  } = useFitbit();
   
   // State for theme and notification settings
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -458,42 +428,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // Activity tracker navigation handlers
-  const handleMiBandSetup = () => {
-    navigation.navigate('MiBandSetup' as never);
-  };
-
-  const handleAppleWatchSetup = () => {
-    navigation.navigate('AppleWatchSetup' as never);
-  };
-
-  const handleFitbitSetup = () => {
-    navigation.navigate('FitbitSetup' as never);
-  };
-
-  const handleSyncData = async (type: 'miband' | 'applewatch' | 'fitbit') => {
-    try {
-      switch (type) {
-        case 'applewatch':
-          if (syncAppleWatchData) {
-            await syncAppleWatchData();
-            showToast('success', 'Apple Watchデータを同期しました');
-          }
-          break;
-        case 'fitbit':
-          if (syncFitbitData) {
-            await syncFitbitData();
-            showToast('success', 'Fitbitデータを同期しました');
-          }
-          break;
-        default:
-          showToast('info', 'Mi Bandは自動同期されます');
-      }
-    } catch (error) {
-      console.error(`Error syncing ${type} data:`, error);
-      showToast('error', 'データ同期に失敗しました');
-    }
-  };
 
   // Format time for display
   const formatTime = (hour: number, minute: number): string => {
@@ -544,22 +478,6 @@ export default function ProfileScreen() {
             formatTime={formatTime}
             formatWeekday={formatWeekday}
             onReminderFrequencyChange={handleReminderFrequencyChange}
-            // Activity tracker props
-            miBandConnected={miBandConnected}
-            miBandSteps={miBandSteps || undefined}
-            miBandHeartRate={miBandHeartRate || undefined}
-            miBandLastSync={miBandLastSync?.getTime()}
-            appleWatchConnected={appleWatchConnected}
-            appleWatchSupported={appleWatchSupported}
-            appleWatchData={appleWatchData || undefined}
-            appleWatchLastSync={appleWatchLastSync?.getTime()}
-            fitbitConnected={fitbitConnected}
-            fitbitData={fitbitData || undefined}
-            fitbitLastSync={fitbitLastSync?.getTime()}
-            onMiBandSetup={handleMiBandSetup}
-            onAppleWatchSetup={handleAppleWatchSetup}
-            onFitbitSetup={handleFitbitSetup}
-            onSyncData={handleSyncData}
           />
         )}
       />
