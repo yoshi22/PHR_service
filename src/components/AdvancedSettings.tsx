@@ -297,12 +297,12 @@ export default function AdvancedSettings({
             <View style={styles.trackerInfo}>
               <Ionicons name="watch" size={24} color="#FF6900" />
               <View style={styles.trackerTextContainer}>
-                <Text style={styles.trackerName}>Mi Band</Text>
+                <Text style={styles.trackerName}>Mi Band (HealthKit経由)</Text>
                 <Text style={[
                   styles.trackerStatus,
-                  { color: miBandConnected ? '#34C759' : '#FF3B30' }
+                  { color: miBandConnected ? '#34C759' : '#FF9500' }
                 ]}>
-                  {miBandConnected ? '接続中' : '未接続'}
+                  {miBandConnected ? 'HealthKit連携済み' : 'Zepp Life設定が必要'}
                 </Text>
               </View>
             </View>
@@ -313,17 +313,33 @@ export default function AdvancedSettings({
               <Text style={styles.setupButtonText}>設定</Text>
             </TouchableOpacity>
           </View>
-          {miBandConnected && (
-            <View style={styles.trackerData}>
-              <Text style={styles.dataText}>歩数: {miBandSteps?.toLocaleString() || '---'}</Text>
-              <Text style={styles.dataText}>心拍数: {miBandHeartRate || '---'} bpm</Text>
-              {miBandLastSync && (
-                <Text style={styles.syncTime}>
-                  最終同期: {new Date(miBandLastSync).toLocaleString('ja-JP')}
+          <View style={styles.trackerData}>
+            {miBandConnected ? (
+              <>
+                <Text style={styles.dataText}>歩数: {miBandSteps?.toLocaleString() || '取得中...'}</Text>
+                <Text style={styles.dataText}>心拍数: {miBandHeartRate ? `${miBandHeartRate} bpm` : '取得中...'}</Text>
+                <Text style={styles.infoText}>
+                  ※ Zepp Lifeアプリ経由でApple Healthと同期
                 </Text>
-              )}
-            </View>
-          )}
+                {miBandLastSync && (
+                  <Text style={styles.syncTime}>
+                    最終同期: {new Date(miBandLastSync).toLocaleString('ja-JP')}
+                  </Text>
+                )}
+              </>
+            ) : (
+              <View style={styles.setupRequired}>
+                <Text style={styles.setupRequiredText}>
+                  Mi Band連携にはZepp Lifeアプリが必要です
+                </Text>
+                <Text style={styles.setupSteps}>
+                  1. Zepp LifeでMi Bandをペアリング{'\n'}
+                  2. Zepp Life → データエクスポート → Apple Health をON{'\n'}
+                  3. PHRアプリでHealthKit権限を許可
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Apple Watch */}
@@ -613,5 +629,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     marginTop: 4,
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  setupRequired: {
+    marginTop: 8,
+  },
+  setupRequiredText: {
+    fontSize: 14,
+    color: '#FF9500',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  setupSteps: {
+    fontSize: 12,
+    color: '#666',
+    lineHeight: 18,
   },
 });
