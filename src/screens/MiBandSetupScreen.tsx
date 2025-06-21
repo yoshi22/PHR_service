@@ -14,9 +14,12 @@ import { useMiBand } from '../hooks/useMiBand';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import * as miBandService from '../services/miBandService';
+import { useOptimizedHealth } from '../hooks/useOptimizedHealth';
 
 const MiBandSetupScreen: React.FC = () => {
   const { colors } = useTheme();
+  const optimizedHealth = useOptimizedHealth();
   const {
     isScanning,
     isConnecting,
@@ -30,10 +33,19 @@ const MiBandSetupScreen: React.FC = () => {
     connect,
     startHeartRateMonitoring,
     syncStepsData,
+    syncWeeklyStepsHistory,
+    getStoredWeeklySteps,
     disconnect,
+    // 手動デバイス選択機能
+    scannedDevices,
+    showDeviceSelector,
+    selectDevice,
+    cancelDeviceSelection,
   } = useMiBand();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [weeklyData, setWeeklyData] = useState<any>(null);
+  const [isWeeklySync, setIsWeeklySync] = useState(false);
 
   // デバイスの接続
   const handleConnect = useCallback(async () => {
@@ -67,6 +79,56 @@ const MiBandSetupScreen: React.FC = () => {
       setRefreshing(false);
     }
   }, [isConnected, handleConnect, startHeartRateMonitoring, syncStepsData]);
+
+  // 週間履歴データを同期
+  const handleWeeklySync = useCallback(async () => {
+    setIsWeeklySync(true);
+    try {
+      // デバイスが接続されていなければ接続
+      if (!isConnected) {
+        await handleConnect();
+      }
+      
+      if (isConnected) {
+        console.log('📅 Starting weekly steps history sync...');
+        const weeklyResult = await syncWeeklyStepsHistory();
+        
+        if (weeklyResult) {
+          setWeeklyData(weeklyResult);
+          console.log(`✅ Weekly data updated: ${weeklyResult.daily.length} days`);
+        } else {
+          // 保存されたデータを読み込み
+          const storedData = await getStoredWeeklySteps();
+          if (storedData) {
+            setWeeklyData(storedData);
+            console.log('📊 Using stored weekly data');
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Weekly sync failed:', e);
+    } finally {
+      setIsWeeklySync(false);
+    }
+  }, [isConnected, handleConnect, syncWeeklyStepsHistory, getStoredWeeklySteps]);
+
+  // 保存された週間データを読み込み（初期化時）
+  const loadStoredWeeklyData = useCallback(async () => {
+    try {
+      const storedData = await getStoredWeeklySteps();
+      if (storedData) {
+        setWeeklyData(storedData);
+        console.log('📊 Loaded stored weekly data on init');
+      }
+    } catch (e) {
+      console.error('Failed to load stored weekly data:', e);
+    }
+  }, [getStoredWeeklySteps]);
+
+  // 初期化時に保存されたデータを読み込み
+  useEffect(() => {
+    loadStoredWeeklyData();
+  }, [loadStoredWeeklyData]);
 
   // プル更新
   const onRefresh = useCallback(async () => {
@@ -113,116 +175,124 @@ const MiBandSetupScreen: React.FC = () => {
         <Ionicons name="fitness" size={60} color={colors.primary} />
         <Text style={[styles.title, { color: colors.text }]}>Mi Band 連携</Text>
         <Text style={[styles.subtitle, { color: colors.text }]}>
-          Mi Bandと連携して健康データを記録しましょう
+          Zepp Life経由でHealthKitと連携して歩数データを取得します
         </Text>
       </View>
 
       <View style={[styles.statusCard, { backgroundColor: colors.card }]}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>接続状態</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>連携状態</Text>
         <View style={styles.statusRow}>
           <Ionicons 
-            name={isConnected ? "checkmark-circle" : "close-circle"} 
+            name="heart" 
             size={24} 
-            color={isConnected ? '#4CAF50' : '#F44336'} 
+            color="#4CAF50" 
           />
           <Text style={[styles.statusText, { color: colors.text }]}>
-            {isConnected ? '接続中' : '未接続'}
+            HealthKit経由で連携
           </Text>
         </View>
 
-        {device && (
-          <View style={styles.deviceInfo}>
-            <Text style={{ color: colors.text }}>デバイス: {device.name || 'Mi Band'}</Text>
-            <Text style={{ color: colors.text }}>ID: {device.id.substring(0, 8)}...</Text>
-          </View>
-        )}
+        <View style={styles.deviceInfo}>
+          <Text style={{ color: colors.text }}>データソース: Zepp Life → Apple Health</Text>
+          <Text style={{ color: colors.text }}>取得方法: HealthKit API</Text>
+        </View>
 
         {lastSyncTime && (
           <Text style={[styles.syncTime, { color: colors.text }]}>
-            最終同期: {format(lastSyncTime, 'yyyy/MM/dd HH:mm', { locale: ja })}
+            最終確認: {format(lastSyncTime, 'yyyy/MM/dd HH:mm', { locale: ja })}
           </Text>
         )}
       </View>
 
       <View style={[styles.dataCard, { backgroundColor: colors.card }]}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>健康データ</Text>
-        
-        <View style={styles.dataRow}>
-          <Ionicons name="heart" size={24} color="#F44336" />
-          <Text style={[styles.dataLabel, { color: colors.text }]}>心拍数:</Text>
-          <Text style={[styles.dataValue, { color: colors.text }]}>
-            {heartRate ? `${heartRate} BPM` : '- BPM'}
-          </Text>
-        </View>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>現在のデータ状況</Text>
         
         <View style={styles.dataRow}>
           <Ionicons name="footsteps" size={24} color="#2196F3" />
-          <Text style={[styles.dataLabel, { color: colors.text }]}>歩数:</Text>
+          <Text style={[styles.dataLabel, { color: colors.text }]}>今日の歩数:</Text>
           <Text style={[styles.dataValue, { color: colors.text }]}>
-            {steps ? `${steps.toLocaleString()} 歩` : '- 歩'}
+            {optimizedHealth.loading ? '取得中...' : `${optimizedHealth.steps.toLocaleString()} 歩`}
+          </Text>
+        </View>
+        
+        {optimizedHealth.sourceInfo && (
+          <View style={styles.dataRow}>
+            <Ionicons 
+              name={optimizedHealth.hasMiBandData ? "star" : "cellular"} 
+              size={24} 
+              color={optimizedHealth.hasMiBandData ? "#FFD700" : "#4CAF50"} 
+            />
+            <Text style={[styles.dataLabel, { color: colors.text }]}>データソース:</Text>
+            <Text style={[styles.dataValue, { color: colors.text }]}>
+              {optimizedHealth.sourceInfo}
+            </Text>
+          </View>
+        )}
+        
+        <View style={styles.dataRow}>
+          <Ionicons name="sync" size={24} color="#FF9800" />
+          <Text style={[styles.dataLabel, { color: colors.text }]}>Mi Band連携:</Text>
+          <Text style={[styles.dataValue, { color: colors.text }]}>
+            {optimizedHealth.hasMiBandData ? '✅ 検出済み' : '⚠️ 未検出'}
           </Text>
         </View>
       </View>
 
+      {weeklyData && weeklyData.daily && weeklyData.daily.length > 0 && (
+        <View style={[styles.weeklyCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>週間歩数履歴 (Mi Band優先)</Text>
+          {weeklyData.daily.slice(0, 7).map((day: any, index: number) => (
+            <View key={day.date} style={styles.weeklyRow}>
+              <Text style={[styles.weeklyDate, { color: colors.text }]}>
+                {format(new Date(day.date), 'MM/dd (E)', { locale: ja })}
+              </Text>
+              <Text style={[styles.weeklySteps, { color: colors.primary }]}>
+                {day.steps.toLocaleString()} 歩
+              </Text>
+            </View>
+          ))}
+          <Text style={[styles.syncTime, { color: colors.text }]}>
+            最終同期: {format(new Date(weeklyData.lastSyncTime), 'yyyy/MM/dd HH:mm', { locale: ja })}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.buttonContainer}>
-        {isConnected ? (
-          <>
-            <TouchableOpacity
-              style={[styles.button, styles.syncButton, { backgroundColor: colors.primary }]}
-              onPress={handleSync}
-              disabled={refreshing}
-            >
-              {refreshing ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="sync" size={20} color="#FFFFFF" />
-                  <Text style={styles.buttonText}>データを同期</Text>
-                </>
-              )}
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.button, styles.disconnectButton]}
-              onPress={handleDisconnect}
-              disabled={refreshing}
-            >
-              <Ionicons name="bluetooth" size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>切断</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={[styles.button, styles.connectButton, { backgroundColor: colors.primary }]}
-              onPress={handleConnect}
-              disabled={isScanning || isConnecting}
-            >
-              {isScanning || isConnecting ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="bluetooth" size={20} color="#FFFFFF" />
-                  <Text style={styles.buttonText}>
-                    {device ? '接続' : '検索して接続'}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </>
-        )}
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: '#2196F3' }]}
+          onPress={() => {
+            Alert.alert(
+              'HealthKit設定',
+              'iOSの設定 → プライバシーとセキュリティ → ヘルスケア → データアクセスとデバイス → このアプリ から権限を確認してください。',
+              [{ text: 'OK' }]
+            );
+          }}
+        >
+          <Ionicons name="settings" size={20} color="#FFFFFF" />
+          <Text style={styles.buttonText}>HealthKit権限確認</Text>
+        </TouchableOpacity>
       </View>
 
+
       <View style={[styles.helpCard, { backgroundColor: colors.card }]}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>使い方</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>設定手順</Text>
         <Text style={{ color: colors.text, marginBottom: 8 }}>
-          1. Mi Bandを腕に装着し、Bluetoothをオンにします
+          1. App StoreからZepp Lifeアプリをダウンロード
         </Text>
         <Text style={{ color: colors.text, marginBottom: 8 }}>
-          2. 「検索して接続」ボタンをタップしてMi Bandを接続します
+          2. Zepp LifeでMi Bandをペアリング・設定
         </Text>
         <Text style={{ color: colors.text, marginBottom: 8 }}>
-          3. 「データを同期」ボタンをタップして健康データを同期します
+          3. Zepp Life → プロフィール → 設定 → 「Apple Healthと同期」をON
+        </Text>
+        <Text style={{ color: colors.text, marginBottom: 8 }}>
+          4. 本アプリでHealthKit権限を許可
+        </Text>
+        <Text style={{ color: colors.text, marginBottom: 8, fontSize: 12, fontStyle: 'italic' }}>
+          ✅ 安全：公式API経由 | ✅ 自動同期：バックグラウンド対応 | ✅ 法的安全：利用規約準拠
+        </Text>
+        <Text style={{ color: colors.text, marginBottom: 8, fontSize: 12 }}>
+          ※ 歩数データはダッシュボードのHealthKit統合で確認できます
         </Text>
       </View>
     </ScrollView>
@@ -344,6 +414,98 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  weeklyCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  weeklyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  weeklyDate: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  weeklySteps: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // デバイス選択モーダルスタイル
+  deviceSelectorCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+  },
+  deviceSelectorNote: {
+    fontSize: 14,
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  deviceList: {
+    maxHeight: 200,
+    marginBottom: 12,
+  },
+  deviceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  deviceItemContent: {
+    flex: 1,
+  },
+  deviceName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  deviceId: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginBottom: 2,
+  },
+  deviceServices: {
+    fontSize: 11,
+    opacity: 0.6,
+  },
+  deviceManufacturer: {
+    fontSize: 10,
+    opacity: 0.5,
+    fontFamily: 'monospace',
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    padding: 12,
+  },
+  noDevicesText: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontStyle: 'italic',
+    padding: 20,
   },
 });
 

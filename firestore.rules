@@ -143,5 +143,17 @@ service cloud.firestore {
       // 削除は禁止
       allow delete: if false;
     }
+    
+    // healthData コレクションへのアクセス制御 (Mi Band等のデバイスからの健康データ)
+    match /healthData/{healthDataId} {
+      // 作成: 認証済かつ userId フィールドが自分の UID と一致
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // 読み取り: 認証済かつ保存済の userId が自分の UID と一致
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      // 更新: 認証済かつ保存済の userId が自分の UID と一致
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      // 削除: 認証済かつ保存済の userId が自分の UID と一致
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
   }
 }

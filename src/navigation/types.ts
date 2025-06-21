@@ -54,7 +54,6 @@ export type MainTabParamList = {
   Dashboard: undefined;
   HealthConsultation: undefined;
   Profile: undefined;
-  Debug: undefined;
 };
 
 // Profile Stack Navigator types
@@ -182,5 +181,4 @@ export const TAB_ROUTES = {
   DASHBOARD: 'Dashboard' as const,
   HEALTH_CONSULTATION: 'HealthConsultation' as const,
   PROFILE: 'Profile' as const,
-  DEBUG: 'Debug' as const,
 } as const;

@@ -15,7 +15,6 @@ import { TAB_ROUTES } from './types'
 import DashboardScreen from '../screens/DashboardScreen'
 import ProfileNavigator from './ProfileNavigator'
 import HealthConsultationNavigator from './HealthConsultationNavigator'
-import HealthKitDebugScreenNew from '../components/HealthKitDebugScreenNew'
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
 
@@ -27,7 +26,6 @@ function getTabBarIcon(routeName: keyof MainTabParamList): React.ComponentProps<
     [TAB_ROUTES.DASHBOARD]: 'stats-chart',
     [TAB_ROUTES.HEALTH_CONSULTATION]: 'medical',
     [TAB_ROUTES.PROFILE]: 'person',
-    [TAB_ROUTES.DEBUG]: 'bug',
   };
   
   return iconMap[routeName] || 'help-circle';
@@ -72,11 +70,6 @@ export default function MainTabs() {
         name={TAB_ROUTES.HEALTH_CONSULTATION} 
         component={HealthConsultationNavigator} 
         options={{ title: '健康相談' }} 
-      />
-      <Tab.Screen 
-        name={TAB_ROUTES.DEBUG} 
-        component={HealthKitDebugScreenNew} 
-        options={{ title: 'デバッグ' }} 
       />
       <Tab.Screen 
         name={TAB_ROUTES.PROFILE} 
