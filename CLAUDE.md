@@ -4,6 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 日本語で必ず返信してください
 実機の再ビルドが必要な場合は必ず教えてください
 
+## Context7による最新情報参照
+-**Context7**: context7を使って常に最新の情報を参照するようにして最新の技術情報とベストプラクティスを参照にするようにしてください
+-ライブラリのドキュメント、API仕様、実装パターンなどの最新情報を取得
+-新機能実装やトラブルシューティング時にContext7で関連情報を検索、参照することを推奨
+
+
 ## Development Commands
 
 ### Core Development

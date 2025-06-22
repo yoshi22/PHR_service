@@ -38,7 +38,7 @@ import {
 } from '../services/notificationService';
 import { getUserSettings, updateStepGoal, updateNotificationTime } from '../services/userSettingsService';
 import { CoachSettings } from '../services/coachService';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerAndroid, DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 /**
  * ProfileScreen for user settings and account management

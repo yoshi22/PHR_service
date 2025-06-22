@@ -31,7 +31,7 @@ export default function InputField({
   const [isFocused, setIsFocused] = useState(false);
   
   const getInputContainerStyle = () => {
-    const baseStyle = [styles.inputContainer, styles[variant], styles[size]];
+    const baseStyle = [styles.inputContainer, styles[variant as keyof typeof styles], styles[size as keyof typeof styles]];
     
     if (isFocused) {
       baseStyle.push(styles.focused);

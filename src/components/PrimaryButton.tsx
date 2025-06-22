@@ -28,12 +28,12 @@ export default function PrimaryButton({
   const isDisabled = disabled || loading;
   
   const getButtonStyle = () => {
-    const baseStyle = [styles.button, styles[size]];
+    const baseStyle = [styles.button, styles[size as keyof typeof styles]];
     
     if (isDisabled) {
       baseStyle.push(styles.disabled);
     } else {
-      baseStyle.push(styles[variant]);
+      baseStyle.push(styles[variant as keyof typeof styles]);
     }
     
     return baseStyle;

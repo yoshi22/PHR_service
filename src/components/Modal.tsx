@@ -39,33 +39,27 @@ export default function Modal({
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   
   const getModalContentStyle = () => {
-    const baseStyle = [styles.modalContent];
-    
     switch (size) {
       case 'small':
-        baseStyle.push({
+        return [styles.modalContent, {
           width: Math.min(screenWidth * 0.8, 300),
           maxHeight: screenHeight * 0.6,
-        });
-        break;
+        }];
       case 'medium':
-        baseStyle.push({
+        return [styles.modalContent, {
           width: Math.min(screenWidth * 0.9, 400),
           maxHeight: screenHeight * 0.8,
-        });
-        break;
+        }];
       case 'large':
-        baseStyle.push({
+        return [styles.modalContent, {
           width: Math.min(screenWidth * 0.95, 600),
           maxHeight: screenHeight * 0.9,
-        });
-        break;
+        }];
       case 'fullscreen':
-        baseStyle.push(styles.fullscreen);
-        break;
+        return [styles.modalContent, styles.fullscreen];
+      default:
+        return [styles.modalContent];
     }
-    
-    return baseStyle;
   };
 
   const handleBackdropPress = () => {
@@ -207,7 +201,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 0,
-    maxWidth: undefined,
+    maxWidth: '100%',
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,

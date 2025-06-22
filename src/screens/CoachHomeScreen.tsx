@@ -184,9 +184,11 @@ const CoachHomeScreen: React.FC = () => {
     await loadUserGoals();
     
     // Refresh device connections and data
-    const promises = [];
+    const promises: Promise<void>[] = [];
     
-    // If Apple Watch is supported and connected, sync data
+    // Apple Watch関連の変数は現在未実装のため、コメントアウト
+    // TODO: useAppleWatch hookを実装後に有効化
+    /*
     if (appleWatchSupported && appleWatchConnected) {
       const syncAppleWatch = async () => {
         try {
@@ -197,8 +199,11 @@ const CoachHomeScreen: React.FC = () => {
       };
       promises.push(syncAppleWatch());
     }
+    */
     
-    // If Fitbit is connected, sync data
+    // Fitbit関連の変数も現在未実装のため、コメントアウト
+    // TODO: useFitbit hookを実装後に有効化
+    /*
     if (fitbitConnected) {
       const syncFitbit = async () => {
         try {
@@ -209,6 +214,7 @@ const CoachHomeScreen: React.FC = () => {
       };
       promises.push(syncFitbit());
     }
+    */
     
     // Wait for all sync operations to complete
     if (promises.length > 0) {
@@ -216,7 +222,7 @@ const CoachHomeScreen: React.FC = () => {
     }
     
     setRefreshing(false);
-  }, [loadUserGoals, appleWatchSupported, appleWatchConnected, fitbitConnected]);
+  }, [loadUserGoals]); // 未実装の依存関係を削除
 
   // 朝の計画を開始
   const startMorningPlan = useCallback(async () => {
@@ -242,20 +248,36 @@ const CoachHomeScreen: React.FC = () => {
     return goal.scheduledDays.includes(today.getDay());
   });
 
-  // Mi Band 設定画面へ移動
+  // TODO: 実装待ちの変数を一時的にモック値で定義
+  const miBandConnected = false;
+  const appleWatchConnected = false;
+  const appleWatchSupported = false;
+  const fitbitConnected = false;
+  const steps = 0;
+  const heartRate = 0;
+  const appleWatchData = { steps: 0, heartRate: 0 };
+  const fitbitData = { steps: 0, heartRate: 0 };
+
+  // Mi Band 設定画面へ移動 (一時的に無効化)
   const navigateToMiBandSetup = useCallback(() => {
-    navigation.navigate('MiBandSetup');
-  }, [navigation]);
+    // TODO: MiBandSetupスクリーンの実装後に有効化
+    console.log('Mi Band setup navigation - 未実装');
+    // navigation.navigate('MiBandSetup');
+  }, []);
 
-  // Apple Watch 設定画面へ移動
+  // Apple Watch 設定画面へ移動 (一時的に無効化)
   const navigateToAppleWatchSetup = useCallback(() => {
-    navigation.navigate('AppleWatchSetup');
-  }, [navigation]);
+    // TODO: AppleWatchSetupスクリーンの実装後に有効化
+    console.log('Apple Watch setup navigation - 未実装');
+    // navigation.navigate('AppleWatchSetup');
+  }, []);
 
-  // Fitbit 設定画面へ移動
+  // Fitbit 設定画面へ移動 (一時的に無効化)
   const navigateToFitbitSetup = useCallback(() => {
-    navigation.navigate('FitbitSetup');
-  }, [navigation]);
+    // TODO: FitbitSetupスクリーンの実装後に有効化
+    console.log('Fitbit setup navigation - 未実装');
+    // navigation.navigate('FitbitSetup');
+  }, []);
 
   // エクササイズライブラリへ移動
   const navigateToExerciseLibrary = useCallback(() => {

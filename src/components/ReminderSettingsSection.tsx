@@ -9,7 +9,7 @@ import {
   getReminderSettings,
   updateReminderSettings
 } from '../services/smartReminderService';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerAndroid, DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 export default function ReminderSettingsSection() {
   const { colors } = useTheme();

@@ -1,0 +1,81 @@
+
+> phrapp@1.0.0 type-check
+> tsc --noEmit
+
+src/components/InputField.tsx(37,22): error TS2345: Argument of type '{ borderWidth: number; borderColor: "#007AFF"; shadowColor: "#007AFF"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; }' is not assignable to parameter of type '{ flexDirection: "row"; alignItems: "center"; borderRadius: 8; backgroundColor: "#FFFFFF"; } | { borderWidth: number; borderColor: "#D1D5DB"; } | { backgroundColor: "#F3F4F6"; borderWidth: number; } | { ...; }'.
+  Type '{ borderWidth: number; borderColor: "#007AFF"; shadowColor: "#007AFF"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; }' is not assignable to type '{ borderWidth: number; borderColor: "#D1D5DB"; }'.
+    Types of property 'borderColor' are incompatible.
+      Type '"#007AFF"' is not assignable to type '"#D1D5DB"'.
+src/components/InputField.tsx(41,22): error TS2345: Argument of type '{ borderWidth: number; borderColor: "#FF3B30"; }' is not assignable to parameter of type '{ flexDirection: "row"; alignItems: "center"; borderRadius: 8; backgroundColor: "#FFFFFF"; } | { borderWidth: number; borderColor: "#D1D5DB"; } | { backgroundColor: "#F3F4F6"; borderWidth: number; } | { ...; }'.
+  Type '{ borderWidth: number; borderColor: "#FF3B30"; }' is not assignable to type '{ borderWidth: number; borderColor: "#D1D5DB"; }'.
+    Types of property 'borderColor' are incompatible.
+      Type '"#FF3B30"' is not assignable to type '"#D1D5DB"'.
+src/components/Modal.tsx(47,11): error TS2353: Object literal may only specify known properties, and 'width' does not exist in type '{ maxWidth: "100%"; shadowColor: "rgba(0, 0, 0, 0.1)"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: "#FFFFFF"; borderRadius: 16; }'.
+src/components/Modal.tsx(53,11): error TS2353: Object literal may only specify known properties, and 'width' does not exist in type '{ maxWidth: "100%"; shadowColor: "rgba(0, 0, 0, 0.1)"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: "#FFFFFF"; borderRadius: 16; }'.
+src/components/Modal.tsx(59,11): error TS2353: Object literal may only specify known properties, and 'width' does not exist in type '{ maxWidth: "100%"; shadowColor: "rgba(0, 0, 0, 0.1)"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: "#FFFFFF"; borderRadius: 16; }'.
+src/components/Modal.tsx(64,24): error TS2345: Argument of type '{ width: "100%"; height: "100%"; borderRadius: number; maxWidth: undefined; shadowColor: "rgba(0, 0, 0, 0.1)"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: "#FFFFFF"; }' is not assignable to parameter of type '{ maxWidth: "100%"; shadowColor: "rgba(0, 0, 0, 0.1)"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: "#FFFFFF"; borderRadius: 16; }'.
+  Types of property 'maxWidth' are incompatible.
+    Type 'undefined' is not assignable to type '"100%"'.
+src/components/PrimaryButton.tsx(36,22): error TS2345: Argument of type '{ backgroundColor: "#007AFF"; } | { backgroundColor: "#4B5563"; } | { backgroundColor: "#FF3B30"; } | { backgroundColor: string; borderWidth: number; borderColor: "#007AFF"; }' is not assignable to parameter of type '{ shadowColor: "rgba(0, 0, 0, 0.1)"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; alignItems: "center"; justifyContent: "center"; borderRadius: 8; } | { ...; } | { ...; } | { ...; }'.
+  Type '{ backgroundColor: "#007AFF"; }' is not assignable to type '{ shadowColor: "rgba(0, 0, 0, 0.1)"; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; alignItems: "center"; justifyContent: "center"; borderRadius: 8; } | { ...; } | { ...; } | { ...; }'.
+src/navigation/ProfileNavigator.tsx(38,11): error TS2353: Object literal may only specify known properties, and 'color' does not exist in type '{ fontFamily?: string | undefined; fontSize?: number | undefined; } | RecursiveArray<Falsy | { fontFamily?: string | undefined; fontSize?: number | undefined; } | RegisteredStyle<{ fontFamily?: string | undefined; fontSize?: number | undefined; }>>'.
+src/screens/CoachHomeScreen.tsx(190,9): error TS2304: Cannot find name 'appleWatchSupported'.
+src/screens/CoachHomeScreen.tsx(190,32): error TS2304: Cannot find name 'appleWatchConnected'.
+src/screens/CoachHomeScreen.tsx(193,17): error TS2304: Cannot find name 'syncAppleWatchData'.
+src/screens/CoachHomeScreen.tsx(202,9): error TS2304: Cannot find name 'fitbitConnected'.
+src/screens/CoachHomeScreen.tsx(205,17): error TS2304: Cannot find name 'syncFitbitData'.
+src/screens/CoachHomeScreen.tsx(219,22): error TS2304: Cannot find name 'appleWatchSupported'.
+src/screens/CoachHomeScreen.tsx(219,43): error TS2304: Cannot find name 'appleWatchConnected'.
+src/screens/CoachHomeScreen.tsx(219,64): error TS2304: Cannot find name 'fitbitConnected'.
+src/screens/CoachHomeScreen.tsx(247,25): error TS2769: No overload matches this call.
+  Argument of type '["MiBandSetup"]' is not assignable to parameter of type '[screen: "GoalList"] | [screen: "GoalList", params: undefined] | [screen: "CreateGoal"] | [screen: "CreateGoal", params: undefined] | [screen: "GoalDetail", params: { goalId?: string | undefined; }] | [screen: "ExerciseLibrary"] | [screen: "ExerciseLibrary", params: undefined] | [screen: ...] | [screen: ...] | [scre...'.
+    Type '["MiBandSetup"]' is not assignable to type '[screen: "GoalList"] | [screen: "CreateGoal"] | [screen: "ExerciseLibrary"] | [screen: "CoachHome"]'.
+      Type '["MiBandSetup"]' is not assignable to type '[screen: "CoachHome"]'.
+        Type '"MiBandSetup"' is not assignable to type '"CoachHome"'.
+  Overload 2 of 2, '(options: { key: string; params?: undefined; merge?: boolean | undefined; } | { name: "GoalList"; key?: string | undefined; params: undefined; merge?: boolean | undefined; } | { key: string; params?: undefined; merge?: boolean | undefined; } | ... 10 more ... | { ...; }): void', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '{ key: string; params?: undefined; merge?: boolean | undefined; } | { name: "GoalList"; key?: string | undefined; params: undefined; merge?: boolean | undefined; } | { key: string; params?: undefined; merge?: boolean | undefined; } | ... 10 more ... | { ...; }'.
+src/screens/CoachHomeScreen.tsx(252,25): error TS2769: No overload matches this call.
+  Argument of type '["AppleWatchSetup"]' is not assignable to parameter of type '[screen: "GoalList"] | [screen: "GoalList", params: undefined] | [screen: "CreateGoal"] | [screen: "CreateGoal", params: undefined] | [screen: "GoalDetail", params: { goalId?: string | undefined; }] | [screen: "ExerciseLibrary"] | [screen: "ExerciseLibrary", params: undefined] | [screen: ...] | [screen: ...] | [scre...'.
+    Type '["AppleWatchSetup"]' is not assignable to type '[screen: "GoalList"] | [screen: "CreateGoal"] | [screen: "ExerciseLibrary"] | [screen: "CoachHome"]'.
+      Type '["AppleWatchSetup"]' is not assignable to type '[screen: "CoachHome"]'.
+        Type '"AppleWatchSetup"' is not assignable to type '"CoachHome"'.
+  Overload 2 of 2, '(options: { key: string; params?: undefined; merge?: boolean | undefined; } | { name: "GoalList"; key?: string | undefined; params: undefined; merge?: boolean | undefined; } | { key: string; params?: undefined; merge?: boolean | undefined; } | ... 10 more ... | { ...; }): void', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '{ key: string; params?: undefined; merge?: boolean | undefined; } | { name: "GoalList"; key?: string | undefined; params: undefined; merge?: boolean | undefined; } | { key: string; params?: undefined; merge?: boolean | undefined; } | ... 10 more ... | { ...; }'.
+src/screens/CoachHomeScreen.tsx(257,25): error TS2769: No overload matches this call.
+  Argument of type '["FitbitSetup"]' is not assignable to parameter of type '[screen: "GoalList"] | [screen: "GoalList", params: undefined] | [screen: "CreateGoal"] | [screen: "CreateGoal", params: undefined] | [screen: "GoalDetail", params: { goalId?: string | undefined; }] | [screen: "ExerciseLibrary"] | [screen: "ExerciseLibrary", params: undefined] | [screen: ...] | [screen: ...] | [scre...'.
+    Type '["FitbitSetup"]' is not assignable to type '[screen: "GoalList"] | [screen: "CreateGoal"] | [screen: "ExerciseLibrary"] | [screen: "CoachHome"]'.
+      Type '["FitbitSetup"]' is not assignable to type '[screen: "CoachHome"]'.
+        Type '"FitbitSetup"' is not assignable to type '"CoachHome"'.
+  Overload 2 of 2, '(options: { key: string; params?: undefined; merge?: boolean | undefined; } | { name: "GoalList"; key?: string | undefined; params: undefined; merge?: boolean | undefined; } | { key: string; params?: undefined; merge?: boolean | undefined; } | ... 10 more ... | { ...; }): void', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '{ key: string; params?: undefined; merge?: boolean | undefined; } | { name: "GoalList"; key?: string | undefined; params: undefined; merge?: boolean | undefined; } | { key: string; params?: undefined; merge?: boolean | undefined; } | ... 10 more ... | { ...; }'.
+src/screens/CoachHomeScreen.tsx(432,40): error TS2304: Cannot find name 'miBandConnected'.
+src/screens/CoachHomeScreen.tsx(436,32): error TS2304: Cannot find name 'miBandConnected'.
+src/screens/CoachHomeScreen.tsx(438,24): error TS2304: Cannot find name 'miBandConnected'.
+src/screens/CoachHomeScreen.tsx(441,20): error TS2304: Cannot find name 'miBandConnected'.
+src/screens/CoachHomeScreen.tsx(444,26): error TS2304: Cannot find name 'steps'.
+src/screens/CoachHomeScreen.tsx(444,37): error TS2304: Cannot find name 'steps'.
+src/screens/CoachHomeScreen.tsx(447,26): error TS2304: Cannot find name 'heartRate'.
+src/screens/CoachHomeScreen.tsx(447,45): error TS2304: Cannot find name 'heartRate'.
+src/screens/CoachHomeScreen.tsx(466,40): error TS2304: Cannot find name 'appleWatchConnected'.
+src/screens/CoachHomeScreen.tsx(470,32): error TS2304: Cannot find name 'appleWatchConnected'.
+src/screens/CoachHomeScreen.tsx(472,24): error TS2304: Cannot find name 'appleWatchConnected'.
+src/screens/CoachHomeScreen.tsx(472,56): error TS2304: Cannot find name 'appleWatchSupported'.
+src/screens/CoachHomeScreen.tsx(475,20): error TS2304: Cannot find name 'appleWatchConnected'.
+src/screens/CoachHomeScreen.tsx(475,43): error TS2304: Cannot find name 'appleWatchData'.
+src/screens/CoachHomeScreen.tsx(478,26): error TS2304: Cannot find name 'appleWatchData'.
+src/screens/CoachHomeScreen.tsx(478,52): error TS2304: Cannot find name 'appleWatchData'.
+src/screens/CoachHomeScreen.tsx(480,24): error TS2304: Cannot find name 'appleWatchData'.
+src/screens/CoachHomeScreen.tsx(482,35): error TS2304: Cannot find name 'appleWatchData'.
+src/screens/CoachHomeScreen.tsx(507,40): error TS2304: Cannot find name 'fitbitConnected'.
+src/screens/CoachHomeScreen.tsx(511,32): error TS2304: Cannot find name 'fitbitConnected'.
+src/screens/CoachHomeScreen.tsx(513,24): error TS2304: Cannot find name 'fitbitConnected'.
+src/screens/CoachHomeScreen.tsx(516,20): error TS2304: Cannot find name 'fitbitConnected'.
+src/screens/CoachHomeScreen.tsx(516,39): error TS2304: Cannot find name 'fitbitData'.
+src/screens/CoachHomeScreen.tsx(519,26): error TS2304: Cannot find name 'fitbitData'.
+src/screens/CoachHomeScreen.tsx(519,52): error TS2304: Cannot find name 'fitbitData'.
+src/screens/CoachHomeScreen.tsx(521,24): error TS2304: Cannot find name 'fitbitData'.
+src/screens/CoachHomeScreen.tsx(523,35): error TS2304: Cannot find name 'fitbitData'.
+src/services/healthDataService.ts(77,32): error TS2345: Argument of type '"OPERATION_FAILED"' is not assignable to parameter of type '"AUTH_REQUIRED" | "AUTH_INVALID" | "AUTH_EXPIRED" | "PERMISSION_DENIED" | "PERMISSION_REQUIRED" | "PERMISSION_REQUEST_FAILED" | "PLATFORM_NOT_SUPPORTED" | "CONNECTION_CHECK_FAILED" | ... 23 more ... | "VALIDATION_ERROR"'.
+src/services/healthDataService.ts(169,34): error TS2345: Argument of type '"OPERATION_FAILED"' is not assignable to parameter of type '"AUTH_REQUIRED" | "AUTH_INVALID" | "AUTH_EXPIRED" | "PERMISSION_DENIED" | "PERMISSION_REQUIRED" | "PERMISSION_REQUEST_FAILED" | "PLATFORM_NOT_SUPPORTED" | "CONNECTION_CHECK_FAILED" | ... 23 more ... | "VALIDATION_ERROR"'.
+src/services/healthDataService.ts(173,32): error TS2345: Argument of type '"OPERATION_FAILED"' is not assignable to parameter of type '"AUTH_REQUIRED" | "AUTH_INVALID" | "AUTH_EXPIRED" | "PERMISSION_DENIED" | "PERMISSION_REQUIRED" | "PERMISSION_REQUEST_FAILED" | "PLATFORM_NOT_SUPPORTED" | "CONNECTION_CHECK_FAILED" | ... 23 more ... | "VALIDATION_ERROR"'.
+src/services/healthService.ts(248,9): error TS2353: Object literal may only specify known properties, and 'typeIdentifier' does not exist in type 'HealthInputOptions'.
